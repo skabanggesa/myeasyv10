@@ -161,13 +161,13 @@
 
 <script>
 const firebaseConfig = {
-        apiKey: "AIzaSyCwh99Ui4KPXgC-W-CpCg-edYnHN3aVmrk",
-        authDomain: "portal-8368.firebaseapp.com",
-        projectId: "portal-8368",
-        storageBucket: "portal-8368.firebasestorage.app",
-        messagingSenderId: "150403488308",
-        appId: "1:150403488308:web:fac9b3c52dcd9975130861"
-    };
+    apiKey: "AIzaSyCwh99Ui4KPXgC-W-CpCg-edYnHN3aVmrk",
+    authDomain: "portal-8368.firebaseapp.com",
+    projectId: "portal-8368",
+    storageBucket: "portal-8368.firebasestorage.app",
+    messagingSenderId: "150403488308",
+    appId: "1:150403488308:web:fac9b3c52dcd9975130861"
+};
 
     const KPM_SUBJECTS = [
         {id:'BM', name:'BAHASA MELAYU'}, {id:'BI', name:'BAHASA INGGERIS'}, {id:'MT', name:'MATEMATIK'}, 
@@ -399,41 +399,39 @@ const firebaseConfig = {
 // 1. FUNGSI PADAM SEMUA DATA BAGI SATU PENTAKSIRAN
 async function clearAllData() {
     const sesi = document.getElementById('sesiAkademik').value;
-    // PENTING: .replace ini akan menukar "Ujian Akhir..." kepada "Ujian_Akhir..."
-    const jenisInput = document.getElementById('sesiPentaksiran').value.replace(/\s+/g,'_');
+    const jenis = document.getElementById('sesiPentaksiran').value.replace(/\s+/g,'_');
     
-    console.log("Memadam di laluan:", `sesi/${sesi}/pentaksiran/${jenisInput}`);
+    const confirmation = confirm(`AMARAN: Padam semua data bagi ${jenis.replace(/_/g,' ')} (${sesi})?`);
+    if(!confirmation || prompt("Taip 'PADAM' untuk sahkan:") !== "PADAM") return;
 
     try {
-        const docRef = db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenisInput);
-        const classSnap = await docRef.collection('kelas').get();
-
-        if (classSnap.empty) {
-            // Jika masih tak jumpa, kita paparkan apa yang ada dalam DB untuk semakan
-            const allPentaksiran = await db.collection('sesi').doc(sesi).collection('pentaksiran').get();
-            let senaraiAda = allPentaksiran.docs.map(d => d.id).join(", ");
-            
-            alert(`DATA TIDAK JUMPA!\n\nSistem cari: ${jenisInput}\nDalam DB ada: [${senaraiAda}]`);
+        // Ambil semua dokumen kelas di bawah pentaksiran tersebut
+        const snap = await db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').get();
+        
+        if (snap.empty) {
+            alert("Tiada data dijumpai di laluan tersebut.");
             return;
         }
 
-        if(!confirm(`Jumpa ${classSnap.size} kelas dalam ${jenisInput}. Sahkan padam semua?`)) return;
-        if(prompt("Taip 'PADAM':") !== "PADAM") return;
-
         const batch = db.batch();
-        for (const kDoc of classSnap.docs) {
+
+        for (const kDoc of snap.docs) {
+            // Ambil semua murid dalam setiap kelas
             const mSnap = await kDoc.ref.collection('murid').get();
-            mSnap.forEach(m => batch.delete(m.ref)); // Padam semua murid
-            batch.delete(kDoc.ref); // Padam kelas
+            mSnap.forEach(m => {
+                batch.delete(m.ref); // Tambah arahan padam murid ke batch
+            });
+            batch.delete(kDoc.ref); // Tambah arahan padam kelas ke batch
         }
-        batch.delete(docRef); // Padam rekod pentaksiran
-        
+
+        // Jalankan semua pemadaman sekali gus
         await batch.commit();
-        alert("BERJAYA: Semua data telah dipadam.");
+        alert("BERJAYA: Semua data pentaksiran tersebut telah dibersihkan.");
         location.reload();
 
     } catch (error) {
-        alert("Ralat: " + error.message);
+        console.error("Ralat pemadaman:", error);
+        alert("Ralat teknikal: " + error.message);
     }
 }
 
@@ -465,3 +463,4 @@ async function deleteStudent(sid) {
 </script>
 </body>
 </html>
+
