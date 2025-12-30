@@ -69,10 +69,6 @@
                     <select id="sesiAkademik" onchange="loadClassList()" class="w-full p-2 border rounded font-bold text-blue-900 mb-4 bg-blue-50">
                         <option value="2024_2025">2024/2025</option>
                         <option value="2025_2026">2025/2026</option>
-                        <option value="2026_2027">2026/2027</option>
-                        <option value="2027_2028">2027/2028</option>
-                        <option value="2028_2029">2028/2029</option>
-                        <option value="2029_2030">2029/2030</option>
                     </select>
 
                     <label class="text-[10px] font-bold text-slate-400 block mb-1">JENIS PENTAKSIRAN</label>
@@ -400,29 +396,76 @@ const firebaseConfig = {
         }; reader.readAsText(file);
     }
 
-    async function clearAllData() {
-        const sesi = document.getElementById('sesiAkademik').value;
-        const jenis = document.getElementById('sesiPentaksiran').value.replace(/\s+/g,'_');
-        if(!confirm(`AMARAN: Padam semua data bagi ${jenis} (${sesi})?`) || prompt("Taip 'PADAM':") !== "PADAM") return;
-        
-        const snap = await db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').get();
-        for (const kDoc of snap.docs) {
-            const mSnap = await kDoc.ref.collection('murid').get();
-            const batch = db.batch();
-            mSnap.forEach(m => batch.delete(m.ref));
-            batch.delete(kDoc.ref);
-            await batch.commit();
-        }
-        alert("Data Pentaksiran Tersebut Telah Dipadam!"); location.reload();
-    }
+// 1. FUNGSI PADAM SEMUA DATA BAGI SATU PENTAKSIRAN
+async function clearAllData() {
+    const sesi = document.getElementById('sesiAkademik').value;
+    const jenis = document.getElementById('sesiPentaksiran').value; // Ambil nilai asal tanpa replace
+    
+    const confirmMsg = `AMARAN: Padam semua data bagi ${jenis} (${sesi})?\n\nSemua senarai murid dan markah dalam pentaksiran ini akan dihapuskan secara kekal.`;
+    
+    if(!confirm(confirmMsg)) return;
+    
+    const laluan = prompt("Taip 'PADAM' untuk pengesahan:");
+    if (laluan !== "PADAM") return;
 
-    async function deleteStudent(sid) {
-        if(!confirm("Padam murid ini?")) return;
-        const sesi = document.getElementById('sesiAkademik').value;
-        const jenis = document.getElementById('sesiPentaksiran').value.replace(/\s+/g,'_');
-        const kelas = document.getElementById('classDropdown').value;
-        await db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(kelas).collection('murid').doc(sid).delete();
+    try {
+        // Cari semua kelas dalam pentaksiran tersebut
+        const snap = await db.collection('sesi').doc(sesi)
+                           .collection('pentaksiran').doc(jenis)
+                           .collection('kelas').get();
+
+        if (snap.empty) {
+            alert("Tiada data ditemui untuk dipadam pada laluan ini.");
+            return;
+        }
+
+        const batch = db.batch();
+
+        for (const kDoc of snap.docs) {
+            // A. Cari semua murid dalam kelas tersebut
+            const mSnap = await kDoc.ref.collection('murid').get();
+            mSnap.forEach(m => {
+                batch.delete(m.ref); // Padam setiap murid
+            });
+
+            // B. Padam dokumen kelas itu sendiri
+            batch.delete(kDoc.ref);
+        }
+
+        // C. Padam dokumen induk pentaksiran
+        const pentaksiranRef = db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis);
+        batch.delete(pentaksiranRef);
+
+        await batch.commit();
+        
+        alert("BERJAYA: Semua data murid, kelas dan rekod pentaksiran telah dipadam.");
+        location.reload();
+
+    } catch (error) {
+        console.error("Ralat semasa memadam:", error);
+        alert("Gagal memadam data. Sila semak sambungan internet atau Security Rules anda.");
     }
+}
+
+// 2. FUNGSI PADAM SEORANG MURID
+async function deleteStudent(sid) {
+    if(!confirm("Padam rekod murid ini?")) return;
+    
+    const sesi = document.getElementById('sesiAkademik').value;
+    const jenis = document.getElementById('sesiPentaksiran').value;
+    const kelas = document.getElementById('classDropdown').value;
+
+    try {
+        await db.collection('sesi').doc(sesi)
+                .collection('pentaksiran').doc(jenis)
+                .collection('kelas').doc(kelas)
+                .collection('murid').doc(sid).delete();
+        
+        // Data akan hilang secara automatik dari table kerana ada listener startSync()
+    } catch (error) {
+        alert("Ralat memadam murid: " + error.message);
+    }
+}
 
     function exportToExcel() {
         const data = [...currentClassData].sort((a,b)=>a.nama.localeCompare(b.nama)).map(m => ({ Nama: m.nama, ...m.marks, GPM: m.gpm, Rank: m.rank, Status: m.statusLulus }));
@@ -432,4 +475,3 @@ const firebaseConfig = {
 </script>
 </body>
 </html>
-
