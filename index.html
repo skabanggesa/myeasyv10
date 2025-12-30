@@ -399,48 +399,56 @@ const firebaseConfig = {
 // 1. FUNGSI PADAM SEMUA DATA BAGI SATU PENTAKSIRAN
 async function clearAllData() {
     const sesi = document.getElementById('sesiAkademik').value;
-    const jenis = document.getElementById('sesiPentaksiran').value.replace(/\s+/g,'_');
+    // .trim() dan .replace() memastikan nama pentaksiran sepadan dengan Database
+    const jenisRaw = document.getElementById('sesiPentaksiran').value;
+    const jenis = jenisRaw.trim().replace(/\s+/g,'_');
     
-    const confirmation = confirm(`AMARAN: Padam semua data bagi ${jenis.replace(/_/g,' ')} (${sesi})?`);
+    console.log("Memulakan pemadaman di:", `sesi/${sesi}/pentaksiran/${jenis}`);
+
+    const confirmation = confirm(`AMARAN: Padam semua data bagi ${jenisRaw} (${sesi})?`);
     if(!confirmation || prompt("Taip 'PADAM' untuk sahkan:") !== "PADAM") return;
 
     try {
         // Ambil semua dokumen kelas di bawah pentaksiran tersebut
-        const snap = await db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').get();
+        const snap = await db.collection('sesi').doc(sesi)
+                           .collection('pentaksiran').doc(jenis)
+                           .collection('kelas').get();
         
         if (snap.empty) {
-            alert("Tiada data dijumpai di laluan tersebut.");
+            console.warn("Tiada koleksi 'kelas' dijumpai di laluan tersebut.");
+            alert("DATA TIDAK DIJUMPAI.\n\nSistem cari: " + jenis + "\nSila pastikan pilihan Pentaksiran adalah betul.");
             return;
         }
 
         const batch = db.batch();
+        let totalDeleted = 0;
 
         for (const kDoc of snap.docs) {
             // Ambil semua murid dalam setiap kelas
             const mSnap = await kDoc.ref.collection('murid').get();
             mSnap.forEach(m => {
-                batch.delete(m.ref); // Tambah arahan padam murid ke batch
+                batch.delete(m.ref);
+                totalDeleted++;
             });
-            batch.delete(kDoc.ref); // Tambah arahan padam kelas ke batch
+            batch.delete(kDoc.ref); // Padam dokumen kelas itu sendiri
         }
 
-        // Jalankan semua pemadaman sekali gus
         await batch.commit();
-        alert("BERJAYA: Semua data pentaksiran tersebut telah dibersihkan.");
+        alert(`BERJAYA: Rekod bagi ${snap.docs.length} kelas (${totalDeleted} murid) telah dibersihkan.`);
         location.reload();
 
     } catch (error) {
         console.error("Ralat pemadaman:", error);
-        alert("Ralat teknikal: " + error.message);
+        alert("Ralat teknikal (Sila semak konsol): " + error.message);
     }
 }
 
-// 2. FUNGSI PADAM SEORANG MURID
+// 2. FUNGSI PADAM SEORANG MURID (TELAH DIBAIKI)
 async function deleteStudent(sid) {
     if(!confirm("Padam rekod murid ini?")) return;
     
     const sesi = document.getElementById('sesiAkademik').value;
-    const jenis = document.getElementById('sesiPentaksiran').value;
+    const jenis = document.getElementById('sesiPentaksiran').value.trim().replace(/\s+/g,'_'); // DITAMBAH .replace()
     const kelas = document.getElementById('classDropdown').value;
 
     try {
@@ -448,13 +456,11 @@ async function deleteStudent(sid) {
                 .collection('pentaksiran').doc(jenis)
                 .collection('kelas').doc(kelas)
                 .collection('murid').doc(sid).delete();
-        
-        // Data akan hilang secara automatik dari table kerana ada listener startSync()
+        console.log("Murid dipadam:", sid);
     } catch (error) {
         alert("Ralat memadam murid: " + error.message);
     }
 }
-
     function exportToExcel() {
         const data = [...currentClassData].sort((a,b)=>a.nama.localeCompare(b.nama)).map(m => ({ Nama: m.nama, ...m.marks, GPM: m.gpm, Rank: m.rank, Status: m.statusLulus }));
         const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new();
@@ -463,4 +469,5 @@ async function deleteStudent(sid) {
 </script>
 </body>
 </html>
+
 
