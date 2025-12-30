@@ -3,421 +3,403 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Analisis SKAG V10.0 - Restore Delete Function</title>
+    <title>Portal Digital & MyEASy V10</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Cinzel:wght@700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Great+Vibes&display=swap');
+        :root { --kurikulum: #3b82f6; --hem: #f59e0b; --koko: #10b981; --bg: #f8fafc; --dark-blue: #1e293b; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg); margin: 0; color: #334155; }
+        
+        /* Auth Screen */
+        #auth-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; background: linear-gradient(135deg, #1e293b 0%, #334155 100%); }
+        .auth-container { max-width: 400px; width: 90%; padding: 30px; background: white; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; }
+        .auth-input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .auth-btn { width: 100%; padding: 12px; background: var(--dark-blue); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+
+        /* Portal UI */
+        header { background: var(--dark-blue); color: white; padding: 15px; text-align: center; }
+        .unit-card { cursor: pointer; transition: 0.3s; background: white; border-radius: 15px; padding: 20px; border-bottom: 6px solid #cbd5e1; }
+        .unit-card:hover { transform: translateY(-5px); }
+        
+        /* MyEASy Specific Styles */
+        .certificate-border { border: 20px double #1e3a8a; padding: 50px; background: white; min-height: 1050px; display: flex; flex-direction: column; position: relative; }
+        .mark-input { width: 55px; padding: 2px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; font-size: 12px; }
         
         @media print {
             body * { visibility: hidden; }
             #section-sijil, #section-sijil * { visibility: visible; }
             #section-sijil { position: absolute; left: 0; top: 0; width: 100%; }
-            .no-print { display: none; }
+            .no-print { display: none !important; }
             .page-break { page-break-after: always; }
         }
-
-        .certificate-border { 
-            border: 20px double #1e3a8a; 
-            padding: 50px; 
-            background: white; 
-            min-height: 1050px; 
-            display: flex; 
-            flex-direction: column; 
-            position: relative;
-        }
-        .mark-input { width: 50px; padding: 4px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; }
-        #login-overlay { position: fixed; inset: 0; background: #0f172a; z-index: 9999; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
-<body class="bg-slate-50 font-sans text-slate-800 text-sm">
+<body class="bg-slate-50">
 
-<div id="login-overlay">
-    <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md text-center border-t-8 border-blue-900">
-        <img src="logo.png" class="w-24 h-24 mx-auto mb-4" onerror="this.src='https://via.placeholder.com/100?text=SKAG'">
-        <h2 class="text-2xl font-black text-blue-900 mb-2 uppercase">Malaysian Exam Analysis System V10.0</h2>
-        <input type="password" id="accessKeyInput" placeholder="Kod Akses" class="w-full p-4 border-2 border-slate-200 rounded-xl text-center text-xl mb-4">
-        <button onclick="checkAccess()" class="w-full bg-blue-900 text-white py-4 rounded-xl font-black hover:bg-blue-800 transition">MASUK</button>
-    </div>
-</div>
-
-<div id="main-content" class="hidden">
-    <div class="bg-white p-5 shadow-sm border-b-4 border-blue-900 no-print">
-        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex items-center gap-4">
-                <img src="logo.png" class="w-16 h-16" onerror="this.style.display='none'">
-                <div>
-                    <h1 class="text-xl font-black text-blue-900 uppercase">SK ABANG GESA, BELAWAI</h1>
-                    <p class="text-[10px] font-bold text-blue-500 tracking-widest uppercase">Sistem Pengurusan Data Peperiksaan</p>
-                </div>
+    <div id="auth-screen">
+        <div class="auth-container">
+            <img src="logo.png" class="w-20 mx-auto mb-4" onerror="this.src='https://via.placeholder.com/80'">
+            <h2 id="auth-title" class="text-xl font-bold mb-4">Log Masuk Portal</h2>
+            <div id="reg-fields" style="display: none;">
+                <input type="text" id="reg-name" class="auth-input" placeholder="NAMA PENUH (HURUF BESAR)" oninput="this.value = this.value.toUpperCase()">
             </div>
-            <button onclick="logout()" class="bg-slate-700 text-white px-5 py-2 rounded-lg font-bold text-xs uppercase">🚪 Log Keluar</button>
+            <input type="email" id="auth-email" class="auth-input" placeholder="Emel @moe-dl.edu.my">
+            <input type="password" id="auth-password" class="auth-input" placeholder="Kata Laluan">
+            <button onclick="handleAuth()" class="auth-btn">MASUK</button>
+            <p class="text-xs mt-4 text-blue-600 cursor-pointer" onclick="toggleAuth()">Belum mendaftar? Klik sini.</p>
         </div>
     </div>
 
-    <div class="container mx-auto p-6 no-print">
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            
-            <div class="space-y-4">
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                    <h2 class="font-bold text-xs text-blue-700 uppercase mb-4 border-b pb-2 text-[10px]">⚙️ Tetapan Sesi</h2>
-                    
-                    <label class="text-[10px] font-bold text-slate-400 block mb-1">SESI AKADEMIK</label>
-                    <select id="sesiAkademik" onchange="loadClassList()" class="w-full p-2 border rounded font-bold text-blue-900 mb-4 bg-blue-50">
-                        <option value="2024_2025">2025</option>
-                        <option value="2025_2026">2026</option>
-                        <option value="2026_2027">2027</option>
-                        <option value="2027_2028">2028</option>
-                        <option value="2028_2029">2029</option>
-                        <option value="2029_2030">2030</option>
-                    </select>
+    <div id="main-portal" class="hidden no-print">
+        <header>
+            <img src="logo.png" class="w-12 mx-auto mb-2">
+            <h1 class="text-lg font-bold uppercase">Portal Digital Guru SK Abang Gesa</h1>
+            <p id="user-display" class="text-yellow-400 text-xs font-bold"></p>
+            <button onclick="logout()" class="mt-2 bg-red-600 px-4 py-1 rounded-full text-[10px] font-bold">LOG KELUAR</button>
+        </header>
 
-                    <label class="text-[10px] font-bold text-slate-400 block mb-1">JENIS PENTAKSIRAN</label>
-                    <select id="sesiPentaksiran" onchange="startSync()" class="w-full p-2 border rounded font-bold text-emerald-800 mb-4 bg-emerald-50">
-                        <option value="Ujian Akhir Sesi Akademik (UASA)">UJIAN AKHIR SESI AKADEMIK</option>
-                        <option value="Pentaksiran Pertengahan Tahun">PENILAIAN PERTENGAHAN TAHUN</option>
-                        <option value="UPDLP">UJIAN PENILAIAN DUAL LANGUAGE PROGRAMME</option>
-                    </select>
+        <div class="p-6 max-w-6xl mx-auto">
+            <div id="main-menu" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="unit-card border-blue-500 text-blue-600 text-center" onclick="showSection('kurikulum')">
+                    <i class="fa-solid fa-graduation-cap text-4xl mb-2"></i>
+                    <h2 class="font-bold">KURIKULUM</h2>
+                </div>
+                <div class="unit-card border-amber-500 text-amber-600 text-center" onclick="showSection('hem')">
+                    <i class="fa-solid fa-hand-holding-heart text-4xl mb-2"></i>
+                    <h2 class="font-bold">HEM</h2>
+                </div>
+                <div class="unit-card border-emerald-500 text-emerald-600 text-center" onclick="showSection('koko')">
+                    <i class="fa-solid fa-volleyball text-4xl mb-2"></i>
+                    <h2 class="font-bold">KOKURIKULUM</h2>
+                </div>
+            </div>
 
-                    <div id="class-area" class="hidden">
-                        <label class="text-[10px] font-bold text-slate-400 block mb-1">PILIH KELAS</label>
-                        <select id="classDropdown" onchange="startSync()" class="w-full p-2 border border-amber-300 rounded font-bold text-blue-900 bg-amber-50"></select>
+            <div id="sec-kurikulum" class="hidden space-y-4">
+                <button onclick="backToMenu()" class="text-sm font-bold text-slate-500"><i class="fa-solid fa-arrow-left"></i> KEMBALI</button>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-white p-4 rounded-xl border text-center cursor-pointer hover:bg-blue-50" onclick="openMyEasy()">
+                        <img src="myeasy.png" class="w-10 mx-auto mb-2" onerror="this.src='https://via.placeholder.com/40'">
+                        <h3 class="font-bold text-sm">MyEASy V10</h3>
+                        <p class="text-[10px] text-slate-400">Analisis & Penjanaan Sijil</p>
                     </div>
                 </div>
+            </div>
 
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                    <h2 class="font-bold text-xs text-blue-700 uppercase mb-3 text-[10px]">📥 IMPORT SENARAI MURID (CSV)</h2>
-                    <input type="file" id="csvInput" accept=".csv" class="w-full text-[10px] mb-2">
-                    <button onclick="processCSV()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded text-[10px] font-bold uppercase">Proses Fail CSV</button>
+            <div id="sec-hem" class="hidden">... HEM Dalam Pembinaan ...</div>
+            <div id="sec-koko" class="hidden">... KOKO Dalam Pembinaan ...</div>
+
+            <div id="myeasy-app" class="hidden bg-slate-100 -m-6 p-6 min-h-screen">
+                <div class="flex justify-between items-center mb-6 bg-white p-4 rounded-xl shadow-sm border-b-4 border-blue-900">
+                    <h2 class="font-black text-blue-900 uppercase">MyEASy V10 - Integrasi Portal</h2>
+                    <button onclick="closeMyEasy()" class="bg-slate-700 text-white px-4 py-1 rounded text-xs font-bold">TUTUP MODULE</button>
                 </div>
 
-                <div class="bg-slate-800 p-5 rounded-xl shadow-lg border text-white">
-                    <h2 class="font-black text-[10px] text-yellow-400 uppercase mb-3 border-b border-slate-600 pb-1">⚙️ DATA MANAGER</h2>
-                    <div class="space-y-2">
-                        <button onclick="backupDatabase()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded text-[10px] font-bold">💾 SIMPAN BACKUP</button>
-                        <div class="border border-slate-600 p-2 rounded bg-slate-700">
-                            <input type="file" id="importJsonInput" accept=".json" class="hidden" onchange="processJsonImport(this)">
-                            <button onclick="document.getElementById('importJsonInput').click()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 rounded text-[10px] font-bold">📂 MUAT NAIK BACKUP</button>
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    <div class="space-y-4">
+                        <div class="bg-white p-4 rounded-xl shadow-sm border">
+                            <h3 class="text-[10px] font-bold text-blue-700 mb-3 border-b pb-1">⚙️ TETAPAN SESI</h3>
+                            <label class="text-[9px] font-bold text-slate-400 block uppercase">Sesi Akademik</label>
+                            <select id="sesiAkademik" onchange="loadClassList()" class="w-full p-2 border rounded mb-3 text-xs font-bold">
+                                <option value="2024_2025">2024/2025</option><option value="2025_2026">2025/2026</option>
+                            </select>
+                            <label class="text-[9px] font-bold text-slate-400 block uppercase">Jenis Pentaksiran</label>
+                            <select id="sesiPentaksiran" onchange="startSync()" class="w-full p-2 border rounded mb-3 text-xs font-bold">
+                                <option value="Ujian_Akhir_Sesi_Akademik">UASA</option>
+                                <option value="Pentaksiran_Pertengahan_Tahun">PPT</option>
+                            </select>
+                            <div id="class-area" class="hidden">
+                                <label class="text-[9px] font-bold text-slate-400 block uppercase">Pilih Kelas</label>
+                                <select id="classDropdown" onchange="startSync()" class="w-full p-2 border border-amber-300 rounded text-xs font-bold bg-amber-50"></select>
+                            </div>
                         </div>
-                        <button onclick="clearAllData()" class="w-full bg-red-600 hover:bg-red-500 text-white py-2 rounded text-[10px] font-bold">🚨 PADAM SEMUA DATA INI</button>
-                    </div>
-                </div>
 
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                    <h2 class="font-bold text-xs text-blue-700 uppercase mb-3 text-[10px]">📚 Matapelajaran</h2>
-                    <div id="subject-grid" class="grid grid-cols-1 gap-1 max-h-48 overflow-y-auto text-[10px]"></div>
-                </div>
-            </div>
+                        <div class="bg-white p-4 rounded-xl shadow-sm border">
+                            <h3 class="text-[10px] font-bold text-blue-700 mb-2 uppercase">📥 Import Murid (CSV)</h3>
+                            <input type="file" id="csvInput" accept=".csv" class="w-full text-[9px] mb-2">
+                            <button onclick="processCSV()" class="w-full bg-blue-600 text-white py-1.5 rounded text-[10px] font-bold">PROSES CSV</button>
+                        </div>
 
-            <div class="lg:col-span-3 space-y-6">
-                <div id="dashboard" class="grid grid-cols-2 md:grid-cols-4 gap-4 hidden">
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border-l-8 border-blue-600 text-center">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase">GPM KELAS</p>
-                        <p id="stat-gpm" class="text-3xl font-black text-blue-900">-</p>
-                    </div>
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border-l-8 border-emerald-500 text-center">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase">% Lulus</p>
-                        <p id="stat-lulus" class="text-3xl font-black text-emerald-600">-</p>
-                    </div>
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border-l-8 border-orange-400 text-center">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase">Murid</p>
-                        <p id="stat-murid" class="text-3xl font-black text-slate-800">-</p>
-                    </div>
-                    <button onclick="calculate()" class="bg-blue-900 text-white rounded-2xl font-black text-sm uppercase shadow-xl hover:scale-105 transition">🚀 Jana Sijil & Analisis</button>
-                </div>
-
-                <div id="excellence-panel" class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
-                    <div class="bg-white p-5 rounded-xl border-t-4 border-emerald-500 shadow-sm">
-                        <h3 class="font-black text-emerald-700 text-xs mb-3 border-b pb-2 uppercase tracking-tighter">🏆 5 Pelajar Terbaik Keseluruhan</h3>
-                        <div id="top-5-list" class="space-y-2 text-[11px]"></div>
+                        <div class="bg-white p-4 rounded-xl shadow-sm border">
+                            <h3 class="text-[10px] font-bold text-blue-700 mb-2 uppercase">📚 Matapelajaran</h3>
+                            <div id="subject-grid" class="space-y-1 text-[10px]"></div>
+                        </div>
                     </div>
 
-                    <div class="bg-white p-5 rounded-xl border-t-4 border-amber-400 shadow-sm">
-                        <h3 class="font-black text-blue-900 text-xs mb-3 border-b pb-2 uppercase tracking-tighter">⭐ Murid Terbaik Ikut Subjek</h3>
-                        <div id="subject-best-list" class="grid grid-cols-1 gap-1 text-[11px]"></div>
-                    </div>
-                </div>
+                    <div class="lg:col-span-3 space-y-6">
+                        <div id="dashboard" class="grid grid-cols-2 md:grid-cols-4 gap-4 hidden">
+                            <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-600">
+                                <p class="text-[9px] font-bold text-slate-400">GPM KELAS</p>
+                                <p id="stat-gpm" class="text-2xl font-black text-blue-900">-</p>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-emerald-500">
+                                <p class="text-[9px] font-bold text-slate-400">% LULUS</p>
+                                <p id="stat-lulus" class="text-2xl font-black text-emerald-600">-</p>
+                            </div>
+                            <button onclick="calculate()" class="bg-blue-900 text-white rounded-xl font-black text-xs uppercase shadow-lg">🚀 Jana Sijil</button>
+                            <button onclick="exportToExcel()" class="bg-emerald-600 text-white rounded-xl font-black text-xs uppercase shadow-lg">📊 Excel</button>
+                        </div>
 
-                <div id="table-card" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hidden">
-                    <div class="p-4 bg-slate-50 border-b flex items-center gap-3">
-                        <input type="text" id="searchInput" onkeyup="renderTable()" placeholder="Cari nama murid..." class="flex-1 p-2 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
-                        <button onclick="exportToExcel()" class="bg-emerald-600 text-white px-6 py-2 rounded-xl font-bold text-xs">📊 EXCEL</button>
+                        <div id="table-card" class="bg-white rounded-xl shadow-sm border overflow-hidden hidden">
+                            <div class="p-3 bg-slate-50 border-b">
+                                <input type="text" id="searchInput" onkeyup="renderTable()" placeholder="Cari nama murid..." class="w-full p-2 border rounded-lg text-xs outline-none">
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left">
+                                    <thead class="bg-blue-900 text-white text-[9px] uppercase"><tr id="tableHeader"></tr></thead>
+                                    <tbody id="tableBody" class="text-xs"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div id="print-area" class="hidden flex justify-center">
+                            <button onclick="window.print()" class="bg-blue-900 text-white px-10 py-3 rounded-full font-black text-lg shadow-xl">🖨️ CETAK SEMUA SIJIL</button>
+                        </div>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left">
-                            <thead class="bg-blue-900 text-white text-[10px] uppercase"><tr id="tableHeader"></tr></thead>
-                            <tbody id="tableBody" class="text-xs"></tbody>
-                        </table>
-                    </div>
-                </div>
-                
-                <div id="print-btn-area" class="hidden flex justify-center pb-24">
-                    <button onclick="window.print()" class="bg-blue-900 text-white px-16 py-5 rounded-full font-black text-xl shadow-2xl">🖨️ CETAK SEMUA SIJIL</button>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<div id="section-sijil"></div>
+    <div id="section-sijil"></div>
 
-<script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyDEuXGoOt9BTv6OBvpc1h-yVmARlpW-LkE",
-        authDomain: "myeasy-a1547.firebaseapp.com",
-        projectId: "myeasy-a1547",
-        storageBucket: "myeasy-a1547.firebasestorage.app",
-        messagingSenderId: "182516833076",
-        appId: "1:182516833076:web:a43961448e7ebb6ccc6361"
-    };
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, onSnapshot, query, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    const KPM_SUBJECTS = [
-        {id:'BM', name:'BAHASA MELAYU'}, {id:'BI', name:'BAHASA INGGERIS'}, {id:'MT', name:'MATEMATIK'}, 
-        {id:'SN', name:'SAINS'}, {id:'SJ', name:'SEJARAH'}, {id:'PAI', name:'PENDIDIKAN ISLAM'},
-        {id:'MZ', name:'PENDIDIKAN MUZIK'}, {id:'PJK', name:'PENDIDIKAN JASMANI KESIHATAN'}, 
-        {id:'PSV', name:'PENDIDIKAN SENI VISUAL'}, {id:'RBT', name:'REKA BENTUK TEKNOLOGI'}
-    ];
+        const firebaseConfig = {
+            apiKey: "AIzaSyCwh99Ui4KPXgC-W-CpCg-edYnHN3aVmrk",
+            authDomain: "portal-8368.firebaseapp.com",
+            projectId: "portal-8368",
+            storageBucket: "portal-8368.firebasestorage.app",
+            messagingSenderId: "150403488308",
+            appId: "1:150403488308:web:fac9b3c52dcd9975130861"
+        };
 
-    let db, currentClassData = [], selectedSubjects = [];
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
-    window.onload = () => { firebase.initializeApp(firebaseConfig); db = firebase.firestore(); renderSubjectGrid(); initAuth(); };
+        // -- AUTH LOGIC --
+        let isLoginMode = true;
+        window.toggleAuth = () => {
+            isLoginMode = !isLoginMode;
+            document.getElementById('auth-title').innerText = isLoginMode ? "Log Masuk Portal" : "Daftar Akaun Baru";
+            document.getElementById('reg-fields').style.display = isLoginMode ? "none" : "block";
+        };
 
-    // SECURITY
-    async function checkAccess() { verifyKey(document.getElementById('accessKeyInput').value); }
-    async function initAuth() { const key = localStorage.getItem('skag_access_key'); if(key) verifyKey(key); }
-    async function verifyKey(key) {
-        const doc = await db.collection('config').doc('security').get();
-        if(doc.exists && key === doc.data().key) {
-            localStorage.setItem('skag_access_key', key);
-            document.getElementById('login-overlay').style.display = 'none';
-            document.getElementById('main-content').classList.remove('hidden');
-            loadClassList();
-        } else { alert("Akses Ditolak!"); }
-    }
-    function logout() { localStorage.removeItem('skag_access_key'); location.reload(); }
+        window.handleAuth = async () => {
+            const email = document.getElementById('auth-email').value;
+            const pass = document.getElementById('auth-password').value;
+            try {
+                if(isLoginMode) await signInWithEmailAndPassword(auth, email, pass);
+                else {
+                    const name = document.getElementById('reg-name').value;
+                    const userCred = await createUserWithEmailAndPassword(auth, email, pass);
+                    await updateProfile(userCred.user, { displayName: name });
+                    await setDoc(doc(db, "pengguna", userCred.user.uid), { nama: name, emel: email });
+                    alert("Berjaya mendaftar!");
+                }
+            } catch (e) { alert("Ralat: " + e.message); }
+        };
 
-    function renderSubjectGrid() {
-        const grid = document.getElementById('subject-grid');
-        KPM_SUBJECTS.forEach(sub => {
-            grid.innerHTML += `<label class="flex items-center space-x-3 p-1.5 hover:bg-slate-50 cursor-pointer rounded"><input type="checkbox" value="${sub.id}" class="sub-checkbox w-4 h-4" checked onchange="updateSelectedSubjects()"> <span class="font-medium">${sub.name}</span></label>`;
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('main-portal').classList.remove('hidden');
+                document.getElementById('user-display').innerText = "SELAMAT DATANG, " + (user.displayName || "GURU");
+                loadClassList();
+            } else {
+                document.getElementById('auth-screen').classList.remove('hidden');
+                document.getElementById('main-portal').classList.add('hidden');
+            }
         });
-        updateSelectedSubjects();
-    }
-    function updateSelectedSubjects() { selectedSubjects = Array.from(document.querySelectorAll('.sub-checkbox:checked')).map(cb => cb.value); if (currentClassData.length > 0) renderTable(); }
 
-    // DATA LOADING
-    async function loadClassList() {
-        const sesi = document.getElementById('sesiAkademik').value;
-        const snap = await db.collection('sesi').doc(sesi).collection('kelas').get();
-        document.getElementById('classDropdown').innerHTML = '<option value="">-- Pilih Kelas --</option>' + snap.docs.map(d => `<option value="${d.id}">${d.data().nama_kelas || d.id}</option>`).join('');
-        document.getElementById('class-area').classList.remove('hidden');
-    }
+        window.logout = () => signOut(auth);
 
-    function startSync() {
-        const sesi = document.getElementById('sesiAkademik').value;
-        const jenis = document.getElementById('sesiPentaksiran').value.replace(/\s+/g,'_');
-        const kelas = document.getElementById('classDropdown').value;
-        if(!kelas) return;
+        // -- PORTAL NAVIGATION --
+        window.showSection = (id) => {
+            document.getElementById('main-menu').classList.add('hidden');
+            document.getElementById('sec-' + id).classList.remove('hidden');
+        };
+        window.backToMenu = () => {
+            document.querySelectorAll('[id^="sec-"]').forEach(s => s.classList.add('hidden'));
+            document.getElementById('main-menu').classList.remove('hidden');
+        };
 
-        db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(kelas).collection('murid')
-            .onSnapshot(snap => {
+        // -- MYEASY LOGIC (MODERNIZED) --
+        const SUBJECTS = [
+            {id:'BM', name:'BAHASA MELAYU'}, {id:'BI', name:'BAHASA INGGERIS'}, {id:'MT', name:'MATEMATIK'}, 
+            {id:'SN', name:'SAINS'}, {id:'SJ', name:'SEJARAH'}, {id:'PAI', name:'PENDIDIKAN ISLAM'},
+            {id:'MZ', name:'PENDIDIKAN MUZIK'}, {id:'PJK', name:'PJK'}, 
+            {id:'PSV', name:'PSV'}, {id:'RBT', name:'RBT'}
+        ];
+        let currentClassData = [], selectedSubjects = [];
+
+        window.openMyEasy = () => {
+            document.getElementById('sec-kurikulum').classList.add('hidden');
+            document.getElementById('myeasy-app').classList.remove('hidden');
+            renderSubjectGrid();
+        };
+
+        window.closeMyEasy = () => {
+            document.getElementById('myeasy-app').classList.add('hidden');
+            document.getElementById('sec-kurikulum').classList.remove('hidden');
+        };
+
+        function renderSubjectGrid() {
+            const grid = document.getElementById('subject-grid');
+            grid.innerHTML = SUBJECTS.map(s => `
+                <label class="flex items-center gap-2 p-1 hover:bg-slate-50 rounded">
+                    <input type="checkbox" value="${s.id}" class="sub-cb" checked onchange="updateSelectedSubs()">
+                    <span>${s.name}</span>
+                </label>
+            `).join('');
+            updateSelectedSubs();
+        }
+
+        window.updateSelectedSubs = () => {
+            selectedSubjects = Array.from(document.querySelectorAll('.sub-cb:checked')).map(cb => cb.value);
+            if(currentClassData.length > 0) renderTable();
+        };
+
+        window.loadClassList = async () => {
+            const sesi = document.getElementById('sesiAkademik').value;
+            const snap = await getDocs(collection(db, "sesi", sesi, "kelas"));
+            document.getElementById('classDropdown').innerHTML = '<option value="">-- Pilih Kelas --</option>' + 
+                snap.docs.map(d => `<option value="${d.id}">${d.data().nama_kelas || d.id}</option>`).join('');
+            document.getElementById('class-area').classList.remove('hidden');
+        };
+
+        let unsubscribe = null;
+        window.startSync = () => {
+            const sesi = document.getElementById('sesiAkademik').value;
+            const jenis = document.getElementById('sesiPentaksiran').value;
+            const kelas = document.getElementById('classDropdown').value;
+            if(!kelas) return;
+
+            if(unsubscribe) unsubscribe();
+            const q = collection(db, "sesi", sesi, "pentaksiran", jenis, "kelas", kelas, "murid");
+            unsubscribe = onSnapshot(q, (snap) => {
                 currentClassData = snap.docs.map(d => ({id: d.id, ...d.data()}));
                 renderTable();
             });
-    }
-
-    async function updateMark(sid, sub, val) {
-        const sesi = document.getElementById('sesiAkademik').value;
-        const jenis = document.getElementById('sesiPentaksiran').value.replace(/\s+/g,'_');
-        const kelas = document.getElementById('classDropdown').value;
-        await db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(kelas).collection('murid').doc(sid).set({ marks: {[sub]: parseFloat(val) || 0} }, {merge: true});
-    }
-
-    async function processCSV() {
-        const file = document.getElementById('csvInput').files[0];
-        const sesi = document.getElementById('sesiAkademik').value;
-        const jenis = document.getElementById('sesiPentaksiran').value.replace(/\s+/g,'_');
-        if (!file) return alert("Pilih fail CSV!");
-        
-        Papa.parse(file, {
-            header: true, skipEmptyLines: true,
-            complete: async (res) => {
-                const batch = db.batch();
-                res.data.forEach(row => {
-                    const rowData = Object.keys(row).reduce((acc, k) => { acc[k.toLowerCase().trim()] = row[k]; return acc; }, {});
-                    if (rowData.nama && rowData.kelas) {
-                        const cid = rowData.kelas.toString().replace(/\s+/g,'_').toUpperCase();
-                        const cref = db.collection('sesi').doc(sesi).collection('kelas').doc(cid);
-                        const mref = db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(cid).collection('murid').doc();
-                        batch.set(cref, { nama_kelas: rowData.kelas.toUpperCase() }, { merge: true });
-                        batch.set(mref, { nama: rowData.nama.toUpperCase(), marks: {} });
-                    }
-                });
-                await batch.commit(); alert("Data berjaya diimport ke " + jenis + "!"); loadClassList();
-            }
-        });
-    }
-
-    // TABLE RENDER
-    function renderTable() {
-        const search = document.getElementById('searchInput').value.toUpperCase();
-        const header = document.getElementById('tableHeader');
-        const body = document.getElementById('tableBody');
-        header.innerHTML = `<th class="p-4">NAMA MURID</th>` + selectedSubjects.map(s => `<th class="p-2 text-center bg-blue-800">${s}</th>`).join('') + `<th class="p-2 text-center bg-slate-700">GPM</th><th class="p-2 text-center bg-red-600">X</th>`;
-        const sorted = [...currentClassData].filter(m => m.nama.includes(search)).sort((a,b) => a.nama.localeCompare(b.nama));
-        body.innerHTML = sorted.map(m => `
-            <tr class="border-b hover:bg-blue-50">
-                <td class="p-4 font-bold uppercase text-slate-700">${m.nama}</td>
-                ${selectedSubjects.map(sub => `<td class="p-2 text-center"><input type="number" class="mark-input" value="${m.marks?.[sub] || 0}" onchange="updateMark('${m.id}', '${sub}', this.value)"></td>`).join('')}
-                <td class="p-2 text-center font-black text-blue-600">${m.gpm || '0.00'}</td>
-                <td class="p-2 text-center"><button onclick="deleteStudent('${m.id}')" class="text-red-300">🗑️</button></td>
-            </tr>`).join('');
-        document.getElementById('table-card').classList.remove('hidden');
-        document.getElementById('dashboard').classList.remove('hidden');
-        document.getElementById('stat-murid').innerText = currentClassData.length;
-    }
-
-    // CALCULATION
-    function calculate() {
-        const getGrade = (m) => {
-            if (m >= 80) return { g: 'A', p: 1 }; if (m >= 70) return { g: 'B', p: 2 }; if (m >= 60) return { g: 'C', p: 3 };
-            if (m >= 50) return { g: 'D', p: 4 }; if (m >= 40) return { g: 'E', p: 5 }; return { g: 'F', p: 6 };
         };
-        const coreSubjects = ['BM', 'BI', 'MT', 'SN', 'SJ'];
-        let totalPassClass = 0;
-        
-        currentClassData.forEach(s => {
-            let tm = 0, tp = 0, isLulusHeadcount = true;
-            selectedSubjects.forEach(sub => {
-                let m = s.marks?.[sub] || 0; let res = getGrade(m);
-                tm += m; tp += res.p; if(coreSubjects.includes(sub) && m < 40) isLulusHeadcount = false;
-            });
-            s.totalMarks = tm; s.gpm = (tp / (selectedSubjects.length || 1)).toFixed(2);
-            s.percent = ((tm / (selectedSubjects.length * 100)) * 100).toFixed(2);
-            s.statusLulus = isLulusHeadcount ? "LULUS" : "GAGAL"; if(isLulusHeadcount) totalPassClass++;
-        });
 
-        const sortedByRank = [...currentClassData].sort((a,b) => a.gpm - b.gpm || b.totalMarks - a.totalMarks);
-        currentClassData.forEach(s => s.rank = sortedByRank.findIndex(r => r.id === s.id) + 1);
+        window.renderTable = () => {
+            const search = document.getElementById('searchInput').value.toUpperCase();
+            const header = document.getElementById('tableHeader');
+            const body = document.getElementById('tableBody');
+            
+            header.innerHTML = `<th class="p-3">NAMA MURID</th>` + selectedSubjects.map(s => `<th class="p-2 text-center bg-blue-800">${s}</th>`).join('') + `<th class="p-2 text-center bg-slate-700">GPM</th>`;
+            
+            const filtered = currentClassData.filter(m => m.nama.includes(search)).sort((a,b) => a.nama.localeCompare(b.nama));
+            body.innerHTML = filtered.map(m => `
+                <tr class="border-b bg-white hover:bg-blue-50">
+                    <td class="p-3 font-bold uppercase text-[10px]">${m.nama}</td>
+                    ${selectedSubjects.map(sub => `<td class="p-1 text-center"><input type="number" class="mark-input" value="${m.marks?.[sub] || 0}" onchange="updateMark('${m.id}', '${sub}', this.value)"></td>`).join('')}
+                    <td class="p-1 text-center font-bold text-blue-600">${m.gpm || '0.00'}</td>
+                </tr>
+            `).join('');
+            
+            document.getElementById('table-card').classList.remove('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+        };
 
-        document.getElementById('top-5-list').innerHTML = sortedByRank.slice(0, 5).map((s, idx) => `
-            <div class="flex justify-between items-center p-2 border-b">
-                <span>${idx + 1}. <b>${s.nama}</b></span>
-                <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-black">GPM: ${s.gpm}</span>
-            </div>`).join('');
-        
-        let bestSubHtml = '';
-        selectedSubjects.forEach(sub => {
-            const marksList = currentClassData.map(m => m.marks?.[sub] || 0);
-            const maxMark = Math.max(...marksList);
-            if (maxMark > 0) {
-                const winners = currentClassData.filter(m => (m.marks?.[sub] || 0) === maxMark);
-                const winnerNames = winners.map(w => w.nama).join(', ');
-                bestSubHtml += `
-                    <div class="p-2 bg-blue-50 border-l-4 border-blue-900 rounded mb-1 flex flex-col">
-                        <span class="font-black text-blue-900 uppercase text-[9px]">${KPM_SUBJECTS.find(k=>k.id===sub).name}</span>
-                        <div class="flex justify-between"><span class="font-bold text-slate-700 truncate mr-2">${winnerNames}</span><span class="bg-blue-900 text-white px-2 py-0.5 rounded text-[10px] font-black">${maxMark}</span></div>
-                    </div>`;
-            }
-        });
-        document.getElementById('subject-best-list').innerHTML = bestSubHtml;
-        document.getElementById('excellence-panel').classList.remove('hidden');
-        document.getElementById('stat-gpm').innerText = (currentClassData.reduce((a,b) => a + parseFloat(b.gpm), 0) / (currentClassData.length || 1)).toFixed(2);
-        document.getElementById('stat-lulus').innerText = ((totalPassClass / (currentClassData.length || 1)) * 100).toFixed(1) + "%";
-        generateSijil(getGrade); renderTable();
-        document.getElementById('print-btn-area').classList.remove('hidden');
-    }
-
-    function generateSijil(getGrade) {
-        const sortedAZ = [...currentClassData].sort((a, b) => a.nama.localeCompare(b.nama));
-        const pentaksiran = document.getElementById('sesiPentaksiran').value;
-        document.getElementById('section-sijil').innerHTML = sortedAZ.map(s => `
-            <div class="page-break"><div class="certificate-border">
-                <div class="text-center mb-10"><img src="logo.png" class="w-20 mx-auto mb-4"><h2 class="text-2xl font-black text-blue-900">SK ABANG GESA, BELAWAI</h2><p class="text-xs font-bold text-slate-500 uppercase">${pentaksiran}</p></div>
-                <div class="text-center mb-8"><h1 style="font-family: 'Cinzel', serif;" class="text-5xl font-bold text-blue-900">SIJIL PENCAPAIAN</h1><p class="mt-6 italic text-sm text-slate-500">Dianugerahkan kepada</p><h2 class="text-3xl font-black my-4 uppercase text-blue-950 border-b-4 border-double border-blue-900 inline-block px-12 pb-2">${s.nama}</h2></div>
-                <div class="flex justify-center flex-grow py-4">
-                    <table class="w-11/12 border-2 border-slate-800 text-[11px]">
-                        <thead class="bg-blue-900 text-white uppercase text-sm"><tr><th class="p-3 border text-left">MATAPELAJARAN</th><th class="p-3 border text-center">MARKAH</th><th class="p-3 border text-center">GRED</th></tr></thead>
-                        <tbody class="font-bold">
-                            ${selectedSubjects.map(sub => `<tr><td class="border border-slate-800 p-2 px-6 uppercase">${KPM_SUBJECTS.find(k=>k.id===sub).name}</td><td class="border border-slate-800 text-center p-2 text-base">${s.marks?.[sub] || 0}</td><td class="border border-slate-800 text-center p-2 text-base font-black text-blue-900">${getGrade(s.marks?.[sub] || 0).g}</td></tr>`).join('')}
-                        </tbody>
-                    </table>
-                </div>
-                <div class="mt-4 grid grid-cols-4 gap-4 text-center max-w-3xl mx-auto font-black text-xs">
-                    <div class="bg-slate-100 p-3 border rounded-xl">GPM: ${s.gpm}</div><div class="bg-slate-100 p-3 border rounded-xl">KEDUDUKAN: ${s.rank}</div>
-                    <div class="bg-blue-900 text-white p-3 rounded-xl uppercase">${s.statusLulus}</div><div class="bg-slate-100 p-3 border rounded-xl">PERATUS: ${s.percent}%</div>
-                </div>
-                <div class="mt-20 flex justify-between px-16 text-sm font-black text-center uppercase"><div class="w-56"><div class="border-b-2 border-black h-12 mb-2"></div><p>Guru Kelas</p></div><div class="w-56"><div class="border-b-2 border-black h-12 mb-2"></div><p>Guru Besar</p></div></div>
-            </div></div>`).join('');
-    }
-
-    // DATABASE MANAGER FUNCTIONS
-    async function backupDatabase() {
-        const sesi = document.getElementById('sesiAkademik').value;
-        const jenis = document.getElementById('sesiPentaksiran').value.replace(/\s+/g,'_');
-        const backupData = { app: "SKAG", sesiAsal: sesi, pentaksiran: jenis, content: [] };
-        const kelasSnap = await db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').get();
-        for (const kDoc of kelasSnap.docs) {
-            const mSnap = await db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(kDoc.id).collection('murid').get();
-            backupData.content.push({ kelasId: kDoc.id, namaKelas: kDoc.data()?.nama_kelas || kDoc.id, senaraiMurid: mSnap.docs.map(m => m.data()) });
-        }
-        const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: "application/json" });
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `BACKUP_SKAG_${jenis}_${sesi}.json`; a.click();
-    }
-
-    async function processJsonImport(input) {
-        const file = input.files[0]; if (!file) return;
-        const reader = new FileReader(); reader.onload = async (e) => {
-            const data = JSON.parse(e.target.result); 
+        window.updateMark = async (mid, sub, val) => {
             const sesi = document.getElementById('sesiAkademik').value;
-            const jenis = document.getElementById('sesiPentaksiran').value.replace(/\s+/g,'_');
-            if(!confirm(`Import data ke ${jenis} (${sesi})?`)) return;
-            for (const item of data.content) {
-                const kRef = db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(item.kelasId);
-                await kRef.set({ nama_kelas: item.namaKelas }, { merge: true });
-                const batch = db.batch();
-                item.senaraiMurid.forEach(m => batch.set(kRef.collection('murid').doc(), m));
-                await batch.commit();
-            }
-            alert("Backup Berjaya Dimuat Naik!"); location.reload();
-        }; reader.readAsText(file);
-    }
+            const jenis = document.getElementById('sesiPentaksiran').value;
+            const kelas = document.getElementById('classDropdown').value;
+            const ref = doc(db, "sesi", sesi, "pentaksiran", jenis, "kelas", kelas, "murid", mid);
+            await updateDoc(ref, { [`marks.${sub}`]: parseFloat(val) || 0 });
+        };
 
-    async function clearAllData() {
-        const sesi = document.getElementById('sesiAkademik').value;
-        const jenis = document.getElementById('sesiPentaksiran').value.replace(/\s+/g,'_');
-        if(!confirm(`AMARAN: Padam semua data bagi ${jenis} (${sesi})?`) || prompt("Taip 'PADAM':") !== "PADAM") return;
-        
-        const snap = await db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').get();
-        for (const kDoc of snap.docs) {
-            const mSnap = await kDoc.ref.collection('murid').get();
-            const batch = db.batch();
-            mSnap.forEach(m => batch.delete(m.ref));
-            batch.delete(kDoc.ref);
-            await batch.commit();
+        window.processCSV = async () => {
+            const file = document.getElementById('csvInput').files[0];
+            const sesi = document.getElementById('sesiAkademik').value;
+            const jenis = document.getElementById('sesiPentaksiran').value;
+            if(!file) return alert("Pilih fail CSV!");
+
+            Papa.parse(file, {
+                header: true, skipEmptyLines: true,
+                complete: async (res) => {
+                    const batch = writeBatch(db);
+                    for(const row of res.data) {
+                        const nama = row.Nama || row.NAMA;
+                        const kName = row.Kelas || row.KELAS;
+                        if(nama && kName) {
+                            const cid = kName.replace(/\s+/g,'_').toUpperCase();
+                            const mRef = doc(collection(db, "sesi", sesi, "pentaksiran", jenis, "kelas", cid, "murid"));
+                            batch.set(doc(db, "sesi", sesi, "kelas", cid), { nama_kelas: kName.toUpperCase() }, {merge:true});
+                            batch.set(mRef, { nama: nama.toUpperCase(), marks: {} });
+                        }
+                    }
+                    await batch.commit();
+                    alert("Import Berjaya!"); loadClassList();
+                }
+            });
+        };
+
+        window.calculate = () => {
+            const getGrade = (m) => {
+                if(m>=80) return {g:'A',p:1}; if(m>=70) return {g:'B',p:2}; if(m>=60) return {g:'C',p:3};
+                if(m>=50) return {g:'D',p:4}; if(m>=40) return {g:'E',p:5}; return {g:'F',p:6};
+            };
+            
+            let totalGpm = 0;
+            currentClassData.forEach(s => {
+                let tp = 0, tm = 0;
+                selectedSubjects.forEach(sub => {
+                    let m = s.marks?.[sub] || 0; let res = getGrade(m);
+                    tp += res.p; tm += m;
+                });
+                s.gpm = (tp / (selectedSubjects.length || 1)).toFixed(2);
+                s.totalMarks = tm;
+                totalGpm += parseFloat(s.gpm);
+            });
+
+            const sorted = [...currentClassData].sort((a,b) => a.gpm - b.gpm || b.totalMarks - a.totalMarks);
+            currentClassData.forEach(s => s.rank = sorted.findIndex(r => r.id === s.id) + 1);
+
+            document.getElementById('stat-gpm').innerText = (totalGpm / (currentClassData.length || 1)).toFixed(2);
+            generateCertificates(getGrade);
+            renderTable();
+            document.getElementById('print-area').classList.remove('hidden');
+        };
+
+        function generateCertificates(getGrade) {
+            const pentaksiran = document.getElementById('sesiPentaksiran').value.replace(/_/g,' ');
+            document.getElementById('section-sijil').innerHTML = currentClassData.sort((a,b)=>a.nama.localeCompare(b.nama)).map(s => `
+                <div class="page-break"><div class="certificate-border">
+                    <div class="text-center mb-6"><img src="logo.png" class="w-16 mx-auto mb-2"><h2 class="text-xl font-black text-blue-900">SK ABANG GESA, BELAWAI</h2><p class="text-[10px] font-bold uppercase">${pentaksiran}</p></div>
+                    <div class="text-center mb-6"><h1 style="font-family:'Cinzel'" class="text-4xl font-bold text-blue-900">SIJIL PENCAPAIAN</h1><p class="italic text-xs">Dianugerahkan kepada</p><h2 class="text-2xl font-black my-2 uppercase border-b-2 border-blue-900 inline-block px-10">${s.nama}</h2></div>
+                    <div class="flex-grow">
+                        <table class="w-10/12 mx-auto border-2 border-slate-800 text-[10px] font-bold">
+                            <thead class="bg-blue-900 text-white"><tr><th class="p-2 border text-left">MATAPELAJARAN</th><th class="p-2 border text-center">MARKAH</th><th class="p-2 border text-center">GRED</th></tr></thead>
+                            <tbody>
+                                ${selectedSubjects.map(sub => `<tr><td class="border border-slate-800 p-1.5 px-4">${SUBJECTS.find(k=>k.id===sub).name}</td><td class="border border-slate-800 text-center">${s.marks?.[sub]||0}</td><td class="border border-slate-800 text-center text-blue-900">${getGrade(s.marks?.[sub]||0).g}</td></tr>`).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-10 grid grid-cols-2 gap-4 text-center max-w-md mx-auto font-black text-[10px]">
+                        <div class="bg-slate-100 p-2 rounded">GPM: ${s.gpm}</div><div class="bg-slate-100 p-2 rounded">KEDUDUKAN: ${s.rank}</div>
+                    </div>
+                    <div class="mt-16 flex justify-between px-16 text-[10px] font-bold text-center uppercase"><div class="w-40 border-t border-black pt-1">Guru Kelas</div><div class="w-40 border-t border-black pt-1">Guru Besar</div></div>
+                </div></div>`).join('');
         }
-        alert("Data Pentaksiran Tersebut Telah Dipadam!"); location.reload();
-    }
 
-    async function deleteStudent(sid) {
-        if(!confirm("Padam murid ini?")) return;
-        const sesi = document.getElementById('sesiAkademik').value;
-        const jenis = document.getElementById('sesiPentaksiran').value.replace(/\s+/g,'_');
-        const kelas = document.getElementById('classDropdown').value;
-        await db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(kelas).collection('murid').doc(sid).delete();
-    }
-
-    function exportToExcel() {
-        const data = [...currentClassData].sort((a,b)=>a.nama.localeCompare(b.nama)).map(m => ({ Nama: m.nama, ...m.marks, GPM: m.gpm, Rank: m.rank, Status: m.statusLulus }));
-        const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Analisis"); XLSX.writeFile(wb, `Analisis_SKAG_${Date.now()}.xlsx`);
-    }
-</script>
+        window.exportToExcel = () => {
+            const data = currentClassData.map(m => ({ Nama: m.nama, ...m.marks, GPM: m.gpm, Rank: m.rank }));
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Analisis");
+            XLSX.writeFile(wb, `Analisis_SKAG_${Date.now()}.xlsx`);
+        };
+    </script>
 </body>
-
 </html>
-
