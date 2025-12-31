@@ -33,7 +33,6 @@
         }
         .mark-input { width: 50px; padding: 4px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; }
         
-        /* Loading overlay semasa menyemak status login */
         #loading-overlay { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
     </style>
 </head>
@@ -69,10 +68,6 @@
                     <select id="sesiAkademik" onchange="loadClassList()" class="w-full p-2 border rounded font-bold text-blue-900 mb-4 bg-blue-50">
                         <option value="2024_2025">2024/2025</option>
                         <option value="2025_2026">2025/2026</option>
-                        <option value="2026_2027">2026/2027</option>
-                        <option value="2027_2028">2027/2028</option>
-                        <option value="2028_2029">2028/2029</option>
-                        <option value="2029_2030">2029/2030</option>
                     </select>
 
                     <label class="text-[10px] font-bold text-slate-400 block mb-1">JENIS PENTAKSIRAN</label>
@@ -180,50 +175,49 @@ const firebaseConfig = {
         {id:'PSV', name:'PENDIDIKAN SENI VISUAL'}, {id:'RBT', name:'REKA BENTUK TEKNOLOGI'}
     ];
 
-    let db, currentClassData = [], selectedSubjects = [];
+    let db, auth, currentClassData = [], selectedSubjects = [];
 
     window.onload = () => { 
         firebase.initializeApp(firebaseConfig); 
         db = firebase.firestore(); 
+        auth = firebase.auth(); // Initialize auth
         renderSubjectGrid(); 
-        initSingleSignIn(); // Memulakan SSO
+        initSingleSignIn(); 
     };
 
-// GANTIKAN FUNGSI SSO LAMA KEPADA INI
-function initSingleSignIn() {
-    // Gunakan 'onAuthStateChanged' dari modular, bukan firebase.auth()
-    onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            // User sudah login
-            document.getElementById('loading-overlay').style.display = 'none';
-            document.getElementById('main-content').classList.remove('hidden');
-            
-            // Ambil nama profil (jika ada) atau guna emel
-            const namaPaparan = await fetchTeacherName(user); 
-            document.getElementById('user-welcome').innerText = `MyEASy V10.0 | LOG MASUK SEBAGAI: ${namaPaparan}`;
-            
-            loadClassList();
-        } else {
-            // User belum login - Hantar balik ke Portal SAGE
-            document.getElementById('loading-overlay').innerHTML = `
-                <div class="text-center">
-                    <p class="text-red-600 font-bold">AKSES DITOLAK: SILA LOG MASUK PORTAL DULU</p>
-                    <p class="text-xs text-gray-500 mb-4">Anda akan dibawa ke portal utama...</p>
-                    <button onclick="window.location.href='http://skabanggesa.github.io/sage'" 
-                            class="bg-blue-900 text-white px-6 py-2 rounded-xl font-bold">
-                        KE PORTAL SAGE
-                    </button>
-                </div>
-            `;
-            // Opsyenal: Redirect automatik selepas 3 saat
-            setTimeout(() => {
-                window.location.href = "http://skabanggesa.github.io/sage";
-            }, 3000);
-        }
-    });
-}
+    // FUNGSI SINGLE SIGN-ON (SSO)
+    function initSingleSignIn() {
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                document.getElementById('loading-overlay').style.display = 'none';
+                document.getElementById('main-content').classList.remove('hidden');
+                document.getElementById('user-welcome').innerText = `MyEASy V10.0 | LOG MASUK SEBAGAI: ${user.displayName || user.email}`;
+                loadClassList();
+            } else {
+                document.getElementById('loading-overlay').innerHTML = `
+                    <div class="text-center">
+                        <p class="text-red-600 font-bold mb-4">AKSES DITOLAK: SILA LOG MASUK PORTAL DULU</p>
+                        <button onclick="window.location.href='http://skabanggesa.github.io/sage'" class="bg-blue-900 text-white px-6 py-2 rounded-xl font-bold">KE PORTAL UTAMA</button>
+                    </div>
+                `;
+            }
+        });
+    }
 
-    // SEMUA FUNGSI ASAL DIKEKALKAN
+    // FUNGSI LOGOUT YANG TELAH DIBAIKI
+    function logoutPortal() {
+        if(confirm("Log keluar dari Sistem MyEasy Ver 10?")) {
+            auth.signOut().then(() => {
+                // Redirection ke portal SAGE
+                window.location.href = "http://skabanggesa.github.io/sage"; 
+            }).catch((error) => {
+                console.error("Ralat Log Keluar:", error);
+                alert("Ralat semasa log keluar. Sila cuba lagi.");
+            });
+        }
+    }
+
+    // --- SEMUA FUNGSI ASAL DIKEKALKAN TANPA PERUBAHAN ---
     function renderSubjectGrid() {
         const grid = document.getElementById('subject-grid');
         KPM_SUBJECTS.forEach(sub => {
@@ -411,71 +405,34 @@ function initSingleSignIn() {
         }; reader.readAsText(file);
     }
 
-// 1. FUNGSI PADAM SEMUA DATA BAGI SATU PENTAKSIRAN
-async function clearAllData() {
-    const sesi = document.getElementById('sesiAkademik').value;
-    // .trim() dan .replace() memastikan nama pentaksiran sepadan dengan Database
-    const jenisRaw = document.getElementById('sesiPentaksiran').value;
-    const jenis = jenisRaw.trim().replace(/\s+/g,'_');
-    
-    console.log("Memulakan pemadaman di:", `sesi/${sesi}/pentaksiran/${jenis}`);
-
-    const confirmation = confirm(`AMARAN: Padam semua data bagi ${jenisRaw} (${sesi})?`);
-    if(!confirmation || prompt("Taip 'PADAM' untuk sahkan:") !== "PADAM") return;
-
-    try {
-        // Ambil semua dokumen kelas di bawah pentaksiran tersebut
-        const snap = await db.collection('sesi').doc(sesi)
-                           .collection('pentaksiran').doc(jenis)
-                           .collection('kelas').get();
-        
-        if (snap.empty) {
-            console.warn("Tiada koleksi 'kelas' dijumpai di laluan tersebut.");
-            alert("DATA TIDAK DIJUMPAI.\n\nSistem cari: " + jenis + "\nSila pastikan pilihan Pentaksiran adalah betul.");
-            return;
-        }
-
-        const batch = db.batch();
-        let totalDeleted = 0;
-
-        for (const kDoc of snap.docs) {
-            // Ambil semua murid dalam setiap kelas
-            const mSnap = await kDoc.ref.collection('murid').get();
-            mSnap.forEach(m => {
-                batch.delete(m.ref);
-                totalDeleted++;
-            });
-            batch.delete(kDoc.ref); // Padam dokumen kelas itu sendiri
-        }
-
-        await batch.commit();
-        alert(`BERJAYA: Rekod bagi ${snap.docs.length} kelas (${totalDeleted} murid) telah dibersihkan.`);
-        location.reload();
-
-    } catch (error) {
-        console.error("Ralat pemadaman:", error);
-        alert("Ralat teknikal (Sila semak konsol): " + error.message);
+    async function clearAllData() {
+        const sesi = document.getElementById('sesiAkademik').value;
+        const jenis = document.getElementById('sesiPentaksiran').value.replace(/\s+/g,'_');
+        const confirmation = confirm(`AMARAN: Padam semua data bagi ${jenis.replace(/_/g,' ')} (${sesi})?`);
+        if(!confirmation || prompt("Taip 'PADAM' untuk sahkan:") !== "PADAM") return;
+        try {
+            const snap = await db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').get();
+            if (snap.empty) { alert("Tiada data dijumpai."); return; }
+            const batch = db.batch();
+            for (const kDoc of snap.docs) {
+                const mSnap = await kDoc.ref.collection('murid').get();
+                mSnap.forEach(m => batch.delete(m.ref));
+                batch.delete(kDoc.ref);
+            }
+            await batch.commit(); alert("BERJAYA: Data telah dibersihkan."); location.reload();
+        } catch (error) { alert("Ralat teknikal: " + error.message); }
     }
-}
 
-// 2. FUNGSI PADAM SEORANG MURID (TELAH DIBAIKI)
-async function deleteStudent(sid) {
-    if(!confirm("Padam rekod murid ini?")) return;
-    
-    const sesi = document.getElementById('sesiAkademik').value;
-    const jenis = document.getElementById('sesiPentaksiran').value.trim().replace(/\s+/g,'_'); // DITAMBAH .replace()
-    const kelas = document.getElementById('classDropdown').value;
-
-    try {
-        await db.collection('sesi').doc(sesi)
-                .collection('pentaksiran').doc(jenis)
-                .collection('kelas').doc(kelas)
-                .collection('murid').doc(sid).delete();
-        console.log("Murid dipadam:", sid);
-    } catch (error) {
-        alert("Ralat memadam murid: " + error.message);
+    async function deleteStudent(sid) {
+        if(!confirm("Padam rekod murid ini?")) return;
+        const sesi = document.getElementById('sesiAkademik').value;
+        const jenis = document.getElementById('sesiPentaksiran').value.replace(/\s+/g,'_');
+        const kelas = document.getElementById('classDropdown').value;
+        try {
+            await db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(kelas).collection('murid').doc(sid).delete();
+        } catch (error) { alert("Ralat memadam murid: " + error.message); }
     }
-}
+
     function exportToExcel() {
         const data = [...currentClassData].sort((a,b)=>a.nama.localeCompare(b.nama)).map(m => ({ Nama: m.nama, ...m.marks, GPM: m.gpm, Rank: m.rank, Status: m.statusLulus }));
         const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new();
@@ -484,8 +441,3 @@ async function deleteStudent(sid) {
 </script>
 </body>
 </html>
-
-
-
-
-
