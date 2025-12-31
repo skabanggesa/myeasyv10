@@ -208,9 +208,16 @@ const firebaseConfig = {
         });
     }
 
-    function logoutPortal() {
-        firebase.auth().signOut().then(() => { location.reload(); });
+        document.getElementById('logout-button').onclick = () => {
+    if(confirm("Log keluar dari Sistem MyEasy Ver 10?")) {
+        signOut(auth).then(() => {
+            // Tukar 'portal.html' kepada URL atau nama fail portal anda
+            window.location.href = "http://skabanggesa.github.io/sage"; 
+        }).catch((error) => {
+            console.error("Ralat Log Keluar:", error);
+        });
     }
+};
 
     // SEMUA FUNGSI ASAL DIKEKALKAN
     function renderSubjectGrid() {
@@ -473,6 +480,7 @@ async function deleteStudent(sid) {
 </script>
 </body>
 </html>
+
 
 
 
