@@ -189,35 +189,39 @@ const firebaseConfig = {
         initSingleSignIn(); // Memulakan SSO
     };
 
-    // FUNGSI SINGLE SIGN-ON (SSO)
-    function initSingleSignIn() {
-        firebase.auth().onAuthStateChanged((user) => {
-            if (user) {
-                // User sudah login di Portal, terus buka MyEASy
-                document.getElementById('loading-overlay').style.display = 'none';
-                document.getElementById('main-content').classList.remove('hidden');
-                document.getElementById('user-welcome').innerText = `MyEASy V10.0 | LOG MASUK SEBAGAI: ${user.displayName || user.email}`;
-                loadClassList();
-            } else {
-                // User belum login, hantar mesej atau redirect ke Portal utama
-                document.getElementById('loading-overlay').innerHTML = `
+// GANTIKAN FUNGSI SSO LAMA KEPADA INI
+function initSingleSignIn() {
+    // Gunakan 'onAuthStateChanged' dari modular, bukan firebase.auth()
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            // User sudah login
+            document.getElementById('loading-overlay').style.display = 'none';
+            document.getElementById('main-content').classList.remove('hidden');
+            
+            // Ambil nama profil (jika ada) atau guna emel
+            const namaPaparan = await fetchTeacherName(user); 
+            document.getElementById('user-welcome').innerText = `MyEASy V10.0 | LOG MASUK SEBAGAI: ${namaPaparan}`;
+            
+            loadClassList();
+        } else {
+            // User belum login - Hantar balik ke Portal SAGE
+            document.getElementById('loading-overlay').innerHTML = `
+                <div class="text-center">
                     <p class="text-red-600 font-bold">AKSES DITOLAK: SILA LOG MASUK PORTAL DULU</p>
-                    <button onclick="location.reload()" class="mt-4 bg-blue-900 text-white px-4 py-2 rounded">CUBA LAGI</button>
-                `;
-            }
-        });
-    }
-
-        document.getElementById('logout-button').onclick = () => {
-    if(confirm("Log keluar dari Sistem MyEasy Ver 10?")) {
-        signOut(auth).then(() => {
-            // Tukar 'portal.html' kepada URL atau nama fail portal anda
-            window.location.href = "http://skabanggesa.github.io/sage"; 
-        }).catch((error) => {
-            console.error("Ralat Log Keluar:", error);
-        });
-    }
-};
+                    <p class="text-xs text-gray-500 mb-4">Anda akan dibawa ke portal utama...</p>
+                    <button onclick="window.location.href='http://skabanggesa.github.io/sage'" 
+                            class="bg-blue-900 text-white px-6 py-2 rounded-xl font-bold">
+                        KE PORTAL SAGE
+                    </button>
+                </div>
+            `;
+            // Opsyenal: Redirect automatik selepas 3 saat
+            setTimeout(() => {
+                window.location.href = "http://skabanggesa.github.io/sage";
+            }, 3000);
+        }
+    });
+}
 
     // SEMUA FUNGSI ASAL DIKEKALKAN
     function renderSubjectGrid() {
@@ -480,6 +484,7 @@ async function deleteStudent(sid) {
 </script>
 </body>
 </html>
+
 
 
 
