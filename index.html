@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Analisis SKAG V10.0 - Terintegrasi Portal</title>
+    <title>Sistem Analisis SKAG V10.0 - Log Masuk Terus</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -33,14 +33,33 @@
         }
         .mark-input { width: 50px; padding: 4px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; }
         
-        #loading-overlay { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        /* Loading & Login Overlay Styles */
+        #auth-overlay { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
     </style>
 </head>
 <body class="bg-slate-50 font-sans text-slate-800 text-sm">
 
-<div id="loading-overlay">
-    <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-900 mb-4"></div>
-    <p class="font-bold text-blue-900 animate-pulse">MENYEMAK AKSES PORTAL...</p>
+<div id="auth-overlay">
+    <div id="loading-state" class="text-center">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-900 mb-4 mx-auto"></div>
+        <p class="font-bold text-blue-900 animate-pulse">MEMERIKSA STATUS PENGGUNA...</p>
+    </div>
+
+    <div id="login-state" class="hidden text-center bg-white p-8 rounded-2xl shadow-2xl border border-slate-200 max-w-sm w-full mx-4">
+        <img src="logo.png" class="w-24 h-24 mx-auto mb-4" onerror="this.src='https://via.placeholder.com/100?text=SKAG'">
+        <h2 class="text-2xl font-black text-blue-900 mb-2">SISTEM ANALISIS SKAG</h2>
+        <p class="text-slate-500 mb-8 text-xs">Sila log masuk untuk mengakses sistem</p>
+        
+        <button onclick="loginWithGoogle()" class="flex items-center justify-center w-full bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold py-3 px-4 rounded-xl shadow-sm transition-all hover:shadow-md group">
+            <svg class="h-5 w-5 mr-3" viewBox="0 0 24 24">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.84z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+            Log Masuk Google
+        </button>
+    </div>
 </div>
 
 <div id="main-content" class="hidden">
@@ -53,7 +72,7 @@
                     <p id="user-welcome" class="text-[10px] font-bold text-blue-500 tracking-widest uppercase">MyEASy V10.0 | LOG MASUK SEBAGAI: ...</p>
                 </div>
             </div>
-            <button onclick="logoutPortal()" class="bg-slate-700 text-white px-5 py-2 rounded-lg font-bold text-xs uppercase">🚪 Log Keluar Portal</button>
+            <button onclick="logoutPortal()" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-bold text-xs uppercase transition shadow">🚪 Log Keluar</button>
         </div>
     </div>
 
@@ -164,14 +183,15 @@
 <div id="section-sijil"></div>
 
 <script>
-const firebaseConfig = {
-    apiKey: "AIzaSyCwh99Ui4KPXgC-W-CpCg-edYnHN3aVmrk",
-    authDomain: "portal-8368.firebaseapp.com",
-    projectId: "portal-8368",
-    storageBucket: "portal-8368.firebasestorage.app",
-    messagingSenderId: "150403488308",
-    appId: "1:150403488308:web:fac9b3c52dcd9975130861"
-};
+    // CONFIG FIREBASE (Gantikan dengan config anda jika berbeza)
+    const firebaseConfig = {
+        apiKey: "AIzaSyCwh99Ui4KPXgC-W-CpCg-edYnHN3aVmrk",
+        authDomain: "portal-8368.firebaseapp.com",
+        projectId: "portal-8368",
+        storageBucket: "portal-8368.firebasestorage.app",
+        messagingSenderId: "150403488308",
+        appId: "1:150403488308:web:fac9b3c52dcd9975130861"
+    };
 
     const KPM_SUBJECTS = [
         {id:'BM', name:'BAHASA MELAYU'}, {id:'BI', name:'BAHASA INGGERIS'}, {id:'MT', name:'MATEMATIK'}, 
@@ -185,44 +205,70 @@ const firebaseConfig = {
     window.onload = () => { 
         firebase.initializeApp(firebaseConfig); 
         db = firebase.firestore(); 
-        auth = firebase.auth(); // Initialize auth
+        auth = firebase.auth(); 
         renderSubjectGrid(); 
-        initSingleSignIn(); 
+        initAuthCheck(); 
     };
 
-    // FUNGSI SINGLE SIGN-ON (SSO)
-    function initSingleSignIn() {
+    // ----------------------------------------------------
+    // FUNGSI AUTHENTICATION (LOG MASUK / KELUAR)
+    // ----------------------------------------------------
+
+    function initAuthCheck() {
         auth.onAuthStateChanged((user) => {
+            const overlay = document.getElementById('auth-overlay');
+            const mainContent = document.getElementById('main-content');
+            const loadingState = document.getElementById('loading-state');
+            const loginState = document.getElementById('login-state');
+
             if (user) {
-                document.getElementById('loading-overlay').style.display = 'none';
-                document.getElementById('main-content').classList.remove('hidden');
+                // PENGGUNA DAH LOGIN
+                overlay.style.display = 'none'; // Sembunyi overlay
+                mainContent.classList.remove('hidden'); // Tunjuk content
                 document.getElementById('user-welcome').innerText = `MyEASy V10.0 | LOG MASUK SEBAGAI: ${user.displayName || user.email}`;
                 loadClassList();
             } else {
-                document.getElementById('loading-overlay').innerHTML = `
-                    <div class="text-center">
-                        <p class="text-red-600 font-bold mb-4">AKSES DITOLAK: SILA LOG MASUK PORTAL DULU</p>
-                        <button onclick="window.location.href='http://skabanggesa.github.io/sage'" class="bg-blue-900 text-white px-6 py-2 rounded-xl font-bold">KE PORTAL UTAMA</button>
-                    </div>
-                `;
+                // PENGGUNA BELUM LOGIN
+                overlay.style.display = 'flex'; // Tunjuk overlay
+                mainContent.classList.add('hidden'); // Sorok content
+                
+                loadingState.classList.add('hidden'); // Sembunyi spinner
+                loginState.classList.remove('hidden'); // Tunjuk kotak login
             }
         });
     }
 
-    // FUNGSI LOGOUT YANG TELAH DIBAIKI
+    // Fungsi Log Masuk Menggunakan Google
+    function loginWithGoogle() {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        auth.signInWithPopup(provider)
+            .then((result) => {
+                // Berjaya, initAuthCheck akan handle redirect
+                console.log("Log masuk berjaya:", result.user);
+            })
+            .catch((error) => {
+                console.error("Ralat Log Masuk:", error);
+                alert("Gagal Log Masuk: " + error.message);
+            });
+    }
+
+    // Fungsi Log Keluar yang diperbaharui (Tiada Redirect Portal)
     function logoutPortal() {
-        if(confirm("Log keluar dari Sistem MyEasy Ver 10?")) {
+        if(confirm("Adakah anda pasti mahu log keluar?")) {
             auth.signOut().then(() => {
-                // Redirection ke portal SAGE
-                window.location.href = "http://skabanggesa.github.io/sage"; 
+                // Hanya refresh page untuk kembali ke screen login
+                window.location.reload(); 
             }).catch((error) => {
-                console.error("Ralat Log Keluar:", error);
-                alert("Ralat semasa log keluar. Sila cuba lagi.");
+                console.error("Ralat:", error);
+                alert("Ralat log keluar.");
             });
         }
     }
 
-    // --- SEMUA FUNGSI ASAL DIKEKALKAN TANPA PERUBAHAN ---
+    // ----------------------------------------------------
+    // FUNGSI SISTEM (KEKAL SAMA)
+    // ----------------------------------------------------
+
     function renderSubjectGrid() {
         const grid = document.getElementById('subject-grid');
         KPM_SUBJECTS.forEach(sub => {
@@ -446,4 +492,3 @@ const firebaseConfig = {
 </script>
 </body>
 </html>
-
