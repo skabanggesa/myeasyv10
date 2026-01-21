@@ -259,41 +259,92 @@
         } catch(e) { alert("Ralat: " + e.message); }
     }
 
-    // --- FUNGSI PADAM PILIHAN 2: KESELURUHAN DATA ---
+// --- KOD BARU: PADAM KESELURUHAN (UNLIMITED DATA) ---
     async function deleteAllPentaksiranData() {
         const sesi = document.getElementById('sesiAkademik').value;
-        const jenis = document.getElementById('sesiPentaksiran').value.replace(/\s+/g,'_');
-        const jenisNama = document.getElementById('sesiPentaksiran').value;
+        const jenisRaw = document.getElementById('sesiPentaksiran').value;
+        const jenisID = jenisRaw.replace(/\s+/g,'_'); // ID dalam database (huruf_bersambung)
 
-        if(!confirm(`BAHAYA: Anda akan memadam SEMUA KELAS dan SEMUA MURID untuk ${jenisNama} (${sesi}).\n\nTindakan ini tidak boleh diundur!`)) return;
-        if(prompt(`Taip 'PADAM SEMUA' untuk sahkan pemadaman global:`) !== "PADAM SEMUA") return;
+        if(!confirm(`AMARAN KRITIKAL!\n\nAnda akan memadam SEMUA DATA untuk:\nSesi: ${sesi}\nUjian: ${jenisRaw}\n\nIni akan memadam semua kelas dan semua murid. Teruskan?`)) return;
+        
+        const code = Math.floor(1000 + Math.random() * 9000); // Kod rawak 4 digit
+        const input = prompt(`Untuk keselamatan, sila taip kod ini untuk sahkan pemadaman:\n\n${code}`);
+        
+        if(input !== code.toString()) return alert("Kod salah. Pemadaman dibatalkan.");
+
+        // Tunjuk status sedang proses
+        const btn = event.target; // Dapatkan butang yang ditekan
+        const originalText = btn.innerText;
+        btn.innerText = "⏳ SEDANG MEMADAM... JANGAN TUTUP BROWSER";
+        btn.disabled = true;
 
         try {
-            alert("Proses pemadaman sedang berjalan... Sila tunggu.");
-            const kelasRef = db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas');
+            console.log(`Memulakan pemadaman untuk path: sesi/${sesi}/pentaksiran/${jenisID}/kelas`);
+            
+            // 1. Dapatkan semua kelas dahulu
+            const kelasRef = db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenisID).collection('kelas');
             const kelasSnap = await kelasRef.get();
 
-            if(kelasSnap.empty) return alert("Tiada data untuk dipadam.");
-
-            const batch = db.batch();
-            let opCount = 0;
-
-            for (const docKelas of kelasSnap.docs) {
-                // Dapatkan subcollection murid untuk setiap kelas
-                const muridSnap = await docKelas.ref.collection('murid').get();
-                muridSnap.docs.forEach(docMurid => {
-                    batch.delete(docMurid.ref);
-                    opCount++;
-                });
-                // Padam dokumen kelas itu sendiri
-                batch.delete(docKelas.ref);
-                opCount++;
+            if(kelasSnap.empty) {
+                alert("Tiada data dijumpai untuk ujian ini.");
+                btn.innerText = originalText;
+                btn.disabled = false;
+                return;
             }
 
-            await batch.commit();
-            alert(`Berjaya memadam ${opCount} rekod data secara global.`);
-            location.reload(); // Refresh untuk elak ralat data lama
-        } catch(e) { alert("Ralat kritikal: " + e.message); }
+            let totalDeleted = 0;
+            let batch = db.batch();
+            let operationCounter = 0;
+            const BATCH_LIMIT = 400; // Firebase limit ialah 500, kita guna 400 untuk selamat
+
+            // 2. Loop setiap kelas
+            for (const docKelas of kelasSnap.docs) {
+                console.log(`Memproses kelas: ${docKelas.id}`);
+
+                // Dapatkan semua murid dalam kelas ini
+                const muridSnap = await docKelas.ref.collection('murid').get();
+                
+                // Masukkan murid dalam batch delete
+                for (const docMurid of muridSnap.docs) {
+                    batch.delete(docMurid.ref);
+                    operationCounter++;
+                    totalDeleted++;
+
+                    // Jika batch dah penuh, execute (commit) dan buat batch baru
+                    if (operationCounter >= BATCH_LIMIT) {
+                        await batch.commit();
+                        batch = db.batch(); // Reset batch baru
+                        operationCounter = 0;
+                        console.log("Batch commit (Chunk)...");
+                    }
+                }
+
+                // Masukkan kelas itu sendiri untuk dipadam
+                batch.delete(docKelas.ref);
+                operationCounter++;
+
+                // Semak lagi jika batch penuh lepas tambah kelas
+                if (operationCounter >= BATCH_LIMIT) {
+                    await batch.commit();
+                    batch = db.batch();
+                    operationCounter = 0;
+                }
+            }
+
+            // 3. Commit baki terakhir (jika ada yang belum di-commit)
+            if (operationCounter > 0) {
+                await batch.commit();
+            }
+
+            alert(`BERJAYA!\n\nSebanyak ${totalDeleted} rekod data murid dan kelas telah dipadam sepenuhnya.`);
+            location.reload(); // Refresh page untuk bersihkan paparan
+
+        } catch(e) {
+            console.error(e);
+            alert("Ralat Semasa Memadam: " + e.message + "\n\nSila buka Console (F12) untuk lihat detail.");
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
     }
 
     async function addStudentManual() {
@@ -399,3 +450,4 @@
 </script>
 </body>
 </html>
+
