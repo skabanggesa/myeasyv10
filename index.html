@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Analisis SKAG V10.2 - Admin</title>
+    <title>Sistem Analisis SKAG V10.3 - Final Fix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -62,12 +62,14 @@
                         <option value="2025">2025</option>
                         <option value="2026">2026</option>
                     </select>
+                    
                     <label class="text-[10px] font-bold text-slate-400 block mb-1">JENIS PENTAKSIRAN</label>
                     <select id="sesiPentaksiran" onchange="startSync()" class="w-full p-2 border rounded font-bold text-emerald-800 mb-4 bg-emerald-50">
-                        <option value="Ujian Akhir Sesi Akademik (UASA)">UASA</option>
-                        <option value="Pentaksiran Pertengahan Tahun">PERTENGAHAN TAHUN</option>
-                        <option value="Ujian Bulanan 1">UJIAN BULANAN 1</option>
+                        <option value="Ujian_Akhir_Sesi_Akademik_(UASA)">UASA</option>
+                        <option value="Pentaksiran_Pertengahan_Tahun">PERTENGAHAN TAHUN</option>
+                        <option value="Ujian_Bulanan_1">UJIAN BULANAN 1</option>
                     </select>
+
                     <div id="class-area" class="hidden">
                         <label class="text-[10px] font-bold text-slate-400 block mb-1">PILIH KELAS</label>
                         <select id="classDropdown" onchange="startSync()" class="w-full p-2 border border-amber-300 rounded font-bold text-blue-900 bg-amber-50"></select>
@@ -222,7 +224,8 @@
 
     function startSync() {
         const sesi = document.getElementById('sesiAkademik').value;
-        const jenis = document.getElementById('sesiPentaksiran').value.replace(/\s+/g,'_');
+        // PENTING: Tiada lagi .replace() kerana value HTML sudah betul
+        const jenis = document.getElementById('sesiPentaksiran').value;
         const kelas = document.getElementById('classDropdown').value;
 
         if(!kelas) { document.getElementById('manual-add-area').classList.add('hidden'); return; }
@@ -238,7 +241,7 @@
     // --- FUNGSI PADAM PILIHAN 1: KELAS SEMASA ---
     async function deleteCurrentClass() {
         const sesi = document.getElementById('sesiAkademik').value;
-        const jenis = document.getElementById('sesiPentaksiran').value.replace(/\s+/g,'_');
+        const jenis = document.getElementById('sesiPentaksiran').value; // Guna value terus
         const kelas = document.getElementById('classDropdown').value;
 
         if(!kelas) return alert("Sila pilih KELAS dahulu.");
@@ -251,97 +254,77 @@
             
             const batch = db.batch();
             muridSnap.docs.forEach(doc => batch.delete(doc.ref));
-            // Kita kekalkan dokumen kelas, cuma padam murid di dalamnya, atau boleh padam kelas sekali jika mahu
-            // batch.delete(classRef); 
             
             await batch.commit();
             alert("Data kelas berjaya dipadam!");
         } catch(e) { alert("Ralat: " + e.message); }
     }
 
-// --- KOD BARU: PADAM KESELURUHAN (UNLIMITED DATA) ---
+    // --- FUNGSI PADAM PILIHAN 2: KESELURUHAN DATA (FIXED & ROBUST) ---
     async function deleteAllPentaksiranData() {
         const sesi = document.getElementById('sesiAkademik').value;
-        const jenisRaw = document.getElementById('sesiPentaksiran').value;
-        const jenisID = jenisRaw.replace(/\s+/g,'_'); // ID dalam database (huruf_bersambung)
+        const jenisID = document.getElementById('sesiPentaksiran').value; // ID Sebenar
+        const sel = document.getElementById('sesiPentaksiran');
+        const jenisNama = sel.options[sel.selectedIndex].text; // Nama Paparan
 
-        if(!confirm(`AMARAN KRITIKAL!\n\nAnda akan memadam SEMUA DATA untuk:\nSesi: ${sesi}\nUjian: ${jenisRaw}\n\nIni akan memadam semua kelas dan semua murid. Teruskan?`)) return;
+        if(!confirm(`AMARAN KRITIKAL!\n\nAnda akan memadam SEMUA DATA untuk:\nSesi: ${sesi}\nUjian: ${jenisNama}\nID Database: ${jenisID}\n\nTindakan ini akan memadam semua kelas dan murid di bawah ujian ini. Teruskan?`)) return;
         
-        const code = Math.floor(1000 + Math.random() * 9000); // Kod rawak 4 digit
-        const input = prompt(`Untuk keselamatan, sila taip kod ini untuk sahkan pemadaman:\n\n${code}`);
+        const code = Math.floor(1000 + Math.random() * 9000);
+        const input = prompt(`Sila taip kod ini untuk sahkan: ${code}`);
         
-        if(input !== code.toString()) return alert("Kod salah. Pemadaman dibatalkan.");
+        if(input !== code.toString()) return alert("Kod salah. Batal.");
 
-        // Tunjuk status sedang proses
-        const btn = event.target; // Dapatkan butang yang ditekan
+        const btn = event.target;
         const originalText = btn.innerText;
-        btn.innerText = "⏳ SEDANG MEMADAM... JANGAN TUTUP BROWSER";
+        btn.innerText = "⏳ SEDANG MENCARI & MEMADAM...";
         btn.disabled = true;
 
         try {
-            console.log(`Memulakan pemadaman untuk path: sesi/${sesi}/pentaksiran/${jenisID}/kelas`);
-            
-            // 1. Dapatkan semua kelas dahulu
+            console.log(`Memulakan delete path: sesi/${sesi}/pentaksiran/${jenisID}/kelas`);
             const kelasRef = db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenisID).collection('kelas');
             const kelasSnap = await kelasRef.get();
 
             if(kelasSnap.empty) {
-                alert("Tiada data dijumpai untuk ujian ini.");
+                alert(`Tiada sebarang kelas dijumpai dalam ID: ${jenisID}\nSila pastikan dropdown Pentaksiran betul.`);
                 btn.innerText = originalText;
                 btn.disabled = false;
                 return;
             }
 
-            let totalDeleted = 0;
             let batch = db.batch();
-            let operationCounter = 0;
-            const BATCH_LIMIT = 400; // Firebase limit ialah 500, kita guna 400 untuk selamat
+            let count = 0;
+            const BATCH_LIMIT = 400; // Firebase limit 500, guna 400 selamat
 
-            // 2. Loop setiap kelas
             for (const docKelas of kelasSnap.docs) {
-                console.log(`Memproses kelas: ${docKelas.id}`);
-
-                // Dapatkan semua murid dalam kelas ini
+                // 1. Get Murid
                 const muridSnap = await docKelas.ref.collection('murid').get();
-                
-                // Masukkan murid dalam batch delete
                 for (const docMurid of muridSnap.docs) {
                     batch.delete(docMurid.ref);
-                    operationCounter++;
-                    totalDeleted++;
-
-                    // Jika batch dah penuh, execute (commit) dan buat batch baru
-                    if (operationCounter >= BATCH_LIMIT) {
+                    count++;
+                    if (count % BATCH_LIMIT === 0) {
                         await batch.commit();
-                        batch = db.batch(); // Reset batch baru
-                        operationCounter = 0;
-                        console.log("Batch commit (Chunk)...");
+                        batch = db.batch();
                     }
                 }
-
-                // Masukkan kelas itu sendiri untuk dipadam
+                // 2. Delete Class Doc
                 batch.delete(docKelas.ref);
-                operationCounter++;
-
-                // Semak lagi jika batch penuh lepas tambah kelas
-                if (operationCounter >= BATCH_LIMIT) {
+                count++;
+                if (count % BATCH_LIMIT === 0) {
                     await batch.commit();
                     batch = db.batch();
-                    operationCounter = 0;
                 }
             }
 
-            // 3. Commit baki terakhir (jika ada yang belum di-commit)
-            if (operationCounter > 0) {
+            if (count % BATCH_LIMIT !== 0) {
                 await batch.commit();
             }
 
-            alert(`BERJAYA!\n\nSebanyak ${totalDeleted} rekod data murid dan kelas telah dipadam sepenuhnya.`);
-            location.reload(); // Refresh page untuk bersihkan paparan
+            alert(`BERJAYA! Sebanyak ${count} rekod (Murid + Kelas) telah dipadam.`);
+            location.reload();
 
         } catch(e) {
             console.error(e);
-            alert("Ralat Semasa Memadam: " + e.message + "\n\nSila buka Console (F12) untuk lihat detail.");
+            alert("Ralat Kritikal: " + e.message);
             btn.innerText = originalText;
             btn.disabled = false;
         }
@@ -350,7 +333,7 @@
     async function addStudentManual() {
         const nama = document.getElementById('newStudentName').value.toUpperCase().trim();
         const sesi = document.getElementById('sesiAkademik').value;
-        const jenis = document.getElementById('sesiPentaksiran').value.replace(/\s+/g,'_');
+        const jenis = document.getElementById('sesiPentaksiran').value; // Direct value
         const kelas = document.getElementById('classDropdown').value;
         if(!nama || !kelas) return alert("Isi nama dan pilih kelas.");
         try {
@@ -362,7 +345,7 @@
     async function processCSV() {
         const file = document.getElementById('csvInput').files[0];
         const sesi = document.getElementById('sesiAkademik').value;
-        const jenis = document.getElementById('sesiPentaksiran').value.replace(/\s+/g,'_');
+        const jenis = document.getElementById('sesiPentaksiran').value; // Direct value
         if (!file) return alert("Pilih fail CSV!");
         
         Papa.parse(file, {
@@ -373,8 +356,10 @@
                     const d = Object.keys(row).reduce((acc, k) => { acc[k.toLowerCase().trim()] = row[k]; return acc; }, {});
                     if (d.nama && d.kelas) {
                         const cid = d.kelas.toString().replace(/\s+/g,'_').toUpperCase();
+                        // Simpan Metadata Kelas Utama
                         const cRefMeta = db.collection('sesi').doc(sesi).collection('kelas').doc(cid);
                         batch.set(cRefMeta, { nama_kelas: d.kelas.toUpperCase() }, { merge: true });
+                        // Simpan Murid dalam Pentaksiran Spesifik
                         const mRef = db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(cid).collection('murid').doc();
                         batch.set(mRef, { nama: d.nama.toUpperCase(), marks: {} });
                     }
@@ -386,7 +371,7 @@
 
     async function updateMark(sid, sub, val) {
         const sesi = document.getElementById('sesiAkademik').value;
-        const jenis = document.getElementById('sesiPentaksiran').value.replace(/\s+/g,'_');
+        const jenis = document.getElementById('sesiPentaksiran').value; // Direct value
         const kelas = document.getElementById('classDropdown').value;
         await db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(kelas).collection('murid').doc(sid).set({ marks: {[sub]: parseFloat(val) || 0} }, {merge: true});
     }
@@ -394,7 +379,7 @@
     async function deleteStudent(sid) {
         if(!confirm("Padam murid ini?")) return;
         const sesi = document.getElementById('sesiAkademik').value;
-        const jenis = document.getElementById('sesiPentaksiran').value.replace(/\s+/g,'_');
+        const jenis = document.getElementById('sesiPentaksiran').value; // Direct value
         const kelas = document.getElementById('classDropdown').value;
         await db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(kelas).collection('murid').doc(sid).delete();
     }
@@ -436,7 +421,8 @@
 
     function generateSijil(getGrade) {
         const sortedAZ = [...currentClassData].sort((a, b) => a.nama.localeCompare(b.nama));
-        const pentaksiran = document.getElementById('sesiPentaksiran').value;
+        const sel = document.getElementById('sesiPentaksiran');
+        const pentaksiran = sel.options[sel.selectedIndex].text; // Nama cantik
         const sesi = document.getElementById('sesiAkademik').value;
         document.getElementById('section-sijil').innerHTML = sortedAZ.map(s => `
             <div class="page-break"><div class="certificate-border"><div class="text-center mb-10"><img src="logo.png" class="w-20 mx-auto mb-4" onerror="this.style.display='none'"><h2 class="text-2xl font-black text-blue-900">SK ABANG GESA, BELAWAI</h2><p class="text-xs font-bold text-slate-500 uppercase">${pentaksiran} (${sesi})</p></div><div class="text-center mb-8"><h1 style="font-family: 'Cinzel', serif;" class="text-5xl font-bold text-blue-900">SIJIL PENCAPAIAN</h1><p class="mt-6 italic text-sm text-slate-500">Dianugerahkan kepada</p><h2 class="text-3xl font-black my-4 uppercase text-blue-950 border-b-4 border-double border-blue-900 inline-block px-12 pb-2">${s.nama}</h2></div><div class="flex justify-center flex-grow py-4"><table class="w-11/12 border-2 border-slate-800 text-[11px]"><thead class="bg-blue-900 text-white uppercase text-sm"><tr><th class="p-3 border text-left">MATAPELAJARAN</th><th class="p-3 border text-center">MARKAH</th><th class="p-3 border text-center">GRED</th></tr></thead><tbody class="font-bold">${selectedSubjects.map(sub => { let m=s.marks?.[sub]; if(m===undefined||m==="")return""; return `<tr><td class="border border-slate-800 p-2 px-6 uppercase">${KPM_SUBJECTS.find(k=>k.id===sub)?.name||sub}</td><td class="border border-slate-800 text-center p-2 text-base">${m}</td><td class="border border-slate-800 text-center p-2 text-base font-black text-blue-900">${getGrade(m).g}</td></tr>`; }).join('')}</tbody></table></div><div class="mt-4 grid grid-cols-4 gap-4 text-center max-w-3xl mx-auto font-black text-xs"><div class="bg-slate-100 p-3 border rounded-xl">GPM: ${s.gpm}</div><div class="bg-slate-100 p-3 border rounded-xl">KEDUDUKAN: ${s.rank}</div><div class="bg-blue-900 text-white p-3 rounded-xl uppercase">${s.statusLulus}</div><div class="bg-slate-100 p-3 border rounded-xl">PERATUS: ${s.percent}%</div></div><div class="mt-20 flex justify-between px-16 text-sm font-black text-center uppercase"><div class="w-56"><div class="border-b-2 border-black h-12 mb-2"></div><p>Guru Kelas</p></div><div class="w-56"><div class="border-b-2 border-black h-12 mb-2"></div><p>Guru Besar</p></div></div></div></div>`).join('');
@@ -450,4 +436,3 @@
 </script>
 </body>
 </html>
-
