@@ -52,13 +52,28 @@
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-900 mb-4 mx-auto"></div>
         <p class="font-bold text-blue-900 animate-pulse">MENYEMAK DATA CLOUD...</p>
     </div>
-    <div id="login-state" class="hidden text-center bg-white p-8 rounded-2xl shadow-2xl border border-slate-200 max-w-sm w-full mx-4">
-        <h2 class="text-2xl font-black text-blue-900 mb-2">SISTEM ANALISIS SKAG</h2>
+    
+    <div id="login-state" class="hidden text-center bg-white p-8 rounded-3xl shadow-2xl border border-slate-200 max-w-sm w-full mx-4">
+        <div class="mb-6">
+            <img src="myeasy.png" alt="Logo MyEasy" class="w-32 mx-auto drop-shadow-md">
+        </div>
+        
+        <h2 class="text-2xl font-black text-blue-900 mb-1">SISTEM ANALISIS SKAG</h2>
+        <p class="text-[10px] font-bold text-slate-400 uppercase mb-6 tracking-widest">Powered by MyEasy</p>
+
         <div class="space-y-4 text-left">
-            <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Emel</label><input type="email" id="emailInput" class="w-full p-3 border rounded-lg"></div>
-            <div><label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Kata Laluan</label><input type="password" id="passwordInput" class="w-full p-3 border rounded-lg"></div>
-            <p id="login-error" class="text-red-600 text-xs font-bold text-center hidden"></p>
-            <button onclick="loginWithEmail()" id="btnLogin" class="w-full bg-blue-900 text-white font-bold py-3 rounded-xl">LOG MASUK</button>
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1 ml-1">Emel Rasmi</label>
+                <input type="email" id="emailInput" placeholder="guru@email.com" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1 ml-1">Kata Laluan</label>
+                <input type="password" id="passwordInput" placeholder="••••••••" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+            </div>
+            <p id="login-error" class="text-red-600 text-xs font-bold text-center hidden bg-red-50 py-2 rounded-lg"></p>
+            <button onclick="loginWithEmail()" id="btnLogin" class="w-full bg-blue-900 hover:bg-blue-800 text-white font-black py-4 rounded-xl shadow-lg shadow-blue-200 transition-all active:scale-95">
+                LOG MASUK SEKARANG
+            </button>
         </div>
     </div>
 </div>
@@ -702,3 +717,4 @@
 </script>
 </body>
 </html>
+
