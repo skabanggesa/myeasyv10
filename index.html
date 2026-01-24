@@ -214,22 +214,102 @@
         setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3000);
     }
 
-    // --- DATA MANAGER FUNCTIONS (NEW) ---
+    // =========================================================
+    // BAHAGIAN DATA MANAGER (BACKUP / RESTORE / DELETE / IMPORT)
+    // =========================================================
 
-    // 1. BACKUP DATA (Export JSON)
+    // 1. DELETE ALL DATA (Fixed Logic)
+    async function deleteAllPentaksiranData() {
+        const sesi = document.getElementById('sesiAkademik').value;
+        const jenisID = document.getElementById('sesiPentaksiran').value;
+        const sel = document.getElementById('sesiPentaksiran');
+        const jenisNama = sel.options[sel.selectedIndex].text;
+
+        if(!confirm(`AMARAN KRITIKAL!\n\nAnda pasti mahu memadam SEMUA DATA untuk:\nSesi: ${sesi}\nUjian: ${jenisNama}\n\nTindakan ini tidak boleh diundur!`)) return;
+        
+        const code = Math.floor(1000 + Math.random() * 9000);
+        const input = prompt(`Sila taip kod pengesahan ini: ${code}`);
+        if(input !== code.toString()) return showToast("Kod salah. Proses dibatalkan.", "error");
+
+        const btn = event.target;
+        const originalText = btn.innerText;
+        btn.innerText = "⏳ SEDANG MEMADAM...";
+        btn.disabled = true;
+
+        try {
+            // Kita ambil senarai kelas dari Master List (Sesi > Kelas)
+            const masterKelasRef = db.collection('sesi').doc(sesi).collection('kelas');
+            const masterSnap = await masterKelasRef.get();
+
+            if (masterSnap.empty) {
+                showToast("Tiada kelas dijumpai dalam sesi ini.", "error");
+                btn.innerText = originalText;
+                btn.disabled = false;
+                return;
+            }
+
+            let batch = db.batch();
+            let count = 0;
+            const BATCH_LIMIT = 400; 
+
+            // Loop semua kelas
+            for (const docKelas of masterSnap.docs) {
+                const classID = docKelas.id;
+
+                // Target folder pentaksiran untuk kelas ini
+                const muridRef = db.collection('sesi').doc(sesi)
+                                   .collection('pentaksiran').doc(jenisID)
+                                   .collection('kelas').doc(classID)
+                                   .collection('murid');
+
+                const muridSnap = await muridRef.get();
+
+                // Padam murid
+                for (const docMurid of muridSnap.docs) {
+                    batch.delete(docMurid.ref);
+                    count++;
+                    if (count % BATCH_LIMIT === 0) {
+                        await batch.commit();
+                        batch = db.batch();
+                    }
+                }
+
+                // Padam dokumen kelas dalam folder pentaksiran
+                const classPenRef = db.collection('sesi').doc(sesi)
+                                      .collection('pentaksiran').doc(jenisID)
+                                      .collection('kelas').doc(classID);
+                batch.delete(classPenRef);
+            }
+
+            if (count > 0 || count % BATCH_LIMIT !== 0) {
+                await batch.commit();
+            }
+
+            showToast(`BERJAYA! ${count} rekod murid telah dipadam sepenuhnya.`);
+            setTimeout(() => location.reload(), 2000);
+
+        } catch(e) {
+            console.error(e);
+            showToast("Ralat Sistem: " + e.message, "error");
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    // 2. BACKUP DATA (Fixed Logic)
     async function backupCurrentData() {
         const sesi = document.getElementById('sesiAkademik').value;
         const jenisID = document.getElementById('sesiPentaksiran').value;
         const sel = document.getElementById('sesiPentaksiran');
         const jenisNama = sel.options[sel.selectedIndex].text;
 
-        showToast("Sedang membuat backup data...", "normal");
+        showToast("Sedang mengumpul data...", "normal");
 
         try {
-            const rootRef = db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenisID).collection('kelas');
-            const kelasSnap = await rootRef.get();
+            const masterKelasRef = db.collection('sesi').doc(sesi).collection('kelas');
+            const masterSnap = await masterKelasRef.get();
             
-            if(kelasSnap.empty) return showToast("Tiada data untuk di-backup.", "error");
+            if(masterSnap.empty) return showToast("Tiada kelas dalam sesi ini.", "error");
 
             let exportObj = {
                 meta: {
@@ -241,34 +321,43 @@
                 data: []
             };
 
-            for(const docKelas of kelasSnap.docs) {
-                const muridSnap = await docKelas.ref.collection('murid').get();
-                // Dapatkan nama kelas sebenar dari koleksi meta kelas jika ada, atau guna ID
-                const kelasMetaRef = db.collection('sesi').doc(sesi).collection('kelas').doc(docKelas.id);
-                const kelasMeta = await kelasMetaRef.get();
-                const namaKelas = kelasMeta.exists ? kelasMeta.data().nama_kelas : docKelas.id;
+            let studentCount = 0;
 
-                let students = muridSnap.docs.map(m => ({
-                    nama: m.data().nama,
-                    marks: m.data().marks
-                }));
+            for(const docKelas of masterSnap.docs) {
+                const classID = docKelas.id;
+                const namaKelas = docKelas.data().nama_kelas;
 
-                exportObj.data.push({
-                    kelas_id: docKelas.id,
-                    nama_kelas: namaKelas,
-                    murid: students
-                });
+                const muridSnap = await db.collection('sesi').doc(sesi)
+                                          .collection('pentaksiran').doc(jenisID)
+                                          .collection('kelas').doc(classID)
+                                          .collection('murid').get();
+                
+                if (!muridSnap.empty) {
+                    let students = muridSnap.docs.map(m => ({
+                        nama: m.data().nama,
+                        marks: m.data().marks || {}
+                    }));
+
+                    exportObj.data.push({
+                        kelas_id: classID,
+                        nama_kelas: namaKelas,
+                        murid: students
+                    });
+                    studentCount += students.length;
+                }
             }
+
+            if (studentCount === 0) return showToast("Tiada data murid untuk di-backup.", "error");
 
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj, null, 2));
             const downloadAnchorNode = document.createElement('a');
             downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", `BACKUP_${jenisID}_${sesi}.json`);
+            downloadAnchorNode.setAttribute("download", `BACKUP_${jenisNama}_${sesi}.json`);
             document.body.appendChild(downloadAnchorNode);
             downloadAnchorNode.click();
             downloadAnchorNode.remove();
 
-            showToast("Backup berjaya dimuat turun!");
+            showToast(`Backup Berjaya! (${studentCount} murid)`);
 
         } catch(e) {
             console.error(e);
@@ -276,7 +365,7 @@
         }
     }
 
-    // 2. RESTORE DATA (Import JSON)
+    // 3. RESTORE DATA
     async function restoreData(inputElement) {
         const file = inputElement.files[0];
         if(!file) return;
@@ -285,11 +374,8 @@
         reader.onload = async (e) => {
             try {
                 const json = JSON.parse(e.target.result);
-                
-                // Validasi ringkas
                 if(!json.meta || !json.data) return showToast("Format fail backup tidak sah.", "error");
 
-                // Konfirmasi
                 if(!confirm(`Pulihkan data untuk:\nSesi: ${json.meta.sesi}\nUjian: ${json.meta.pentaksiran_nama}\n\nIni akan menggabungkan data sedia ada.`)) {
                     inputElement.value = '';
                     return;
@@ -300,7 +386,6 @@
                 const sesi = json.meta.sesi;
                 const jenis = json.meta.pentaksiran_id;
                 
-                // Batch processing untuk restore
                 const BATCH_SIZE = 400;
                 let currentBatch = db.batch();
                 let opCount = 0;
@@ -308,19 +393,16 @@
                 for (const kelasData of json.data) {
                     const cid = kelasData.kelas_id;
                     
-                    // Restore Nama Kelas (Meta)
                     const cRefMeta = db.collection('sesi').doc(sesi).collection('kelas').doc(cid);
                     currentBatch.set(cRefMeta, { nama_kelas: kelasData.nama_kelas }, { merge: true });
                     opCount++;
 
-                    // Create dummy doc for Class inside Pentaksiran to ensure it exists
                     const cRefPen = db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(cid);
                     currentBatch.set(cRefPen, { active: true }, { merge: true });
                     opCount++;
 
-                    // Restore Murid
                     for (const m of kelasData.murid) {
-                        const mRef = cRefPen.collection('murid').doc(); // Auto-ID baru untuk elak conflict ID lama
+                        const mRef = cRefPen.collection('murid').doc();
                         currentBatch.set(mRef, { nama: m.nama, marks: m.marks });
                         opCount++;
 
@@ -335,9 +417,8 @@
                 if(opCount > 0) await currentBatch.commit();
 
                 showToast("Data berjaya dipulihkan!");
-                inputElement.value = ''; // Reset input
+                inputElement.value = ''; 
                 
-                // Refresh view jika kita berada di sesi/tahun yang sama
                 if(document.getElementById('sesiAkademik').value == sesi && 
                    document.getElementById('sesiPentaksiran').value == jenis) {
                     loadClassList();
@@ -353,7 +434,76 @@
         reader.readAsText(file);
     }
 
-    // --- END DATA MANAGER ---
+    // 4. IMPORT CSV (Fixed Logic)
+    async function processCSV() {
+        const file = document.getElementById('csvInput').files[0];
+        const sesi = document.getElementById('sesiAkademik').value;
+        const jenis = document.getElementById('sesiPentaksiran').value;
+        
+        if (!file) return showToast("Pilih fail CSV!", "error");
+        
+        Papa.parse(file, {
+            header: true, skipEmptyLines: true,
+            complete: async (res) => {
+                const data = res.data;
+                if (data.length === 0) return showToast("Fail kosong.", "error");
+
+                const firstRow = data[0];
+                const keys = Object.keys(firstRow).map(k => k.toLowerCase().trim());
+                if (!keys.includes('nama') || !keys.includes('kelas')) {
+                    return showToast("Format CSV salah! Pastikan ada lajur 'NAMA' dan 'KELAS'", "error");
+                }
+
+                showToast("Sedang memproses...", "normal");
+                const BATCH_SIZE = 400;
+                let processedCount = 0;
+                let batch = db.batch();
+                let batchOps = 0;
+
+                for (let i = 0; i < data.length; i++) {
+                    const row = data[i];
+                    const d = Object.keys(row).reduce((acc, k) => { acc[k.toLowerCase().trim()] = row[k]; return acc; }, {});
+                    
+                    if (d.nama && d.kelas) {
+                        const cleanClass = d.kelas.toString().toUpperCase().trim();
+                        const cid = cleanClass.replace(/[^a-zA-Z0-9]/g,'_'); 
+                        
+                        // Meta Kelas
+                        const cRefMeta = db.collection('sesi').doc(sesi).collection('kelas').doc(cid);
+                        batch.set(cRefMeta, { nama_kelas: cleanClass }, { merge: true });
+                        batchOps++;
+                        
+                        // Pentaksiran Folder (Wajib ada)
+                        const cRefPen = db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(cid);
+                        batch.set(cRefPen, { active: true }, { merge: true });
+                        batchOps++;
+
+                        // Murid
+                        const mRef = cRefPen.collection('murid').doc();
+                        batch.set(mRef, { nama: d.nama.toUpperCase().trim(), marks: {} });
+                        batchOps++;
+                        processedCount++;
+
+                        if (batchOps >= BATCH_SIZE) {
+                            await batch.commit();
+                            batch = db.batch();
+                            batchOps = 0;
+                            showToast(`Disimpan: ${processedCount} murid...`);
+                        }
+                    }
+                }
+
+                if (batchOps > 0) await batch.commit();
+
+                showToast("Import CSV Selesai!");
+                loadClassList();
+            }
+        });
+    }
+
+    // ==========================================
+    // FUNGSI UMUM LAIN
+    // ==========================================
 
     function loadCustomSubjects() {
         const custom = localStorage.getItem('customSubjects');
@@ -479,56 +629,6 @@
         } catch(e) { showToast("Ralat: " + e.message, "error"); }
     }
 
-    async function deleteAllPentaksiranData() {
-        const sesi = document.getElementById('sesiAkademik').value;
-        const jenisID = document.getElementById('sesiPentaksiran').value;
-        const sel = document.getElementById('sesiPentaksiran');
-        const jenisNama = sel.options[sel.selectedIndex].text;
-
-        if(!confirm(`AMARAN KRITIKAL!\n\nPadam SEMUA DATA untuk: ${jenisNama} (${sesi})?`)) return;
-        
-        const code = Math.floor(1000 + Math.random() * 9000);
-        const input = prompt(`Taip kod: ${code}`);
-        if(input !== code.toString()) return showToast("Kod salah.", "error");
-
-        const btn = event.target;
-        const originalText = btn.innerText;
-        btn.innerText = "⏳ MEMADAM...";
-        btn.disabled = true;
-
-        try {
-            const kelasRef = db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenisID).collection('kelas');
-            const kelasSnap = await kelasRef.get();
-
-            let batch = db.batch();
-            let count = 0;
-            const BATCH_LIMIT = 400;
-
-            for (const docKelas of kelasSnap.docs) {
-                const muridSnap = await docKelas.ref.collection('murid').get();
-                for (const docMurid of muridSnap.docs) {
-                    batch.delete(docMurid.ref);
-                    count++;
-                    if (count % BATCH_LIMIT === 0) { await batch.commit(); batch = db.batch(); }
-                }
-                batch.delete(docKelas.ref);
-                count++;
-                if (count % BATCH_LIMIT === 0) { await batch.commit(); batch = db.batch(); }
-            }
-
-            if (count % BATCH_LIMIT !== 0) await batch.commit();
-
-            showToast(`BERJAYA! ${count} rekod dipadam.`);
-            setTimeout(() => location.reload(), 2000);
-
-        } catch(e) {
-            console.error(e);
-            showToast("Ralat: " + e.message, "error");
-            btn.innerText = originalText;
-            btn.disabled = false;
-        }
-    }
-
     async function addStudentManual() {
         const nama = document.getElementById('newStudentName').value.toUpperCase().trim();
         const sesi = document.getElementById('sesiAkademik').value;
@@ -540,55 +640,6 @@
             document.getElementById('newStudentName').value = '';
             showToast("Murid ditambah.");
         } catch(e) { showToast("Ralat: " + e.message, "error"); }
-    }
-
-    async function processCSV() {
-        const file = document.getElementById('csvInput').files[0];
-        const sesi = document.getElementById('sesiAkademik').value;
-        const jenis = document.getElementById('sesiPentaksiran').value;
-        
-        if (!file) return showToast("Pilih fail CSV!", "error");
-        
-        Papa.parse(file, {
-            header: true, skipEmptyLines: true,
-            complete: async (res) => {
-                const data = res.data;
-                if (data.length === 0) return showToast("Fail kosong.", "error");
-
-                const firstRow = data[0];
-                const keys = Object.keys(firstRow).map(k => k.toLowerCase().trim());
-                if (!keys.includes('nama') || !keys.includes('kelas')) {
-                    return showToast("Format CSV salah! Pastikan ada lajur 'NAMA' dan 'KELAS'", "error");
-                }
-
-                const BATCH_SIZE = 400;
-                let processedCount = 0;
-
-                for (let i = 0; i < data.length; i += BATCH_SIZE) {
-                    const chunk = data.slice(i, i + BATCH_SIZE);
-                    const batch = db.batch();
-                    
-                    chunk.forEach(row => {
-                        const d = Object.keys(row).reduce((acc, k) => { acc[k.toLowerCase().trim()] = row[k]; return acc; }, {});
-                        if (d.nama && d.kelas) {
-                            const cid = d.kelas.toString().replace(/[^a-zA-Z0-9]/g,'_').toUpperCase(); 
-                            const cRefMeta = db.collection('sesi').doc(sesi).collection('kelas').doc(cid);
-                            batch.set(cRefMeta, { nama_kelas: d.kelas.toUpperCase() }, { merge: true });
-                            
-                            const mRef = db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(cid).collection('murid').doc();
-                            batch.set(mRef, { nama: d.nama.toUpperCase(), marks: {} });
-                        }
-                    });
-
-                    await batch.commit();
-                    processedCount += chunk.length;
-                    showToast(`Memproses ${processedCount}/${data.length}...`);
-                }
-
-                showToast("Import Selesai!");
-                loadClassList();
-            }
-        });
     }
 
     async function updateMark(sid, sub, val) {
