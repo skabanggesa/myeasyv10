@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Analisis SKAG V11.5 - Cloud Sync</title>
+    <title>Sistem Analisis SKAG V12.0 - Full Cloud</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -50,7 +50,7 @@
 <div id="auth-overlay">
     <div id="loading-state" class="text-center">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-900 mb-4 mx-auto"></div>
-        <p class="font-bold text-blue-900 animate-pulse">MENYEMAK DATA FIREBASE...</p>
+        <p class="font-bold text-blue-900 animate-pulse">MENYEMAK DATA CLOUD...</p>
     </div>
     <div id="login-state" class="hidden text-center bg-white p-8 rounded-2xl shadow-2xl border border-slate-200 max-w-sm w-full mx-4">
         <h2 class="text-2xl font-black text-blue-900 mb-2">SISTEM ANALISIS SKAG</h2>
@@ -135,8 +135,8 @@
 
                 <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
                     <div class="flex justify-between items-center mb-3">
-                        <h2 class="font-bold text-xs text-blue-700 uppercase text-[10px]">📚 Matapelajaran</h2>
-                        <button onclick="addCustomSubject()" class="text-[9px] bg-blue-100 text-blue-800 px-2 py-1 rounded hover:bg-blue-200 font-bold">+ Tambah</button>
+                        <h2 class="font-bold text-xs text-blue-700 uppercase text-[10px]">📚 Matapelajaran (Global)</h2>
+                        <button onclick="addSubjectToFirebase()" class="text-[9px] bg-blue-100 text-blue-800 px-2 py-1 rounded hover:bg-blue-200 font-bold">+ Tambah (Cloud)</button>
                     </div>
                     <div id="subject-grid" class="grid grid-cols-1 gap-1 max-h-48 overflow-y-auto text-[10px]"></div>
                 </div>
@@ -190,14 +190,14 @@
         appId: "1:150403488308:web:fac9b3c52dcd9975130861"
     };
 
-    // --- DEFAULT STARTING DATA (Untuk Inisialisasi Pertama Kali Sahaja) ---
+    // --- DEFAULTS ---
     const BASE_EXAMS = [
         {id: 'Ujian_Akhir_Sesi_Akademik_(UASA)', name: 'UASA'},
         {id: 'Pentaksiran_Pertengahan_Tahun', name: 'PERTENGAHAN TAHUN'},
         {id: 'Ujian_Bulanan_1', name: 'UJIAN BULANAN 1'}
     ];
 
-    let KPM_SUBJECTS = [
+    const BASE_SUBJECTS = [
         {id:'BM', name:'BAHASA MELAYU'}, {id:'BI', name:'BAHASA INGGERIS'}, {id:'MT', name:'MATEMATIK'}, 
         {id:'SN', name:'SAINS'}, {id:'SJ', name:'SEJARAH'}, {id:'PAI', name:'PENDIDIKAN ISLAM'},
         {id:'BA', name:'BAHASA ARAB'}, {id:'MZ', name:'PENDIDIKAN MUZIK'}, 
@@ -205,6 +205,7 @@
         {id:'RBT', name:'REKA BENTUK TEKNOLOGI'}, {id:'MORAL', name:'PENDIDIKAN MORAL'}
     ];
 
+    let ALL_SUBJECTS = []; // Will hold merged list
     let db, auth, currentClassData = [], selectedSubjects = [];
 
     window.onload = () => { 
@@ -212,10 +213,7 @@
         db = firebase.firestore(); 
         auth = firebase.auth(); 
         
-        loadCustomSubjects();
-        renderSubjectGrid(); 
         initAuthCheck(); 
-        
         document.getElementById("passwordInput").addEventListener("keypress", (e) => { if(e.key==="Enter") document.getElementById("btnLogin").click(); });
     };
 
@@ -229,51 +227,58 @@
     }
 
     // =========================================================
-    // NEW: GLOBAL FIREBASE DROPDOWN MANAGER (SYNCED)
+    // NEW: GLOBAL FIREBASE DATA MANAGER (Sesi, Ujian, Subjek)
     // =========================================================
 
-    async function initFirebaseDropdowns() {
-        // 1. Setup Sesi (Baca dari collection 'sesi')
+    async function initSystemData() {
         try {
+            // 1. Load Sesi
             const sesiSelect = document.getElementById('sesiAkademik');
             const sesiSnap = await db.collection('sesi').get();
             let availableSesi = [];
             
             if (sesiSnap.empty) {
-                // Jika DB kosong, kita create default
                 await db.collection('sesi').doc('2025').set({created: true});
                 await db.collection('sesi').doc('2026').set({created: true});
                 availableSesi = ['2025', '2026'];
             } else {
                 availableSesi = sesiSnap.docs.map(doc => doc.id).sort();
             }
-
             sesiSelect.innerHTML = availableSesi.map(s => `<option value="${s}">${s}</option>`).join('');
-            
-            // Set default selection (most recent year usually)
             if(availableSesi.length > 0) sesiSelect.value = availableSesi[availableSesi.length - 1];
 
-            // 2. Setup Jenis Pentaksiran (Baca dari collection '_tetapan_sistem')
+            // 2. Load Jenis Pentaksiran
             const examRef = db.collection('_tetapan_sistem').doc('senarai_pentaksiran');
             const examSnap = await examRef.get();
-            let examList = [];
-
-            if (!examSnap.exists) {
-                // Initialize default exams globally
-                await examRef.set({ exams: BASE_EXAMS });
-                examList = BASE_EXAMS;
-            } else {
-                examList = examSnap.data().exams || BASE_EXAMS;
-            }
+            let examList = BASE_EXAMS;
+            if (examSnap.exists) examList = examSnap.data().exams || BASE_EXAMS;
+            else await examRef.set({ exams: BASE_EXAMS });
 
             const jenisSelect = document.getElementById('sesiPentaksiran');
             jenisSelect.innerHTML = examList.map(j => `<option value="${j.id}">${j.name}</option>`).join('');
+
+            // 3. Load Subjects (NEW!)
+            const subRef = db.collection('_tetapan_sistem').doc('senarai_subjek');
+            const subSnap = await subRef.get();
+            let extraSubjects = [];
             
-            // Trigger load classes after setting dropdowns
+            if (subSnap.exists) {
+                extraSubjects = subSnap.data().subjects || [];
+            } else {
+                await subRef.set({ subjects: [] });
+            }
+
+            // Merge BASE + CLOUD subjects
+            ALL_SUBJECTS = [...BASE_SUBJECTS];
+            extraSubjects.forEach(s => {
+                if(!ALL_SUBJECTS.find(k => k.id === s.id)) ALL_SUBJECTS.push(s);
+            });
+
+            renderSubjectGrid();
             loadClassList();
 
         } catch (e) {
-            console.error("Gagal memuatkan tetapan sistem:", e);
+            console.error("Gagal memuatkan sistem:", e);
             showToast("Ralat sambungan database.", "error");
         }
     }
@@ -282,30 +287,19 @@
         const input = prompt("Masukkan Tahun Sesi Baru (Contoh: 2027):");
         if (!input) return;
         const cleanInput = input.trim();
-        
-        // Simpan ke Firebase 'sesi' collection
         try {
             const docRef = db.collection('sesi').doc(cleanInput);
-            const doc = await docRef.get();
-            
-            if(doc.exists) {
-                return showToast("Sesi ini sudah wujud dalam Firebase!", "error");
-            }
+            if((await docRef.get()).exists) return showToast("Sesi sudah wujud!", "error");
             
             await docRef.set({ createdBy: auth.currentUser.email, createdAt: new Date() });
             
-            // Refresh dropdown
             const opt = document.createElement('option');
-            opt.value = cleanInput;
-            opt.innerText = cleanInput;
+            opt.value = cleanInput; opt.innerText = cleanInput;
             document.getElementById('sesiAkademik').appendChild(opt);
             document.getElementById('sesiAkademik').value = cleanInput;
-            
-            loadClassList(); // Kosongkan kelas sebab sesi baru
-            showToast(`Sesi ${cleanInput} berjaya disimpan di Cloud!`);
-        } catch(e) {
-            showToast("Gagal menyimpan: " + e.message, "error");
-        }
+            loadClassList();
+            showToast(`Sesi ${cleanInput} disimpan di Cloud!`);
+        } catch(e) { showToast("Ralat: " + e.message, "error"); }
     }
 
     async function addAssessmentToFirebase() {
@@ -316,34 +310,38 @@
 
         try {
             const examRef = db.collection('_tetapan_sistem').doc('senarai_pentaksiran');
+            await examRef.update({ exams: firebase.firestore.FieldValue.arrayUnion({ id: id, name: cleanName }) });
             
-            // Gunakan arrayUnion untuk tambah ke array sedia ada dalam dokumen
-            await examRef.update({
-                exams: firebase.firestore.FieldValue.arrayUnion({ id: id, name: cleanName })
+            // Re-fetch to be safe or manually append
+            const select = document.getElementById('sesiPentaksiran');
+            const opt = document.createElement('option');
+            opt.value = id; opt.innerText = cleanName;
+            select.appendChild(opt);
+            select.value = id;
+            startSync();
+            showToast(`Ujian ${cleanName} disimpan (Global)!`);
+        } catch(e) { showToast("Ralat Database: " + e.message, "error"); }
+    }
+
+    async function addSubjectToFirebase() {
+        const name = prompt("Masukkan nama matapelajaran baru (Contoh: JAWI):");
+        if (!name) return;
+        const cleanName = name.toUpperCase().trim();
+        const id = cleanName.substring(0, 4).toUpperCase().replace(/[^A-Z]/g, '') + Math.floor(Math.random()*10); // Generate simple ID
+        
+        try {
+            const subRef = db.collection('_tetapan_sistem').doc('senarai_subjek');
+            const newSub = { id: id, name: cleanName };
+            
+            await subRef.update({ 
+                subjects: firebase.firestore.FieldValue.arrayUnion(newSub) 
             });
 
-            // Refresh dropdown secara manual tanpa reload page
-            const select = document.getElementById('sesiPentaksiran');
-            // Check if exists
-            let exists = false;
-            for(let i=0; i<select.options.length; i++){
-                if(select.options[i].value === id) exists = true;
-            }
-            
-            if(!exists){
-                const opt = document.createElement('option');
-                opt.value = id;
-                opt.innerText = cleanName;
-                select.appendChild(opt);
-                select.value = id;
-                startSync();
-                showToast(`Ujian ${cleanName} disimpan di Cloud untuk semua guru!`);
-            } else {
-                showToast("Ujian ini sudah wujud.", "error");
-            }
-
+            ALL_SUBJECTS.push(newSub);
+            renderSubjectGrid();
+            showToast(`Subjek ${cleanName} ditambah ke Cloud!`);
         } catch(e) {
-            showToast("Ralat Database: " + e.message, "error");
+            showToast("Gagal tambah subjek: " + e.message, "error");
         }
     }
 
@@ -357,27 +355,20 @@
         const sel = document.getElementById('sesiPentaksiran');
         const jenisNama = sel.options[sel.selectedIndex].text;
 
-        if(!confirm(`AMARAN KRITIKAL!\n\nAnda pasti mahu memadam SEMUA DATA untuk:\nSesi: ${sesi}\nUjian: ${jenisNama}\n\nTindakan ini memadam data DARI SERVER FIREBASE KEKAL!`)) return;
+        if(!confirm(`AMARAN KRITIKAL!\n\nPadam SEMUA DATA untuk:\nSesi: ${sesi}\nUjian: ${jenisNama}\n\nDari FIREBASE?`)) return;
         
         const code = Math.floor(1000 + Math.random() * 9000);
-        const input = prompt(`Sila taip kod pengesahan ini: ${code}`);
-        if(input !== code.toString()) return showToast("Kod salah. Proses dibatalkan.", "error");
+        const input = prompt(`Taip kod: ${code}`);
+        if(input !== code.toString()) return showToast("Kod salah.", "error");
 
         const btn = event.target;
-        const originalText = btn.innerText;
-        btn.innerText = "⏳ SEDANG MEMADAM DARI FIREBASE...";
-        btn.disabled = true;
+        btn.innerText = "⏳ MEMADAM..."; btn.disabled = true;
 
         try {
             const masterKelasRef = db.collection('sesi').doc(sesi).collection('kelas');
             const masterSnap = await masterKelasRef.get();
 
-            if (masterSnap.empty) {
-                showToast("Tiada kelas dijumpai dalam sesi ini.", "error");
-                btn.innerText = originalText;
-                btn.disabled = false;
-                return;
-            }
+            if (masterSnap.empty) { showToast("Tiada kelas."); btn.disabled = false; return; }
 
             let batch = db.batch();
             let count = 0;
@@ -385,39 +376,21 @@
 
             for (const docKelas of masterSnap.docs) {
                 const classID = docKelas.id;
-                const muridRef = db.collection('sesi').doc(sesi)
-                                   .collection('pentaksiran').doc(jenisID)
-                                   .collection('kelas').doc(classID)
-                                   .collection('murid');
+                const muridRef = db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenisID).collection('kelas').doc(classID).collection('murid');
                 const muridSnap = await muridRef.get();
 
                 for (const docMurid of muridSnap.docs) {
                     batch.delete(docMurid.ref);
                     count++;
-                    if (count % BATCH_LIMIT === 0) {
-                        await batch.commit();
-                        batch = db.batch();
-                    }
+                    if (count % BATCH_LIMIT === 0) { await batch.commit(); batch = db.batch(); }
                 }
-                const classPenRef = db.collection('sesi').doc(sesi)
-                                      .collection('pentaksiran').doc(jenisID)
-                                      .collection('kelas').doc(classID);
-                batch.delete(classPenRef);
+                batch.delete(db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenisID).collection('kelas').doc(classID));
             }
+            if (count > 0 || count % BATCH_LIMIT !== 0) await batch.commit();
 
-            if (count > 0 || count % BATCH_LIMIT !== 0) {
-                await batch.commit();
-            }
-
-            showToast(`BERJAYA! ${count} rekod murid telah dipadam sepenuhnya dari Firebase.`);
+            showToast(`BERJAYA! Data dipadam.`);
             setTimeout(() => location.reload(), 2000);
-
-        } catch(e) {
-            console.error(e);
-            showToast("Ralat Sistem: " + e.message, "error");
-            btn.innerText = originalText;
-            btn.disabled = false;
-        }
+        } catch(e) { showToast("Ralat: " + e.message, "error"); btn.disabled = false; }
     }
 
     async function backupCurrentData() {
@@ -426,131 +399,68 @@
         const sel = document.getElementById('sesiPentaksiran');
         const jenisNama = sel.options[sel.selectedIndex].text;
 
-        showToast("Sedang mengumpul data...", "normal");
-
+        showToast("Backup bermula...", "normal");
         try {
             const masterKelasRef = db.collection('sesi').doc(sesi).collection('kelas');
             const masterSnap = await masterKelasRef.get();
-            
-            if(masterSnap.empty) return showToast("Tiada kelas dalam sesi ini.", "error");
+            if(masterSnap.empty) return showToast("Tiada kelas.", "error");
 
-            let exportObj = {
-                meta: {
-                    sesi: sesi,
-                    pentaksiran_id: jenisID,
-                    pentaksiran_nama: jenisNama,
-                    tarikh_backup: new Date().toISOString()
-                },
-                data: []
-            };
-
-            let studentCount = 0;
+            let exportObj = { meta: { sesi: sesi, pentaksiran_id: jenisID, pentaksiran_nama: jenisNama, tarikh: new Date().toISOString() }, data: [] };
 
             for(const docKelas of masterSnap.docs) {
                 const classID = docKelas.id;
-                const namaKelas = docKelas.data().nama_kelas;
-
-                const muridSnap = await db.collection('sesi').doc(sesi)
-                                          .collection('pentaksiran').doc(jenisID)
-                                          .collection('kelas').doc(classID)
-                                          .collection('murid').get();
-                
+                const muridSnap = await db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenisID).collection('kelas').doc(classID).collection('murid').get();
                 if (!muridSnap.empty) {
-                    let students = muridSnap.docs.map(m => ({
-                        nama: m.data().nama,
-                        marks: m.data().marks || {}
-                    }));
-
                     exportObj.data.push({
-                        kelas_id: classID,
-                        nama_kelas: namaKelas,
-                        murid: students
+                        kelas_id: classID, nama_kelas: docKelas.data().nama_kelas,
+                        murid: muridSnap.docs.map(m => ({ nama: m.data().nama, marks: m.data().marks || {} }))
                     });
-                    studentCount += students.length;
                 }
             }
-
-            if (studentCount === 0) return showToast("Tiada data murid untuk di-backup.", "error");
+            if (exportObj.data.length === 0) return showToast("Tiada data.", "error");
 
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj, null, 2));
-            const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", `BACKUP_${jenisNama}_${sesi}.json`);
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
-
-            showToast(`Backup Berjaya! (${studentCount} murid)`);
-
-        } catch(e) {
-            console.error(e);
-            showToast("Ralat Backup: " + e.message, "error");
-        }
+            const dl = document.createElement('a');
+            dl.setAttribute("href", dataStr); dl.setAttribute("download", `BACKUP_${jenisNama}_${sesi}.json`);
+            document.body.appendChild(dl); dl.click(); dl.remove();
+            showToast("Backup selesai.");
+        } catch(e) { showToast("Ralat: " + e.message, "error"); }
     }
 
     async function restoreData(inputElement) {
         const file = inputElement.files[0];
         if(!file) return;
-
         const reader = new FileReader();
         reader.onload = async (e) => {
             try {
                 const json = JSON.parse(e.target.result);
-                if(!json.meta || !json.data) return showToast("Format fail backup tidak sah.", "error");
+                if(!json.meta || !json.data) return showToast("Format salah.", "error");
+                if(!confirm(`Restore data ${json.meta.pentaksiran_nama} (${json.meta.sesi}) ke Firebase?`)) return;
 
-                if(!confirm(`Pulihkan data untuk:\nSesi: ${json.meta.sesi}\nUjian: ${json.meta.pentaksiran_nama}\n\nIni akan diupload ke Firebase.`)) {
-                    inputElement.value = '';
-                    return;
-                }
-
-                showToast("Memulihkan data...", "normal");
-
+                showToast("Sedang upload...", "normal");
                 const sesi = json.meta.sesi;
                 const jenis = json.meta.pentaksiran_id;
-                
-                // Pastikan sesi wujud dalam DB sebelum write data
                 await db.collection('sesi').doc(sesi).set({ created: true }, {merge: true});
 
-                const BATCH_SIZE = 400;
-                let currentBatch = db.batch();
-                let opCount = 0;
-
-                for (const kelasData of json.data) {
-                    const cid = kelasData.kelas_id;
-                    
-                    const cRefMeta = db.collection('sesi').doc(sesi).collection('kelas').doc(cid);
-                    currentBatch.set(cRefMeta, { nama_kelas: kelasData.nama_kelas }, { merge: true });
+                const BATCH_SIZE = 400; let currentBatch = db.batch(); let opCount = 0;
+                for (const k of json.data) {
+                    currentBatch.set(db.collection('sesi').doc(sesi).collection('kelas').doc(k.kelas_id), { nama_kelas: k.nama_kelas }, { merge: true });
                     opCount++;
-
-                    const cRefPen = db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(cid);
+                    const cRefPen = db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(k.kelas_id);
                     currentBatch.set(cRefPen, { active: true }, { merge: true });
                     opCount++;
 
-                    for (const m of kelasData.murid) {
-                        const mRef = cRefPen.collection('murid').doc();
-                        currentBatch.set(mRef, { nama: m.nama, marks: m.marks });
+                    for (const m of k.murid) {
+                        currentBatch.set(cRefPen.collection('murid').doc(), { nama: m.nama, marks: m.marks });
                         opCount++;
-
-                        if(opCount >= BATCH_SIZE) {
-                            await currentBatch.commit();
-                            currentBatch = db.batch();
-                            opCount = 0;
-                        }
+                        if(opCount >= BATCH_SIZE) { await currentBatch.commit(); currentBatch = db.batch(); opCount = 0; }
                     }
                 }
-
                 if(opCount > 0) await currentBatch.commit();
-
-                showToast("Data berjaya dipulihkan!");
+                showToast("Restore berjaya!");
                 inputElement.value = ''; 
-                
-                // Reload to see new session if restored session was new
-                initFirebaseDropdowns();
-
-            } catch (err) {
-                console.error(err);
-                showToast("Ralat Restore: " + err.message, "error");
-            }
+                initSystemData();
+            } catch (err) { showToast("Ralat: " + err.message, "error"); }
         };
         reader.readAsText(file);
     }
@@ -559,7 +469,6 @@
         const file = document.getElementById('csvInput').files[0];
         const sesi = document.getElementById('sesiAkademik').value;
         const jenis = document.getElementById('sesiPentaksiran').value;
-        
         if (!file) return showToast("Pilih fail CSV!", "error");
         
         Papa.parse(file, {
@@ -567,53 +476,31 @@
             complete: async (res) => {
                 const data = res.data;
                 if (data.length === 0) return showToast("Fail kosong.", "error");
+                const keys = Object.keys(data[0]).map(k => k.toLowerCase().trim());
+                if (!keys.includes('nama') || !keys.includes('kelas')) return showToast("Perlu lajur 'NAMA' dan 'KELAS'", "error");
 
-                const firstRow = data[0];
-                const keys = Object.keys(firstRow).map(k => k.toLowerCase().trim());
-                if (!keys.includes('nama') || !keys.includes('kelas')) {
-                    return showToast("Format CSV salah! Pastikan ada lajur 'NAMA' dan 'KELAS'", "error");
-                }
+                showToast("Processing...", "normal");
+                const BATCH_SIZE = 400; let batch = db.batch(); let batchOps = 0;
 
-                showToast("Sedang memproses & upload...", "normal");
-                const BATCH_SIZE = 400;
-                let processedCount = 0;
-                let batch = db.batch();
-                let batchOps = 0;
-
-                for (let i = 0; i < data.length; i++) {
-                    const row = data[i];
+                for (const row of data) {
                     const d = Object.keys(row).reduce((acc, k) => { acc[k.toLowerCase().trim()] = row[k]; return acc; }, {});
-                    
                     if (d.nama && d.kelas) {
                         const cleanClass = d.kelas.toString().toUpperCase().trim();
                         const cid = cleanClass.replace(/[^a-zA-Z0-9]/g,'_'); 
                         
-                        const cRefMeta = db.collection('sesi').doc(sesi).collection('kelas').doc(cid);
-                        batch.set(cRefMeta, { nama_kelas: cleanClass }, { merge: true });
+                        batch.set(db.collection('sesi').doc(sesi).collection('kelas').doc(cid), { nama_kelas: cleanClass }, { merge: true });
                         batchOps++;
-                        
                         const cRefPen = db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(cid);
                         batch.set(cRefPen, { active: true }, { merge: true });
                         batchOps++;
-
-                        const mRef = cRefPen.collection('murid').doc();
-                        batch.set(mRef, { nama: d.nama.toUpperCase().trim(), marks: {} });
+                        batch.set(cRefPen.collection('murid').doc(), { nama: d.nama.toUpperCase().trim(), marks: {} });
                         batchOps++;
-                        processedCount++;
 
-                        if (batchOps >= BATCH_SIZE) {
-                            await batch.commit();
-                            batch = db.batch();
-                            batchOps = 0;
-                            showToast(`Disimpan: ${processedCount} murid...`);
-                        }
+                        if (batchOps >= BATCH_SIZE) { await batch.commit(); batch = db.batch(); batchOps = 0; }
                     }
                 }
-
                 if (batchOps > 0) await batch.commit();
-
-                showToast("Import CSV Selesai!");
-                loadClassList();
+                showToast("CSV Upload Selesai!"); loadClassList();
             }
         });
     }
@@ -622,51 +509,23 @@
     // FUNGSI UMUM LAIN
     // ==========================================
 
-    function loadCustomSubjects() {
-        // Subjek masih boleh guna LocalStorage sebab ia bersifat paparan sahaja
-        const custom = localStorage.getItem('customSubjects');
-        if (custom) {
-            const parsed = JSON.parse(custom);
-            parsed.forEach(s => {
-                if(!KPM_SUBJECTS.find(k => k.id === s.id)) KPM_SUBJECTS.push(s);
-            });
-        }
-    }
-
-    function addCustomSubject() {
-        const name = prompt("Masukkan nama matapelajaran baru (Contoh: JAWI):");
-        if (!name) return;
-        const id = name.substring(0, 4).toUpperCase().replace(/\s/g, '');
-        const newSub = { id: id, name: name.toUpperCase() };
-        
-        KPM_SUBJECTS.push(newSub);
-        let custom = JSON.parse(localStorage.getItem('customSubjects') || "[]");
-        custom.push(newSub);
-        localStorage.setItem('customSubjects', JSON.stringify(custom));
-        renderSubjectGrid();
-        showToast(`Subjek ${name} ditambah!`);
-    }
-
     function downloadTemplate() {
         const wb = XLSX.utils.book_new();
-        const wsData = [["NAMA", "KELAS"]]; 
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        const ws = XLSX.utils.aoa_to_sheet([["NAMA", "KELAS"]]);
         XLSX.utils.book_append_sheet(wb, ws, "Templat");
         XLSX.writeFile(wb, "Templat_Murid.xlsx");
     }
 
     function initAuthCheck() {
         auth.onAuthStateChanged((user) => {
-            const overlay = document.getElementById('auth-overlay');
-            const main = document.getElementById('main-content');
             if (user) {
-                overlay.style.display = 'none';
-                main.classList.remove('hidden');
+                document.getElementById('auth-overlay').style.display = 'none';
+                document.getElementById('main-content').classList.remove('hidden');
                 document.getElementById('user-welcome').innerText = `Admin: ${user.email}`;
-                initFirebaseDropdowns(); // Start loading data
+                initSystemData(); 
             } else {
-                overlay.style.display = 'flex';
-                main.classList.add('hidden');
+                document.getElementById('auth-overlay').style.display = 'flex';
+                document.getElementById('main-content').classList.add('hidden');
                 document.getElementById('login-state').classList.remove('hidden');
                 document.getElementById('loading-state').classList.add('hidden');
             }
@@ -676,9 +535,8 @@
     function loginWithEmail() {
         const e = document.getElementById('emailInput').value;
         const p = document.getElementById('passwordInput').value;
-        const err = document.getElementById('login-error');
-        if(!e || !p) return err.innerText = "Isi semua ruang.", err.classList.remove('hidden');
-        auth.signInWithEmailAndPassword(e, p).catch(error => { err.innerText = "Log masuk gagal."; err.classList.remove('hidden'); });
+        if(!e || !p) return;
+        auth.signInWithEmailAndPassword(e, p).catch(err => { document.getElementById('login-error').innerText="Login Gagal"; document.getElementById('login-error').classList.remove('hidden'); });
     }
     
     function logoutSystem() { auth.signOut().then(() => location.reload()); }
@@ -686,7 +544,8 @@
     function renderSubjectGrid() {
         const grid = document.getElementById('subject-grid');
         grid.innerHTML = '';
-        KPM_SUBJECTS.forEach(sub => {
+        ALL_SUBJECTS.forEach(sub => {
+            // Default check common subjects only
             const isChecked = ['BM','BI','MT','SN','SJ','PAI'].includes(sub.id) ? 'checked' : '';
             grid.innerHTML += `<label class="flex items-center space-x-3 p-1.5 hover:bg-slate-50 cursor-pointer rounded"><input type="checkbox" value="${sub.id}" class="sub-checkbox w-4 h-4" ${isChecked} onchange="updateSelectedSubjects()"> <span class="font-medium">${sub.name}</span></label>`;
         });
@@ -700,8 +559,7 @@
 
     async function loadClassList() {
         const sesi = document.getElementById('sesiAkademik').value;
-        if(!sesi) return; // Prevent error if sesi not yet loaded
-
+        if(!sesi) return;
         const snap = await db.collection('sesi').doc(sesi).collection('kelas').get();
         const dd = document.getElementById('classDropdown');
         dd.innerHTML = '<option value="">-- Pilih Kelas --</option>' + snap.docs.map(d => `<option value="${d.id}">${d.data().nama_kelas || d.id}</option>`).join('');
@@ -727,26 +585,17 @@
         const sesi = document.getElementById('sesiAkademik').value;
         const jenis = document.getElementById('sesiPentaksiran').value;
         const kelas = document.getElementById('classDropdown').value;
-
-        if(!kelas) return showToast("Sila pilih KELAS dahulu.", "error");
-        if(!confirm(`AMARAN: Padam data murid untuk kelas ${kelas} sahaja?`)) return;
-        if(prompt("Taip 'PADAM' untuk sahkan:") !== "PADAM") return;
+        if(!kelas) return showToast("Pilih kelas.", "error");
+        if(!confirm(`Padam data kelas ${kelas}?`) || prompt("Taip 'PADAM':")!=="PADAM") return;
 
         try {
             const classRef = db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(kelas);
-            const muridSnap = await classRef.collection('murid').get();
-            
-            const batches = [];
-            const BATCH_SIZE = 400;
-            for (let i = 0; i < muridSnap.docs.length; i += BATCH_SIZE) {
-                const batch = db.batch();
-                muridSnap.docs.slice(i, i + BATCH_SIZE).forEach(doc => batch.delete(doc.ref));
-                batches.push(batch.commit());
-            }
-            
-            await Promise.all(batches);
-            showToast("Data kelas berjaya dipadam dari Firebase!");
-        } catch(e) { showToast("Ralat: " + e.message, "error"); }
+            const batch = db.batch();
+            const snaps = await classRef.collection('murid').get();
+            snaps.forEach(d => batch.delete(d.ref));
+            await batch.commit();
+            showToast("Kelas dipadam.");
+        } catch(e) { showToast(e.message, "error"); }
     }
 
     async function addStudentManual() {
@@ -754,39 +603,26 @@
         const sesi = document.getElementById('sesiAkademik').value;
         const jenis = document.getElementById('sesiPentaksiran').value;
         const kelas = document.getElementById('classDropdown').value;
-        if(!nama || !kelas) return showToast("Isi nama dan pilih kelas.", "error");
-        try {
-            await db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(kelas).collection('murid').add({ nama: nama, marks: {} });
-            document.getElementById('newStudentName').value = '';
-            showToast("Murid ditambah.");
-        } catch(e) { showToast("Ralat: " + e.message, "error"); }
+        if(!nama || !kelas) return showToast("Isi nama.", "error");
+        await db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(kelas).collection('murid').add({ nama: nama, marks: {} });
+        document.getElementById('newStudentName').value = '';
+        showToast("Murid ditambah.");
     }
 
     async function updateMark(sid, sub, val) {
         const sesi = document.getElementById('sesiAkademik').value;
         const jenis = document.getElementById('sesiPentaksiran').value;
         const kelas = document.getElementById('classDropdown').value;
-        
-        let cleanVal = parseFloat(val);
-        if (isNaN(cleanVal)) cleanVal = 0;
-        if (cleanVal < 0) cleanVal = 0;
-        if (cleanVal > 100) cleanVal = 100;
-
-        const inputEl = document.activeElement;
-        if (inputEl && inputEl.value != cleanVal && val !== "") {
-            inputEl.value = cleanVal;
-        }
-
-        await db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(kelas).collection('murid').doc(sid).set({ marks: {[sub]: cleanVal} }, {merge: true});
+        let c = parseFloat(val); if(isNaN(c))c=0; if(c>100)c=100;
+        await db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(kelas).collection('murid').doc(sid).set({ marks: {[sub]: c} }, {merge: true});
     }
 
     async function deleteStudent(sid) {
-        if(!confirm("Padam murid ini?")) return;
+        if(!confirm("Padam murid?")) return;
         const sesi = document.getElementById('sesiAkademik').value;
         const jenis = document.getElementById('sesiPentaksiran').value;
         const kelas = document.getElementById('classDropdown').value;
         await db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(kelas).collection('murid').doc(sid).delete();
-        showToast("Murid dipadam.");
     }
 
     function renderTable() {
@@ -810,26 +646,16 @@
 
     function calculate() {
         const getGrade = (m) => { m=parseFloat(m)||0; if(m>=80)return{g:'A',p:1}; if(m>=70)return{g:'B',p:2}; if(m>=60)return{g:'C',p:3}; if(m>=50)return{g:'D',p:4}; if(m>=40)return{g:'E',p:5}; return{g:'F',p:6}; };
-        const core = ['BM','BI','MT','SN','SJ','PAI']; 
-        let totalPass=0;
+        const core = ['BM','BI','MT','SN','SJ','PAI']; let totalPass=0;
         
         currentClassData.forEach(s => {
             let tm=0, tp=0, count=0, l=true;
             selectedSubjects.forEach(sub => { 
                 let m=s.marks?.[sub]; 
-                if(m!==undefined&&m!==""){ 
-                    m=parseFloat(m); 
-                    if(m>100) m=100; 
-                    let r=getGrade(m); 
-                    tm+=m; tp+=r.p; count++; 
-                    if(core.includes(sub)&&m<40)l=false; 
-                } 
+                if(m!==undefined&&m!==""){ m=parseFloat(m); if(m>100)m=100; let r=getGrade(m); tm+=m; tp+=r.p; count++; if(core.includes(sub)&&m<40)l=false; } 
             });
-            s.gpm = count>0?(tp/count).toFixed(2):'0.00'; 
-            s.percent=count>0?((tm/(count*100))*100).toFixed(2):'0.00'; 
-            s.statusLulus=(count>0&&l)?"LULUS":"GAGAL"; 
-            if(s.statusLulus==="LULUS")totalPass++; 
-            s.totalMarks=tm;
+            s.gpm = count>0?(tp/count).toFixed(2):'0.00'; s.percent=count>0?((tm/(count*100))*100).toFixed(2):'0.00'; 
+            s.statusLulus=(count>0&&l)?"LULUS":"GAGAL"; if(s.statusLulus==="LULUS")totalPass++; s.totalMarks=tm;
         });
         
         const sorted = [...currentClassData].sort((a,b)=>parseFloat(a.gpm)-parseFloat(b.gpm)||b.totalMarks-a.totalMarks);
@@ -838,18 +664,14 @@
         document.getElementById('stat-gpm').innerText=(currentClassData.reduce((a,b)=>a+parseFloat(b.gpm||0),0)/(currentClassData.length||1)).toFixed(2);
         document.getElementById('stat-lulus').innerText=((totalPass/(currentClassData.length||1))*100).toFixed(1)+"%";
         document.getElementById('top-5-list').innerHTML=sorted.slice(0,5).map((s,i)=>`<div class="flex justify-between items-center p-2 border-b text-[11px]"><span>${i+1}. <b>${s.nama}</b></span><span class="bg-emerald-100 text-emerald-800 px-2 rounded font-black">GPM: ${s.gpm}</span></div>`).join('');
-        
         document.getElementById('excellence-panel').classList.remove('hidden'); 
         document.getElementById('print-btn-area').classList.remove('hidden');
-        renderTable(); 
-        generateSijil(getGrade);
-        showToast("Analisis & Sijil Dijana!");
+        renderTable(); generateSijil(getGrade); showToast("Analisis Siap!");
     }
 
     function generateSijil(getGrade) {
         const sortedAZ = [...currentClassData].sort((a, b) => a.nama.localeCompare(b.nama));
-        const sel = document.getElementById('sesiPentaksiran');
-        const pentaksiran = sel.options[sel.selectedIndex].text;
+        const pentaksiran = document.getElementById('sesiPentaksiran').options[document.getElementById('sesiPentaksiran').selectedIndex].text;
         const sesi = document.getElementById('sesiAkademik').value;
         
         document.getElementById('section-sijil').innerHTML = sortedAZ.map(s => `
@@ -860,35 +682,13 @@
                         <h2 class="text-2xl font-black text-blue-900">SK ABANG GESA, BELAWAI</h2>
                         <p class="text-xs font-bold text-slate-500 uppercase">${pentaksiran} (${sesi})</p>
                     </div>
-                    <div class="text-center">
-                        <h1 style="font-family: 'Cinzel', serif;" class="text-5xl font-bold text-blue-900">SIJIL PENCAPAIAN</h1>
-                        <p class="mt-4 italic text-sm text-slate-500">Dianugerahkan kepada</p>
-                        <h2 class="text-3xl font-black my-4 uppercase text-blue-950 border-b-4 border-double border-blue-900 inline-block px-12 pb-2">${s.nama}</h2>
-                    </div>
+                    <div class="text-center"><h1 style="font-family: 'Cinzel', serif;" class="text-5xl font-bold text-blue-900">SIJIL PENCAPAIAN</h1><p class="mt-4 italic text-sm text-slate-500">Dianugerahkan kepada</p><h2 class="text-3xl font-black my-4 uppercase text-blue-950 border-b-4 border-double border-blue-900 inline-block px-12 pb-2">${s.nama}</h2></div>
                     <div class="flex justify-center flex-grow py-4">
-                        <table class="w-11/12 border-2 border-slate-800 text-[11px]">
-                            <thead class="bg-blue-900 text-white uppercase text-sm">
-                                <tr><th class="p-3 border text-left">MATAPELAJARAN</th><th class="p-3 border text-center">MARKAH</th><th class="p-3 border text-center">GRED</th></tr>
-                            </thead>
-                            <tbody class="font-bold">
-                                ${selectedSubjects.map(sub => { 
-                                    let m=s.marks?.[sub]; 
-                                    if(m===undefined||m==="")return""; 
-                                    return `<tr><td class="border border-slate-800 p-2 px-6 uppercase">${KPM_SUBJECTS.find(k=>k.id===sub)?.name||sub}</td><td class="border border-slate-800 text-center p-2 text-base">${m}</td><td class="border border-slate-800 text-center p-2 text-base font-black text-blue-900">${getGrade(m).g}</td></tr>`; 
-                                }).join('')}
-                            </tbody>
-                        </table>
+                        <table class="w-11/12 border-2 border-slate-800 text-[11px]"><thead class="bg-blue-900 text-white uppercase text-sm"><tr><th class="p-3 border text-left">MATAPELAJARAN</th><th class="p-3 border text-center">MARKAH</th><th class="p-3 border text-center">GRED</th></tr></thead>
+                            <tbody class="font-bold">${selectedSubjects.map(sub => { let m=s.marks?.[sub]; if(m===undefined||m==="")return""; return `<tr><td class="border border-slate-800 p-2 px-6 uppercase">${ALL_SUBJECTS.find(k=>k.id===sub)?.name||sub}</td><td class="border border-slate-800 text-center p-2 text-base">${m}</td><td class="border border-slate-800 text-center p-2 text-base font-black text-blue-900">${getGrade(m).g}</td></tr>`; }).join('')}</tbody></table>
                     </div>
-                    <div class="grid grid-cols-4 gap-4 text-center max-w-3xl mx-auto font-black text-xs w-full">
-                        <div class="bg-slate-100 p-3 border rounded-xl">GPM: ${s.gpm}</div>
-                        <div class="bg-slate-100 p-3 border rounded-xl">KEDUDUKAN: ${s.rank}</div>
-                        <div class="bg-blue-900 text-white p-3 rounded-xl uppercase">${s.statusLulus}</div>
-                        <div class="bg-slate-100 p-3 border rounded-xl">PERATUS: ${s.percent}%</div>
-                    </div>
-                    <div class="mt-12 flex justify-between px-16 text-sm font-black text-center uppercase">
-                        <div class="w-56"><div class="border-b-2 border-black h-12 mb-2"></div><p>Guru Kelas</p></div>
-                        <div class="w-56"><div class="border-b-2 border-black h-12 mb-2"></div><p>Guru Besar</p></div>
-                    </div>
+                    <div class="grid grid-cols-4 gap-4 text-center max-w-3xl mx-auto font-black text-xs w-full"><div class="bg-slate-100 p-3 border rounded-xl">GPM: ${s.gpm}</div><div class="bg-slate-100 p-3 border rounded-xl">KEDUDUKAN: ${s.rank}</div><div class="bg-blue-900 text-white p-3 rounded-xl uppercase">${s.statusLulus}</div><div class="bg-slate-100 p-3 border rounded-xl">PERATUS: ${s.percent}%</div></div>
+                    <div class="mt-12 flex justify-between px-16 text-sm font-black text-center uppercase"><div class="w-56"><div class="border-b-2 border-black h-12 mb-2"></div><p>Guru Kelas</p></div><div class="w-56"><div class="border-b-2 border-black h-12 mb-2"></div><p>Guru Besar</p></div></div>
                 </div>
             </div>`).join('');
     }
@@ -897,7 +697,7 @@
         const data = currentClassData.map(m => ({ Nama: m.nama, ...m.marks, GPM: m.gpm, Rank: m.rank, Status: m.statusLulus }));
         const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Analisis"); XLSX.writeFile(wb, `Analisis_SKAG.xlsx`);
-        showToast("Fail Excel dimuat turun.");
+        showToast("Excel dimuat turun.");
     }
 </script>
 </body>
