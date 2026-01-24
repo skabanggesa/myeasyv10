@@ -597,21 +597,59 @@
         XLSX.writeFile(wb, "Templat_Import_SKAG.xlsx"); 
     }
 
-    async function processCSV() {
-        const file = document.getElementById('csvInput').files[0], sesi = document.getElementById('sesiAkademik').value, jenis = document.getElementById('sesiPentaksiran').value;
-        if (!file) { showToast("Sila pilih fail CSV", "error"); return; }
-        Papa.parse(file, { header: true, skipEmptyLines: true, complete: async (res) => {
-            for (const row of res.data) {
+async function processCSV() {
+    const file = document.getElementById('csvInput').files[0];
+    const sesi = document.getElementById('sesiAkademik').value;
+    const jenis = document.getElementById('sesiPentaksiran').value;
+    
+    if (!file) return showToast("Pilih fail CSV!", "error");
+    if (!sesi || !jenis) return showToast("Sila pilih Sesi dan Ujian dahulu!", "error");
+
+    showToast("Sedang memproses... Sila tunggu.", "success");
+
+    Papa.parse(file, {
+        header: true, skipEmptyLines: true,
+        complete: async (res) => {
+            const data = res.data;
+            if (data.length === 0) return showToast("Fail kosong.", "error");
+
+            const BATCH_SIZE = 400; 
+            let batch = db.batch(); 
+            let batchOps = 0;
+
+            for (const row of data) {
                 const d = Object.keys(row).reduce((acc, k) => { acc[k.toLowerCase().trim()] = row[k]; return acc; }, {});
+                
                 if (d.nama && d.kelas) {
-                    const cid = d.kelas.toString().toUpperCase().trim().replace(/[^a-zA-Z0-9]/g,'_');
-                    await db.collection('sesi').doc(sesi).collection('kelas').doc(cid).set({ nama_kelas: d.kelas.toUpperCase() }, {merge:true});
-                    await db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(cid).collection('murid').add({ nama: d.nama.toUpperCase().trim(), marks: {} });
+                    const cleanName = d.nama.toUpperCase().trim();
+                    const cleanClass = d.kelas.toString().toUpperCase().trim();
+                    
+                    // Jana ID unik berdasarkan nama (supaya tidak duplikasi)
+                    const studentID = cleanName.replace(/[^a-zA-Z0-9]/g, '_');
+                    const classID = cleanClass.replace(/[^a-zA-Z0-9]/g, '_');
+
+                    const classRef = db.collection('sesi').doc(sesi).collection('kelas').doc(classID);
+                    const muridRef = db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis)
+                                       .collection('kelas').doc(classID).collection('murid').doc(studentID);
+
+                    batch.set(classRef, { nama_kelas: cleanClass }, { merge: true });
+                    batch.set(muridRef, { nama: cleanName, marks: {} }, { merge: true });
+                    
+                    batchOps += 2;
+
+                    if (batchOps >= BATCH_SIZE) {
+                        await batch.commit();
+                        batch = db.batch();
+                        batchOps = 0;
+                    }
                 }
             }
-            showToast("Pukal import selesai!"); loadClassList();
-        }});
-    }
+            if (batchOps > 0) await batch.commit();
+            showToast("Selesai! Data telah dikemaskini.");
+            loadClassList();
+        }
+    });
+}
 
     function exportToExcel() {
         const data = currentClassData.map(m => ({ Nama: m.nama, ...m.marks, GPM: m.gpm, Status: m.statusLulus }));
@@ -621,3 +659,4 @@
 </script>
 </body>
 </html>
+
