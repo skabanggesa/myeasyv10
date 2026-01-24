@@ -429,25 +429,70 @@
         showToast("Satu kelas telah dikosongkan.");
     }
 
-    async function deleteAllPentaksiranData() {
-        const code = Math.floor(1000 + Math.random() * 9000);
-        const confirmation = prompt(`AMARAN! Anda akan memadam SEMUA DATA CLOUD. Sila taip kod ini untuk sahkan: ${code}`);
-        if(confirmation !== code.toString()) return;
-        
-        showToast("Memadam data pangkalan data...", "error");
-        // Logik memadam koleksi memerlukan fungsi rekursif atau Cloud Function, 
-        // di sini kita buat pemadaman rekod kelas secara manual melalui Batch.
-        const sesi = document.getElementById('sesiAkademik').value;
-        const kelasSnap = await db.collection('sesi').doc(sesi).collection('kelas').get();
-        for(const kDoc of kelasSnap.docs) {
-             const jenis = document.getElementById('sesiPentaksiran').value;
-             const mSnap = await db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(kDoc.id).collection('murid').get();
-             let batch = db.batch();
-             mSnap.forEach(m => batch.delete(m.ref));
-             await batch.commit();
+async function deleteAllPentaksiranData() {
+    const sesi = document.getElementById('sesiAkademik').value;
+    const jenisID = document.getElementById('sesiPentaksiran').value;
+    const sel = document.getElementById('sesiPentaksiran');
+    const jenisNama = sel.options[sel.selectedIndex].text;
+
+    if(!confirm(`AMARAN KRITIKAL!\n\nPadam SEMUA DATA (Kelas & Pelajar) untuk:\nSesi: ${sesi}\nUjian: ${jenisNama}\n\nData akan dipadam kekal dari Cloud.`)) return;
+    
+    const code = Math.floor(1000 + Math.random() * 9000);
+    const input = prompt(`Taip kod pengesahan ini untuk meneruskan: ${code}`);
+    if(input !== code.toString()) return showToast("Kod salah. Pemadaman dibatalkan.", "error");
+
+    const btn = event.target;
+    const originalText = btn.innerText;
+    btn.innerText = "⏳ MEMADAM SEMUA..."; 
+    btn.disabled = true;
+
+    try {
+        // 1. Ambil semua kelas yang didaftarkan di bawah sesi/ujian tersebut
+        const kelasRef = db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenisID).collection('kelas');
+        const kelasSnap = await kelasRef.get();
+
+        if (kelasSnap.empty) { 
+            showToast("Tiada data ditemui."); 
+            btn.innerText = originalText;
+            btn.disabled = false;
+            return; 
         }
-        location.reload();
+
+        let batch = db.batch();
+        let count = 0;
+
+        for (const docKelas of kelasSnap.docs) {
+            // A. Ambil semua murid dalam kelas ini
+            const muridSnap = await docKelas.ref.collection('murid').get();
+            muridSnap.forEach(docMurid => {
+                batch.delete(docMurid.ref);
+                count++;
+            });
+
+            // B. Padam dokumen KELAS itu sendiri (ini yang tertinggal sebelum ini)
+            batch.delete(docKelas.ref);
+            count++;
+
+            // Commit jika batch terlalu besar (limit 500)
+            if (count >= 400) {
+                await batch.commit();
+                batch = db.batch();
+                count = 0;
+            }
+        }
+
+        if (count > 0) await batch.commit();
+
+        showToast(`BERJAYA! Semua data ${jenisNama} telah dikosongkan.`, "success");
+        setTimeout(() => location.reload(), 1500);
+
+    } catch(e) { 
+        console.error(e);
+        showToast("Ralat: " + e.message, "error"); 
+        btn.innerText = originalText;
+        btn.disabled = false;
     }
+}
 
     function renderTable() {
         const search = document.getElementById('searchInput').value.toUpperCase();
@@ -659,4 +704,5 @@ async function processCSV() {
 </script>
 </body>
 </html>
+
 
