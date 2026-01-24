@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Malaysian Exam Analysis System V12.0 - Full Cloud</title>
+    <title>Sistem Analisis SKAG V13.0 - DELIMa Cloud</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -12,8 +12,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Great+Vibes&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Great+Vibes&family=Inter:wght@400;700;900&display=swap');
         
+        body { font-family: 'Inter', sans-serif; }
+
         @media print {
             body * { visibility: hidden; }
             #section-sijil, #section-sijil * { visibility: visible; }
@@ -36,53 +38,68 @@
         .mark-input { width: 50px; padding: 4px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; }
         .mark-input:invalid { border-color: red; background-color: #fee2e2; }
 
-        #auth-overlay { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        #auth-overlay { position: fixed; inset: 0; background: #f8fafc; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
         
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; }
         .toast { padding: 12px 20px; border-radius: 8px; color: white; font-weight: bold; font-size: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); animation: slideIn 0.3s ease-out; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* Style Baru Butang Google */
+        .google-btn {
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+            background: white; color: #374151; font-weight: 700; padding: 14px 24px;
+            border-radius: 16px; border: 1px solid #e2e8f0; transition: all 0.2s;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); width: 100%;
+        }
+        .google-btn:hover { background: #f9fafb; border-color: #cbd5e1; transform: translateY(-1px); }
+        .google-btn:active { transform: scale(0.98); }
     </style>
 </head>
-<body class="bg-slate-50 font-sans text-slate-800 text-sm">
+<body class="bg-slate-50 text-slate-800 text-sm">
 
 <div id="toast-container"></div>
 
 <div id="auth-overlay">
     <div id="loading-state" class="text-center">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-900 mb-4 mx-auto"></div>
-        <p class="font-bold text-blue-900 animate-pulse">MENYEMAK DATA CLOUD...</p>
+        <p class="font-bold text-blue-900 animate-pulse uppercase tracking-widest text-[10px]">Menyemak Autentikasi Cloud...</p>
     </div>
-    
-    <div id="login-state" class="hidden text-center bg-white p-8 rounded-3xl shadow-2xl border border-slate-200 max-w-sm w-full mx-4">
-        <div class="mb-6">
+
+    <div id="login-state" class="hidden text-center bg-white p-10 rounded-[2.5rem] shadow-2xl border border-slate-100 max-w-sm w-full mx-4">
+        <div class="mb-8">
             <img src="myeasy.png" alt="Logo MyEasy" class="w-32 mx-auto drop-shadow-md">
         </div>
         
-        <h2 class="text-2xl font-black text-blue-900 mb-1">Malaysian Exam Analysis System V12.0</h2>
-        <p class="text-[10px] font-bold text-slate-400 uppercase mb-6 tracking-widest">Powered by MyEasy</p>
+        <h2 class="text-2xl font-black text-blue-900 mb-1 leading-tight uppercase">SISTEM ANALISIS SKAG</h2>
+        <p class="text-[10px] font-bold text-slate-400 uppercase mb-10 tracking-[0.2em]">Powered by MyEasy</p>
 
-        <div class="space-y-4 text-left">
-            <div>
-                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1 ml-1">Emel Rasmi</label>
-                <input type="email" id="emailInput" placeholder="guru@email.com" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
-            </div>
-            <div>
-                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1 ml-1">Kata Laluan</label>
-                <input type="password" id="passwordInput" placeholder="••••••••" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
-            </div>
-            <p id="login-error" class="text-red-600 text-xs font-bold text-center hidden bg-red-50 py-2 rounded-lg"></p>
-            <button onclick="loginWithEmail()" id="btnLogin" class="w-full bg-blue-900 hover:bg-blue-800 text-white font-black py-4 rounded-xl shadow-lg shadow-blue-200 transition-all active:scale-95">
-                LOG MASUK SEKARANG
+        <div class="space-y-4">
+            <button onclick="loginWithGoogle()" class="google-btn">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6">
+                <span class="text-sm">Log Masuk dengan DELIMa</span>
             </button>
+            <div class="pt-4 border-t border-slate-100">
+                <p class="text-[9px] text-slate-400 font-bold px-4 leading-relaxed uppercase">
+                    Akses khas untuk akaun <span class="text-blue-600">@moe-dl.edu.my</span> (Guru) atau <span class="text-blue-600">@moe.edu.my</span> sahaja.
+                </p>
+            </div>
         </div>
+        
+        <div id="login-error" class="mt-6 p-4 bg-red-50 text-red-600 text-[10px] font-bold rounded-2xl hidden border border-red-100"></div>
     </div>
 </div>
 
 <div id="main-content" class="hidden">
     <div class="bg-white p-5 shadow-sm border-b-4 border-blue-900 no-print">
         <div class="container mx-auto flex justify-between items-center gap-4">
-            <div><h1 class="text-xl font-black text-blue-900 uppercase">MALAYSIAN EXAM ANALYSIS SYSTEM</h1><p id="user-welcome" class="text-[10px] font-bold text-blue-500 uppercase">...</p></div>
-            <button onclick="logoutSystem()" class="bg-red-600 text-white px-5 py-2 rounded-lg font-bold text-xs uppercase">🚪 Log Keluar</button>
+            <div class="flex items-center gap-4">
+                <img src="myeasy.png" class="h-10">
+                <div>
+                    <h1 class="text-xl font-black text-blue-900 uppercase leading-none">MALAYSIAN EXAM ANALYSIS SYSTEM</h1>
+                    <p id="user-welcome" class="text-[10px] font-bold text-emerald-600 uppercase mt-1 tracking-wider">...</p>
+                </div>
+            </div>
+            <button onclick="logoutSystem()" class="bg-slate-100 hover:bg-red-50 hover:text-red-600 text-slate-500 px-5 py-2 rounded-xl font-black text-[10px] uppercase transition-all">🚪 Log Keluar</button>
         </div>
     </div>
 
@@ -92,49 +109,49 @@
             <div class="space-y-4">
                 
                 <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                    <h2 class="font-bold text-xs text-blue-700 uppercase mb-4 text-[10px]">⚙️ 1. Tetapan Sesi (Global)</h2>
+                    <h2 class="font-bold text-blue-700 uppercase mb-4 text-[10px] tracking-widest">⚙️ 1. Tetapan Sesi (Global)</h2>
                     
                     <label class="text-[10px] font-bold text-slate-400 block mb-1">SESI AKADEMIK</label>
                     <div class="flex gap-2 mb-4">
-                        <select id="sesiAkademik" onchange="loadClassList()" class="flex-1 p-2 border rounded font-bold text-blue-900 bg-blue-50">
+                        <select id="sesiAkademik" onchange="loadClassList()" class="flex-1 p-2 border rounded font-bold text-blue-900 bg-blue-50 text-xs">
                             <option value="">Memuatkan...</option>
                         </select>
-                        <button onclick="addSessionToFirebase()" class="bg-blue-200 hover:bg-blue-300 text-blue-800 px-3 rounded font-bold text-lg" title="Tambah Sesi Baru ke Firebase">+</button>
+                        <button onclick="addSessionToFirebase()" class="bg-blue-200 hover:bg-blue-300 text-blue-800 px-3 rounded font-bold text-lg" title="Tambah Sesi Baru">+</button>
                     </div>
                     
                     <label class="text-[10px] font-bold text-slate-400 block mb-1">JENIS PENTAKSIRAN</label>
                     <div class="flex gap-2 mb-4">
-                        <select id="sesiPentaksiran" onchange="startSync()" class="flex-1 p-2 border rounded font-bold text-emerald-800 bg-emerald-50">
+                        <select id="sesiPentaksiran" onchange="startSync()" class="flex-1 p-2 border rounded font-bold text-emerald-800 bg-emerald-50 text-xs">
                              <option value="">Memuatkan...</option>
                         </select>
-                        <button onclick="addAssessmentToFirebase()" class="bg-emerald-200 hover:bg-emerald-300 text-emerald-800 px-3 rounded font-bold text-lg" title="Tambah Ujian Baru ke Firebase">+</button>
+                        <button onclick="addAssessmentToFirebase()" class="bg-emerald-200 hover:bg-emerald-300 text-emerald-800 px-3 rounded font-bold text-lg" title="Tambah Ujian Baru">+</button>
                     </div>
 
                     <div id="class-area" class="hidden">
                         <label class="text-[10px] font-bold text-slate-400 block mb-1">PILIH KELAS</label>
-                        <select id="classDropdown" onchange="startSync()" class="w-full p-2 border border-amber-300 rounded font-bold text-blue-900 bg-amber-50"></select>
+                        <select id="classDropdown" onchange="startSync()" class="w-full p-2 border border-amber-300 rounded font-bold text-blue-900 bg-amber-50 text-xs"></select>
                     </div>
                 </div>
 
                 <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                    <h2 class="font-bold text-xs text-blue-700 uppercase mb-3 text-[10px]">📥 2. Import CSV (Pukal)</h2>
+                    <h2 class="font-bold text-blue-700 uppercase mb-3 text-[10px] tracking-widest">📥 2. Import CSV (Pukal)</h2>
                     <div class="flex gap-2 mb-2">
-                        <button onclick="downloadTemplate()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 py-1 rounded text-[9px] font-bold border border-slate-300">⬇️ Templat CSV</button>
+                        <button onclick="downloadTemplate()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 py-1.5 rounded text-[9px] font-bold border border-slate-300">⬇️ Templat CSV</button>
                     </div>
                     <input type="file" id="csvInput" accept=".csv" class="w-full text-[10px] mb-2">
-                    <button onclick="processCSV()" class="w-full bg-blue-600 text-white py-2 rounded text-[10px] font-bold uppercase hover:bg-blue-700">Proses Fail CSV</button>
+                    <button onclick="processCSV()" class="w-full bg-blue-600 text-white py-2.5 rounded text-[10px] font-bold uppercase hover:bg-blue-700 shadow-md transition-all">Proses Fail CSV</button>
                 </div>
 
-                <div class="bg-slate-800 p-5 rounded-xl shadow-lg border text-white">
+                <div class="bg-slate-800 p-5 rounded-xl shadow-lg border border-slate-700 text-white">
                     <h2 class="font-black text-[10px] text-yellow-400 uppercase mb-3 border-b border-slate-600 pb-1">💾 PENGURUSAN DATA (ADVANCED)</h2>
                     
                     <div class="grid grid-cols-2 gap-2 mb-4">
-                        <button onclick="backupCurrentData()" class="bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-lg text-[10px] font-bold flex flex-col items-center justify-center gap-1">
+                        <button onclick="backupCurrentData()" class="bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-lg text-[10px] font-bold flex flex-col items-center justify-center gap-1 transition-all">
                             <span class="text-lg">💾</span>
                             <span>BACKUP</span>
                         </button>
                         
-                        <button onclick="document.getElementById('restoreInput').click()" class="bg-sky-600 hover:bg-sky-500 text-white py-3 rounded-lg text-[10px] font-bold flex flex-col items-center justify-center gap-1">
+                        <button onclick="document.getElementById('restoreInput').click()" class="bg-sky-600 hover:bg-sky-500 text-white py-3 rounded-lg text-[10px] font-bold flex flex-col items-center justify-center gap-1 transition-all">
                             <span class="text-lg">♻️</span>
                             <span>RESTORE</span>
                         </button>
@@ -142,7 +159,7 @@
                     </div>
 
                     <div class="space-y-2 border-t border-slate-600 pt-3">
-                        <p class="text-[9px] text-red-300 font-bold uppercase">Zon Bahaya:</p>
+                        <p class="text-[9px] text-red-300 font-bold uppercase tracking-widest">Zon Bahaya:</p>
                         <button onclick="deleteCurrentClass()" class="w-full bg-slate-700 hover:bg-slate-600 text-white py-2 rounded text-[9px] font-bold border border-slate-600 text-left px-3">🗑️ Padam Kelas Ini Sahaja</button>
                         <button onclick="deleteAllPentaksiranData()" class="w-full bg-red-900 hover:bg-red-800 text-white py-2 rounded text-[9px] font-bold border border-red-700 text-left px-3">🚨 Padam SEMUA Data (Reset)</button>
                     </div>
@@ -150,8 +167,8 @@
 
                 <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
                     <div class="flex justify-between items-center mb-3">
-                        <h2 class="font-bold text-xs text-blue-700 uppercase text-[10px]">📚 Matapelajaran (Global)</h2>
-                        <button onclick="addSubjectToFirebase()" class="text-[9px] bg-blue-100 text-blue-800 px-2 py-1 rounded hover:bg-blue-200 font-bold">+ Tambah (Cloud)</button>
+                        <h2 class="font-bold text-blue-700 uppercase text-[10px] tracking-widest">📚 Matapelajaran</h2>
+                        <button onclick="addSubjectToFirebase()" class="text-[9px] bg-blue-50 text-blue-800 px-2 py-1 rounded hover:bg-blue-100 font-bold">+ Cloud</button>
                     </div>
                     <div id="subject-grid" class="grid grid-cols-1 gap-1 max-h-48 overflow-y-auto text-[10px]"></div>
                 </div>
@@ -160,42 +177,50 @@
             <div class="lg:col-span-3 space-y-6">
                 
                 <div id="dashboard" class="grid grid-cols-2 md:grid-cols-4 gap-4 hidden">
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border-l-8 border-blue-600 text-center"><p class="text-[10px] font-bold text-slate-400">GPM KELAS</p><p id="stat-gpm" class="text-3xl font-black text-blue-900">-</p></div>
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border-l-8 border-emerald-500 text-center"><p class="text-[10px] font-bold text-slate-400">% LULUS</p><p id="stat-lulus" class="text-3xl font-black text-emerald-600">-</p></div>
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border-l-8 border-orange-400 text-center"><p class="text-[10px] font-bold text-slate-400">BIL. MURID</p><p id="stat-murid" class="text-3xl font-black text-slate-800">-</p></div>
-                    <button onclick="calculate()" class="bg-blue-900 text-white rounded-2xl font-black text-sm uppercase shadow-xl hover:scale-105 transition">🚀 JANA SIJIL & ANALISIS</button>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border-l-8 border-blue-600 text-center"><p class="text-[10px] font-bold text-slate-400 uppercase">GPM KELAS</p><p id="stat-gpm" class="text-3xl font-black text-blue-900">-</p></div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border-l-8 border-emerald-500 text-center"><p class="text-[10px] font-bold text-slate-400 uppercase">% LULUS</p><p id="stat-lulus" class="text-3xl font-black text-emerald-600">-</p></div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border-l-8 border-orange-400 text-center"><p class="text-[10px] font-bold text-slate-400 uppercase">BIL. MURID</p><p id="stat-murid" class="text-3xl font-black text-slate-800">-</p></div>
+                    <button onclick="calculate()" class="bg-blue-900 text-white rounded-2xl font-black text-sm uppercase shadow-xl hover:scale-105 transition-all active:scale-95">🚀 JANA SIJIL & ANALISIS</button>
                 </div>
 
-                <div id="manual-add-area" class="bg-green-50 p-4 rounded-xl border border-green-200 hidden flex flex-col md:flex-row gap-2 items-center">
-                    <span class="text-xs font-bold text-green-800 uppercase whitespace-nowrap">➕ Tambah Murid Baru:</span>
-                    <input type="text" id="newStudentName" placeholder="Nama Penuh Murid..." class="flex-1 p-2 border rounded text-xs uppercase font-bold">
-                    <button onclick="addStudentManual()" class="bg-green-600 text-white px-4 py-2 rounded font-bold text-xs uppercase hover:bg-green-700">Simpan</button>
+                <div id="manual-add-area" class="bg-emerald-50 p-4 rounded-xl border border-emerald-100 hidden flex flex-col md:flex-row gap-2 items-center">
+                    <span class="text-xs font-bold text-emerald-800 uppercase whitespace-nowrap">➕ Tambah Murid Baru:</span>
+                    <input type="text" id="newStudentName" placeholder="Nama Penuh Murid..." class="flex-1 p-2 border rounded-xl text-xs uppercase font-bold outline-none focus:ring-2 focus:ring-emerald-400">
+                    <button onclick="addStudentManual()" class="bg-emerald-600 text-white px-6 py-2 rounded-xl font-bold text-xs uppercase hover:bg-emerald-700">Simpan</button>
                 </div>
 
                 <div id="table-card" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hidden">
                     <div class="p-4 bg-slate-50 border-b flex items-center gap-3">
-                        <input type="text" id="searchInput" onkeyup="renderTable()" placeholder="Cari nama murid..." class="flex-1 p-2 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
-                        <button onclick="exportToExcel()" class="bg-emerald-600 text-white px-6 py-2 rounded-xl font-bold text-xs">📊 EXCEL</button>
+                        <input type="text" id="searchInput" onkeyup="renderTable()" placeholder="Cari nama murid..." class="flex-1 p-2 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-xs">
+                        <button onclick="exportToExcel()" class="bg-emerald-600 text-white px-6 py-2 rounded-xl font-bold text-xs shadow-md">📊 EXCEL</button>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left">
-                            <thead class="bg-blue-900 text-white text-[10px] uppercase"><tr id="tableHeader"></tr></thead>
-                            <tbody id="tableBody" class="text-xs"></tbody>
+                            <thead class="bg-blue-900 text-white text-[10px] uppercase tracking-wider"><tr id="tableHeader"></tr></thead>
+                            <tbody id="tableBody" class="text-[11px]"></tbody>
                         </table>
                     </div>
                 </div>
 
-                <div id="excellence-panel" class="hidden space-y-4">
-                    <div class="bg-white p-5 rounded-xl border-t-4 border-emerald-500 shadow-sm"><h3 class="font-black text-emerald-700 text-xs mb-3 border-b pb-2">🏆 TOP 5 PELAJAR</h3><div id="top-5-list"></div></div>
+                <div id="excellence-panel" class="hidden grid grid-cols-1 gap-4">
+                    <div class="bg-white p-5 rounded-xl border-t-4 border-emerald-500 shadow-sm">
+                        <h3 class="font-black text-emerald-700 text-[10px] mb-3 border-b pb-2 uppercase tracking-widest">🏆 Kedudukan Top 5 (GPM)</h3>
+                        <div id="top-5-list"></div>
+                    </div>
                 </div>
-                <div id="print-btn-area" class="hidden flex justify-center pb-24"><button onclick="window.print()" class="bg-blue-900 text-white px-16 py-5 rounded-full font-black text-xl shadow-2xl">🖨️ CETAK SEMUA SIJIL</button></div>
+                
+                <div id="print-btn-area" class="hidden flex justify-center pb-32">
+                    <button onclick="window.print()" class="bg-blue-900 text-white px-20 py-5 rounded-full font-black text-xl shadow-2xl hover:scale-105 transition-all">🖨️ CETAK SEMUA SIJIL</button>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
 <div id="section-sijil"></div>
 
 <script>
+    // --- KONFIGURASI FIREBASE ---
     const firebaseConfig = {
         apiKey: "AIzaSyCwh99Ui4KPXgC-W-CpCg-edYnHN3aVmrk", 
         authDomain: "portal-8368.firebaseapp.com",
@@ -205,364 +230,209 @@
         appId: "1:150403488308:web:fac9b3c52dcd9975130861"
     };
 
-    // --- DEFAULTS ---
     const BASE_EXAMS = [
-        {id: 'Ujian_Akhir_Sesi_Akademik_(UASA)', name: 'UASA'},
-        {id: 'Pentaksiran_Pertengahan_Tahun', name: 'PERTENGAHAN TAHUN'},
-        {id: 'Ujian_Bulanan_1', name: 'UJIAN BULANAN 1'}
+        {id: 'UASA', name: 'UASA'},
+        {id: 'PPT', name: 'PERTENGAHAN TAHUN'},
+        {id: 'UB1', name: 'UJIAN BULANAN 1'}
     ];
 
     const BASE_SUBJECTS = [
         {id:'BM', name:'BAHASA MELAYU'}, {id:'BI', name:'BAHASA INGGERIS'}, {id:'MT', name:'MATEMATIK'}, 
-        {id:'SN', name:'SAINS'}, {id:'SJ', name:'SEJARAH'}, {id:'PAI', name:'PENDIDIKAN ISLAM'},
-        {id:'BA', name:'BAHASA ARAB'}, {id:'MZ', name:'PENDIDIKAN MUZIK'}, 
-        {id:'PJK', name:'PENDIDIKAN JASMANI'}, {id:'PSV', name:'PENDIDIKAN SENI VISUAL'}, 
-        {id:'RBT', name:'REKA BENTUK TEKNOLOGI'}, {id:'MORAL', name:'PENDIDIKAN MORAL'}
+        {id:'SN', name:'SAINS'}, {id:'SJ', name:'SEJARAH'}, {id:'PAI', name:'PENDIDIKAN ISLAM'}
     ];
 
-    let ALL_SUBJECTS = []; // Will hold merged list
+    let ALL_SUBJECTS = []; 
     let db, auth, currentClassData = [], selectedSubjects = [];
 
     window.onload = () => { 
         firebase.initializeApp(firebaseConfig); 
         db = firebase.firestore(); 
         auth = firebase.auth(); 
-        
         initAuthCheck(); 
-        document.getElementById("passwordInput").addEventListener("keypress", (e) => { if(e.key==="Enter") document.getElementById("btnLogin").click(); });
     };
 
     function showToast(msg, type = 'success') {
         const container = document.getElementById('toast-container');
         const el = document.createElement('div');
-        el.className = `toast ${type === 'error' ? 'bg-red-600' : 'bg-green-600'}`;
+        el.className = `toast ${type === 'error' ? 'bg-red-600' : 'bg-emerald-600'}`;
         el.innerText = msg;
         container.appendChild(el);
         setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3000);
     }
 
-    // =========================================================
-    // NEW: GLOBAL FIREBASE DATA MANAGER (Sesi, Ujian, Subjek)
-    // =========================================================
+    // ==========================================
+    // SISTEM LOGIN (V13.0 - GOOGLE DELIMA)
+    // ==========================================
+    
+    function initAuthCheck() {
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                const email = user.email.toLowerCase();
+                // Logik Penapisan DELIMa (Guru vs Murid)
+                if (email.startsWith('g-') || email.endsWith('@moe.edu.my')) {
+                    document.getElementById('auth-overlay').style.display = 'none';
+                    document.getElementById('main-content').classList.remove('hidden');
+                    document.getElementById('user-welcome').innerText = `GURU: ${email}`;
+                    initSystemData();
+                } else if (email.startsWith('m-')) {
+                    const errorBox = document.getElementById('login-error');
+                    errorBox.innerText = "AKSES DISEKAT: Akaun MURID tidak dibenarkan mengakses sistem analisis guru. Sila gunakan akaun GURU.";
+                    errorBox.classList.remove('hidden');
+                    auth.signOut();
+                    showLoginUI();
+                } else {
+                    const errorBox = document.getElementById('login-error');
+                    errorBox.innerText = "RALAT: Sila gunakan emel rasmi @moe-dl.edu.my untuk log masuk.";
+                    errorBox.classList.remove('hidden');
+                    auth.signOut();
+                    showLoginUI();
+                }
+            } else {
+                showLoginUI();
+            }
+        });
+    }
+
+    function showLoginUI() {
+        document.getElementById('loading-state').classList.add('hidden');
+        document.getElementById('login-state').classList.remove('hidden');
+        document.getElementById('main-content').classList.add('hidden');
+        document.getElementById('auth-overlay').style.display = 'flex';
+    }
+
+    function loginWithGoogle() {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        auth.signInWithPopup(provider).catch(err => {
+            const errorBox = document.getElementById('login-error');
+            errorBox.innerText = "Gagal menyambung ke Google: " + err.message;
+            errorBox.classList.remove('hidden');
+        });
+    }
+
+    function logoutSystem() { auth.signOut().then(() => location.reload()); }
+
+    // ==========================================
+    // CORE SYSTEM FUNCTIONS (DARI V12.0)
+    // ==========================================
 
     async function initSystemData() {
         try {
-            // 1. Load Sesi
             const sesiSelect = document.getElementById('sesiAkademik');
             const sesiSnap = await db.collection('sesi').get();
-            let availableSesi = [];
-            
-            if (sesiSnap.empty) {
-                await db.collection('sesi').doc('2025').set({created: true});
-                await db.collection('sesi').doc('2026').set({created: true});
-                availableSesi = ['2025', '2026'];
-            } else {
-                availableSesi = sesiSnap.docs.map(doc => doc.id).sort();
-            }
+            let availableSesi = sesiSnap.empty ? ['2025'] : sesiSnap.docs.map(doc => doc.id).sort();
             sesiSelect.innerHTML = availableSesi.map(s => `<option value="${s}">${s}</option>`).join('');
-            if(availableSesi.length > 0) sesiSelect.value = availableSesi[availableSesi.length - 1];
-
-            // 2. Load Jenis Pentaksiran
+            
             const examRef = db.collection('_tetapan_sistem').doc('senarai_pentaksiran');
             const examSnap = await examRef.get();
-            let examList = BASE_EXAMS;
-            if (examSnap.exists) examList = examSnap.data().exams || BASE_EXAMS;
-            else await examRef.set({ exams: BASE_EXAMS });
+            let examList = examSnap.exists ? examSnap.data().exams : BASE_EXAMS;
+            document.getElementById('sesiPentaksiran').innerHTML = examList.map(j => `<option value="${j.id}">${j.name}</option>`).join('');
 
-            const jenisSelect = document.getElementById('sesiPentaksiran');
-            jenisSelect.innerHTML = examList.map(j => `<option value="${j.id}">${j.name}</option>`).join('');
-
-            // 3. Load Subjects (NEW!)
             const subRef = db.collection('_tetapan_sistem').doc('senarai_subjek');
             const subSnap = await subRef.get();
-            let extraSubjects = [];
-            
-            if (subSnap.exists) {
-                extraSubjects = subSnap.data().subjects || [];
-            } else {
-                await subRef.set({ subjects: [] });
-            }
-
-            // Merge BASE + CLOUD subjects
+            let extraSubjects = subSnap.exists ? subSnap.data().subjects : [];
             ALL_SUBJECTS = [...BASE_SUBJECTS];
-            extraSubjects.forEach(s => {
-                if(!ALL_SUBJECTS.find(k => k.id === s.id)) ALL_SUBJECTS.push(s);
-            });
+            extraSubjects.forEach(s => { if(!ALL_SUBJECTS.find(k => k.id === s.id)) ALL_SUBJECTS.push(s); });
 
             renderSubjectGrid();
             loadClassList();
-
-        } catch (e) {
-            console.error("Gagal memuatkan sistem:", e);
-            showToast("Ralat sambungan database.", "error");
-        }
+        } catch (e) { showToast("Ralat database Cloud.", "error"); }
     }
 
-    async function addSessionToFirebase() {
-        const input = prompt("Masukkan Tahun Sesi Baru (Contoh: 2027):");
-        if (!input) return;
-        const cleanInput = input.trim();
-        try {
-            const docRef = db.collection('sesi').doc(cleanInput);
-            if((await docRef.get()).exists) return showToast("Sesi sudah wujud!", "error");
-            
-            await docRef.set({ createdBy: auth.currentUser.email, createdAt: new Date() });
-            
-            const opt = document.createElement('option');
-            opt.value = cleanInput; opt.innerText = cleanInput;
-            document.getElementById('sesiAkademik').appendChild(opt);
-            document.getElementById('sesiAkademik').value = cleanInput;
-            loadClassList();
-            showToast(`Sesi ${cleanInput} disimpan di Cloud!`);
-        } catch(e) { showToast("Ralat: " + e.message, "error"); }
-    }
-
-    async function addAssessmentToFirebase() {
-        const name = prompt("Masukkan Nama Ujian Baru (Contoh: Percubaan SPM):");
-        if (!name) return;
-        const cleanName = name.toUpperCase().trim();
-        const id = cleanName.replace(/[^a-zA-Z0-9]/g, '_'); 
-
-        try {
-            const examRef = db.collection('_tetapan_sistem').doc('senarai_pentaksiran');
-            await examRef.update({ exams: firebase.firestore.FieldValue.arrayUnion({ id: id, name: cleanName }) });
-            
-            // Re-fetch to be safe or manually append
-            const select = document.getElementById('sesiPentaksiran');
-            const opt = document.createElement('option');
-            opt.value = id; opt.innerText = cleanName;
-            select.appendChild(opt);
-            select.value = id;
-            startSync();
-            showToast(`Ujian ${cleanName} disimpan (Global)!`);
-        } catch(e) { showToast("Ralat Database: " + e.message, "error"); }
-    }
-
-    async function addSubjectToFirebase() {
-        const name = prompt("Masukkan nama matapelajaran baru (Contoh: JAWI):");
-        if (!name) return;
-        const cleanName = name.toUpperCase().trim();
-        const id = cleanName.substring(0, 4).toUpperCase().replace(/[^A-Z]/g, '') + Math.floor(Math.random()*10); // Generate simple ID
-        
-        try {
-            const subRef = db.collection('_tetapan_sistem').doc('senarai_subjek');
-            const newSub = { id: id, name: cleanName };
-            
-            await subRef.update({ 
-                subjects: firebase.firestore.FieldValue.arrayUnion(newSub) 
-            });
-
-            ALL_SUBJECTS.push(newSub);
-            renderSubjectGrid();
-            showToast(`Subjek ${cleanName} ditambah ke Cloud!`);
-        } catch(e) {
-            showToast("Gagal tambah subjek: " + e.message, "error");
-        }
-    }
-
-    // =========================================================
-    // DATA MANAGER FUNCTIONS (GLOBAL DELETION)
-    // =========================================================
-
+    // --- FUNGSI GLOBAL DELETION (BATCH) ---
     async function deleteAllPentaksiranData() {
         const sesi = document.getElementById('sesiAkademik').value;
         const jenisID = document.getElementById('sesiPentaksiran').value;
-        const sel = document.getElementById('sesiPentaksiran');
-        const jenisNama = sel.options[sel.selectedIndex].text;
-
-        if(!confirm(`AMARAN KRITIKAL!\n\nPadam SEMUA DATA untuk:\nSesi: ${sesi}\nUjian: ${jenisNama}\n\nDari FIREBASE?`)) return;
-        
+        if(!confirm(`AMARAN!\nPadam SEMUA data untuk Sesi ${sesi}?`)) return;
         const code = Math.floor(1000 + Math.random() * 9000);
-        const input = prompt(`Taip kod: ${code}`);
-        if(input !== code.toString()) return showToast("Kod salah.", "error");
+        const input = prompt(`Taip kod keselamatan: ${code}`);
+        if(input !== code.toString()) return;
 
-        const btn = event.target;
-        btn.innerText = "⏳ MEMADAM..."; btn.disabled = true;
-
+        showToast("Sedang memadam...", "error");
         try {
             const masterKelasRef = db.collection('sesi').doc(sesi).collection('kelas');
             const masterSnap = await masterKelasRef.get();
-
-            if (masterSnap.empty) { showToast("Tiada kelas."); btn.disabled = false; return; }
-
             let batch = db.batch();
-            let count = 0;
-            const BATCH_LIMIT = 400; 
-
             for (const docKelas of masterSnap.docs) {
-                const classID = docKelas.id;
-                const muridRef = db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenisID).collection('kelas').doc(classID).collection('murid');
-                const muridSnap = await muridRef.get();
-
-                for (const docMurid of muridSnap.docs) {
-                    batch.delete(docMurid.ref);
-                    count++;
-                    if (count % BATCH_LIMIT === 0) { await batch.commit(); batch = db.batch(); }
-                }
-                batch.delete(db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenisID).collection('kelas').doc(classID));
+                const muridSnap = await db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenisID).collection('kelas').doc(docKelas.id).collection('murid').get();
+                muridSnap.forEach(m => batch.delete(m.ref));
+                batch.delete(db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenisID).collection('kelas').doc(docKelas.id));
             }
-            if (count > 0 || count % BATCH_LIMIT !== 0) await batch.commit();
-
-            showToast(`BERJAYA! Data dipadam.`);
-            setTimeout(() => location.reload(), 2000);
-        } catch(e) { showToast("Ralat: " + e.message, "error"); btn.disabled = false; }
+            await batch.commit();
+            showToast("Data Cloud Berjaya Dikosongkan.");
+            location.reload();
+        } catch(e) { showToast(e.message, "error"); }
     }
 
+    // --- FUNGSI BACKUP & RESTORE ---
     async function backupCurrentData() {
         const sesi = document.getElementById('sesiAkademik').value;
         const jenisID = document.getElementById('sesiPentaksiran').value;
-        const sel = document.getElementById('sesiPentaksiran');
-        const jenisNama = sel.options[sel.selectedIndex].text;
-
-        showToast("Backup bermula...", "normal");
+        showToast("Menjana fail backup...");
         try {
-            const masterKelasRef = db.collection('sesi').doc(sesi).collection('kelas');
-            const masterSnap = await masterKelasRef.get();
-            if(masterSnap.empty) return showToast("Tiada kelas.", "error");
-
-            let exportObj = { meta: { sesi: sesi, pentaksiran_id: jenisID, pentaksiran_nama: jenisNama, tarikh: new Date().toISOString() }, data: [] };
-
-            for(const docKelas of masterSnap.docs) {
-                const classID = docKelas.id;
-                const muridSnap = await db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenisID).collection('kelas').doc(classID).collection('murid').get();
-                if (!muridSnap.empty) {
-                    exportObj.data.push({
-                        kelas_id: classID, nama_kelas: docKelas.data().nama_kelas,
-                        murid: muridSnap.docs.map(m => ({ nama: m.data().nama, marks: m.data().marks || {} }))
-                    });
-                }
+            const masterSnap = await db.collection('sesi').doc(sesi).collection('kelas').get();
+            let exportObj = { meta: { sesi, jenisID }, data: [] };
+            for(const doc of masterSnap.docs) {
+                const mSnap = await db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenisID).collection('kelas').doc(doc.id).collection('murid').get();
+                exportObj.data.push({ classID: doc.id, nama: doc.data().nama_kelas, murid: mSnap.docs.map(m => m.data()) });
             }
-            if (exportObj.data.length === 0) return showToast("Tiada data.", "error");
-
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj, null, 2));
-            const dl = document.createElement('a');
-            dl.setAttribute("href", dataStr); dl.setAttribute("download", `BACKUP_${jenisNama}_${sesi}.json`);
-            document.body.appendChild(dl); dl.click(); dl.remove();
-            showToast("Backup selesai.");
-        } catch(e) { showToast("Ralat: " + e.message, "error"); }
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
+            const dl = document.createElement('a'); dl.setAttribute("href", dataStr); dl.setAttribute("download", `BACKUP_SKAG_${sesi}.json`);
+            dl.click();
+        } catch(e) { showToast("Gagal backup.", "error"); }
     }
 
-    async function restoreData(inputElement) {
-        const file = inputElement.files[0];
+    async function restoreData(input) {
+        const file = input.files[0];
         if(!file) return;
         const reader = new FileReader();
         reader.onload = async (e) => {
-            try {
-                const json = JSON.parse(e.target.result);
-                if(!json.meta || !json.data) return showToast("Format salah.", "error");
-                if(!confirm(`Restore data ${json.meta.pentaksiran_nama} (${json.meta.sesi}) ke Firebase?`)) return;
-
-                showToast("Sedang upload...", "normal");
-                const sesi = json.meta.sesi;
-                const jenis = json.meta.pentaksiran_id;
-                await db.collection('sesi').doc(sesi).set({ created: true }, {merge: true});
-
-                const BATCH_SIZE = 400; let currentBatch = db.batch(); let opCount = 0;
-                for (const k of json.data) {
-                    currentBatch.set(db.collection('sesi').doc(sesi).collection('kelas').doc(k.kelas_id), { nama_kelas: k.nama_kelas }, { merge: true });
-                    opCount++;
-                    const cRefPen = db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(k.kelas_id);
-                    currentBatch.set(cRefPen, { active: true }, { merge: true });
-                    opCount++;
-
-                    for (const m of k.murid) {
-                        currentBatch.set(cRefPen.collection('murid').doc(), { nama: m.nama, marks: m.marks });
-                        opCount++;
-                        if(opCount >= BATCH_SIZE) { await currentBatch.commit(); currentBatch = db.batch(); opCount = 0; }
-                    }
-                }
-                if(opCount > 0) await currentBatch.commit();
-                showToast("Restore berjaya!");
-                inputElement.value = ''; 
-                initSystemData();
-            } catch (err) { showToast("Ralat: " + err.message, "error"); }
+            const json = JSON.parse(e.target.result);
+            showToast("Memulihkan data...");
+            let batch = db.batch();
+            for(const k of json.data) {
+                const cRef = db.collection('sesi').doc(json.meta.sesi).collection('pentaksiran').doc(json.meta.jenisID).collection('kelas').doc(k.classID);
+                batch.set(db.collection('sesi').doc(json.meta.sesi).collection('kelas').doc(k.classID), {nama_kelas: k.nama});
+                batch.set(cRef, {active: true});
+                k.murid.forEach(m => batch.set(cRef.collection('murid').doc(), m));
+            }
+            await batch.commit();
+            showToast("Restore Selesai!"); location.reload();
         };
         reader.readAsText(file);
     }
 
+    // --- FUNGSI CSV & TEMPLATE ---
+    function downloadTemplate() { 
+        const wb = XLSX.utils.book_new(); 
+        const ws = XLSX.utils.aoa_to_sheet([["NAMA", "KELAS"]]); 
+        XLSX.utils.book_append_sheet(wb, ws, "Templat"); 
+        XLSX.writeFile(wb, "Templat_Murid_SKAG.xlsx"); 
+    }
+
     async function processCSV() {
-        const file = document.getElementById('csvInput').files[0];
-        const sesi = document.getElementById('sesiAkademik').value;
-        const jenis = document.getElementById('sesiPentaksiran').value;
-        if (!file) return showToast("Pilih fail CSV!", "error");
-        
-        Papa.parse(file, {
-            header: true, skipEmptyLines: true,
-            complete: async (res) => {
-                const data = res.data;
-                if (data.length === 0) return showToast("Fail kosong.", "error");
-                const keys = Object.keys(data[0]).map(k => k.toLowerCase().trim());
-                if (!keys.includes('nama') || !keys.includes('kelas')) return showToast("Perlu lajur 'NAMA' dan 'KELAS'", "error");
-
-                showToast("Processing...", "normal");
-                const BATCH_SIZE = 400; let batch = db.batch(); let batchOps = 0;
-
-                for (const row of data) {
-                    const d = Object.keys(row).reduce((acc, k) => { acc[k.toLowerCase().trim()] = row[k]; return acc; }, {});
-                    if (d.nama && d.kelas) {
-                        const cleanClass = d.kelas.toString().toUpperCase().trim();
-                        const cid = cleanClass.replace(/[^a-zA-Z0-9]/g,'_'); 
-                        
-                        batch.set(db.collection('sesi').doc(sesi).collection('kelas').doc(cid), { nama_kelas: cleanClass }, { merge: true });
-                        batchOps++;
-                        const cRefPen = db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(cid);
-                        batch.set(cRefPen, { active: true }, { merge: true });
-                        batchOps++;
-                        batch.set(cRefPen.collection('murid').doc(), { nama: d.nama.toUpperCase().trim(), marks: {} });
-                        batchOps++;
-
-                        if (batchOps >= BATCH_SIZE) { await batch.commit(); batch = db.batch(); batchOps = 0; }
-                    }
+        const file = document.getElementById('csvInput').files[0], sesi = document.getElementById('sesiAkademik').value, jenis = document.getElementById('sesiPentaksiran').value;
+        if (!file) return;
+        Papa.parse(file, { header: true, skipEmptyLines: true, complete: async (res) => {
+            let batch = db.batch();
+            for (const row of res.data) {
+                const d = Object.keys(row).reduce((acc, k) => { acc[k.toLowerCase().trim()] = row[k]; return acc; }, {});
+                if (d.nama && d.kelas) {
+                    const cid = d.kelas.toString().toUpperCase().trim().replace(/[^a-zA-Z0-9]/g,'_');
+                    batch.set(db.collection('sesi').doc(sesi).collection('kelas').doc(cid), { nama_kelas: d.kelas.toUpperCase() }, {merge:true});
+                    batch.set(db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(cid).collection('murid').doc(), { nama: d.nama.toUpperCase().trim(), marks: {} });
                 }
-                if (batchOps > 0) await batch.commit();
-                showToast("CSV Upload Selesai!"); loadClassList();
             }
-        });
+            await batch.commit();
+            showToast("Import Berjaya!"); loadClassList();
+        }});
     }
 
-    // ==========================================
-    // FUNGSI UMUM LAIN
-    // ==========================================
-
-    function downloadTemplate() {
-        const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.aoa_to_sheet([["NAMA", "KELAS"]]);
-        XLSX.utils.book_append_sheet(wb, ws, "Templat");
-        XLSX.writeFile(wb, "Templat_Murid.xlsx");
-    }
-
-    function initAuthCheck() {
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                document.getElementById('auth-overlay').style.display = 'none';
-                document.getElementById('main-content').classList.remove('hidden');
-                document.getElementById('user-welcome').innerText = `Admin: ${user.email}`;
-                initSystemData(); 
-            } else {
-                document.getElementById('auth-overlay').style.display = 'flex';
-                document.getElementById('main-content').classList.add('hidden');
-                document.getElementById('login-state').classList.remove('hidden');
-                document.getElementById('loading-state').classList.add('hidden');
-            }
-        });
-    }
-
-    function loginWithEmail() {
-        const e = document.getElementById('emailInput').value;
-        const p = document.getElementById('passwordInput').value;
-        if(!e || !p) return;
-        auth.signInWithEmailAndPassword(e, p).catch(err => { document.getElementById('login-error').innerText="Login Gagal"; document.getElementById('login-error').classList.remove('hidden'); });
-    }
-    
-    function logoutSystem() { auth.signOut().then(() => location.reload()); }
-
+    // --- FUNGSI JADUAL & MARKAH ---
     function renderSubjectGrid() {
-        const grid = document.getElementById('subject-grid');
-        grid.innerHTML = '';
+        const grid = document.getElementById('subject-grid'); grid.innerHTML = '';
         ALL_SUBJECTS.forEach(sub => {
-            // Default check common subjects only
             const isChecked = ['BM','BI','MT','SN','SJ','PAI'].includes(sub.id) ? 'checked' : '';
-            grid.innerHTML += `<label class="flex items-center space-x-3 p-1.5 hover:bg-slate-50 cursor-pointer rounded"><input type="checkbox" value="${sub.id}" class="sub-checkbox w-4 h-4" ${isChecked} onchange="updateSelectedSubjects()"> <span class="font-medium">${sub.name}</span></label>`;
+            grid.innerHTML += `<label class="flex items-center space-x-3 p-2 hover:bg-slate-50 cursor-pointer rounded"><input type="checkbox" value="${sub.id}" class="sub-checkbox w-4 h-4" ${isChecked} onchange="updateSelectedSubjects()"> <span class="font-bold">${sub.name}</span></label>`;
         });
         updateSelectedSubjects();
     }
@@ -574,148 +444,108 @@
 
     async function loadClassList() {
         const sesi = document.getElementById('sesiAkademik').value;
-        if(!sesi) return;
         const snap = await db.collection('sesi').doc(sesi).collection('kelas').get();
-        const dd = document.getElementById('classDropdown');
-        dd.innerHTML = '<option value="">-- Pilih Kelas --</option>' + snap.docs.map(d => `<option value="${d.id}">${d.data().nama_kelas || d.id}</option>`).join('');
+        document.getElementById('classDropdown').innerHTML = '<option value="">-- Pilih Kelas --</option>' + snap.docs.map(d => `<option value="${d.id}">${d.data().nama_kelas || d.id}</option>`).join('');
         document.getElementById('class-area').classList.remove('hidden');
     }
 
     function startSync() {
-        const sesi = document.getElementById('sesiAkademik').value;
-        const jenis = document.getElementById('sesiPentaksiran').value;
-        const kelas = document.getElementById('classDropdown').value;
-
-        if(!kelas) { document.getElementById('manual-add-area').classList.add('hidden'); return; }
+        const sesi = document.getElementById('sesiAkademik').value, jenis = document.getElementById('sesiPentaksiran').value, kelas = document.getElementById('classDropdown').value;
+        if(!kelas) return;
         document.getElementById('manual-add-area').classList.remove('hidden');
-
         db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(kelas).collection('murid')
-          .onSnapshot(snap => {
-                currentClassData = snap.docs.map(d => ({id: d.id, ...d.data()}));
-                renderTable();
-          });
-    }
-
-    async function deleteCurrentClass() {
-        const sesi = document.getElementById('sesiAkademik').value;
-        const jenis = document.getElementById('sesiPentaksiran').value;
-        const kelas = document.getElementById('classDropdown').value;
-        if(!kelas) return showToast("Pilih kelas.", "error");
-        if(!confirm(`Padam data kelas ${kelas}?`) || prompt("Taip 'PADAM':")!=="PADAM") return;
-
-        try {
-            const classRef = db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(kelas);
-            const batch = db.batch();
-            const snaps = await classRef.collection('murid').get();
-            snaps.forEach(d => batch.delete(d.ref));
-            await batch.commit();
-            showToast("Kelas dipadam.");
-        } catch(e) { showToast(e.message, "error"); }
-    }
-
-    async function addStudentManual() {
-        const nama = document.getElementById('newStudentName').value.toUpperCase().trim();
-        const sesi = document.getElementById('sesiAkademik').value;
-        const jenis = document.getElementById('sesiPentaksiran').value;
-        const kelas = document.getElementById('classDropdown').value;
-        if(!nama || !kelas) return showToast("Isi nama.", "error");
-        await db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(kelas).collection('murid').add({ nama: nama, marks: {} });
-        document.getElementById('newStudentName').value = '';
-        showToast("Murid ditambah.");
+          .onSnapshot(snap => { currentClassData = snap.docs.map(d => ({id: d.id, ...d.data()})); renderTable(); });
     }
 
     async function updateMark(sid, sub, val) {
-        const sesi = document.getElementById('sesiAkademik').value;
-        const jenis = document.getElementById('sesiPentaksiran').value;
-        const kelas = document.getElementById('classDropdown').value;
-        let c = parseFloat(val); if(isNaN(c))c=0; if(c>100)c=100;
+        const sesi = document.getElementById('sesiAkademik').value, jenis = document.getElementById('sesiPentaksiran').value, kelas = document.getElementById('classDropdown').value;
+        let c = parseFloat(val); if(isNaN(c)) c=0;
         await db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(kelas).collection('murid').doc(sid).set({ marks: {[sub]: c} }, {merge: true});
     }
 
     async function deleteStudent(sid) {
-        if(!confirm("Padam murid?")) return;
-        const sesi = document.getElementById('sesiAkademik').value;
-        const jenis = document.getElementById('sesiPentaksiran').value;
-        const kelas = document.getElementById('classDropdown').value;
+        if(!confirm("Padam murid ini?")) return;
+        const sesi = document.getElementById('sesiAkademik').value, jenis = document.getElementById('sesiPentaksiran').value, kelas = document.getElementById('classDropdown').value;
         await db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(kelas).collection('murid').doc(sid).delete();
+    }
+
+    async function addStudentManual() {
+        const nama = document.getElementById('newStudentName').value.toUpperCase().trim();
+        const sesi = document.getElementById('sesiAkademik').value, jenis = document.getElementById('sesiPentaksiran').value, kelas = document.getElementById('classDropdown').value;
+        if(!nama || !kelas) return;
+        await db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(kelas).collection('murid').add({ nama: nama, marks: {} });
+        document.getElementById('newStudentName').value = '';
     }
 
     function renderTable() {
         const search = document.getElementById('searchInput').value.toUpperCase();
         const header = document.getElementById('tableHeader');
-        const body = document.getElementById('tableBody');
-        header.innerHTML = `<th class="p-4">NAMA MURID</th>` + selectedSubjects.map(s => `<th class="p-2 text-center bg-blue-800">${s}</th>`).join('') + `<th class="p-2 text-center bg-slate-700">GPM</th><th class="p-2 text-center bg-red-600">DEL</th>`;
+        header.innerHTML = `<th class="p-4">NAMA MURID</th>` + selectedSubjects.map(s => `<th class="p-2 text-center bg-blue-800">${s}</th>`).join('') + `<th class="p-2 text-center bg-slate-700">GPM</th><th class="p-2 text-center">DEL</th>`;
         const sorted = [...currentClassData].filter(m => m.nama.includes(search)).sort((a,b) => a.nama.localeCompare(b.nama));
-        
-        body.innerHTML = sorted.map(m => `
-            <tr class="border-b hover:bg-blue-50 transition">
-                <td class="p-4 font-bold uppercase text-slate-700 text-xs">${m.nama}</td>
-                ${selectedSubjects.map(sub => `<td class="p-2 text-center"><input type="number" min="0" max="100" class="mark-input focus:bg-yellow-100" value="${m.marks?.[sub] !== undefined ? m.marks[sub] : ''}" onchange="updateMark('${m.id}', '${sub}', this.value)"></td>`).join('')}
+        document.getElementById('tableBody').innerHTML = sorted.map(m => `
+            <tr class="border-b hover:bg-blue-50">
+                <td class="p-4 font-black uppercase text-slate-700">${m.nama}</td>
+                ${selectedSubjects.map(sub => `<td class="p-1 text-center"><input type="number" class="mark-input" value="${m.marks?.[sub] ?? ''}" onchange="updateMark('${m.id}', '${sub}', this.value)"></td>`).join('')}
                 <td class="p-2 text-center font-black text-blue-600">${m.gpm || '-'}</td>
-                <td class="p-2 text-center"><button onclick="deleteStudent('${m.id}')" class="text-red-400 hover:text-red-600 font-bold">🗑️</button></td>
+                <td class="p-2 text-center"><button onclick="deleteStudent('${m.id}')" class="text-red-300 hover:text-red-600 font-bold">🗑️</button></td>
             </tr>`).join('');
         document.getElementById('table-card').classList.remove('hidden');
         document.getElementById('dashboard').classList.remove('hidden');
         document.getElementById('stat-murid').innerText = currentClassData.length;
     }
 
+    // --- FUNGSI ANALISIS & SIJIL ---
     function calculate() {
         const getGrade = (m) => { m=parseFloat(m)||0; if(m>=80)return{g:'A',p:1}; if(m>=70)return{g:'B',p:2}; if(m>=60)return{g:'C',p:3}; if(m>=50)return{g:'D',p:4}; if(m>=40)return{g:'E',p:5}; return{g:'F',p:6}; };
-        const core = ['BM','BI','MT','SN','SJ','PAI']; let totalPass=0;
-        
+        let totalPass=0;
         currentClassData.forEach(s => {
             let tm=0, tp=0, count=0, l=true;
             selectedSubjects.forEach(sub => { 
                 let m=s.marks?.[sub]; 
-                if(m!==undefined&&m!==""){ m=parseFloat(m); if(m>100)m=100; let r=getGrade(m); tm+=m; tp+=r.p; count++; if(core.includes(sub)&&m<40)l=false; } 
+                if(m!==undefined&&m!==""){ m=parseFloat(m); let r=getGrade(m); tm+=m; tp+=r.p; count++; if(['BM','BI','MT','SN','SJ','PAI'].includes(sub)&&m<40)l=false; } 
             });
-            s.gpm = count>0?(tp/count).toFixed(2):'0.00'; s.percent=count>0?((tm/(count*100))*100).toFixed(2):'0.00'; 
+            s.gpm = count>0?(tp/count).toFixed(2):'0.00'; s.percent=count>0?((tm/(count*100))*100).toFixed(1):'0.0'; 
             s.statusLulus=(count>0&&l)?"LULUS":"GAGAL"; if(s.statusLulus==="LULUS")totalPass++; s.totalMarks=tm;
         });
-        
         const sorted = [...currentClassData].sort((a,b)=>parseFloat(a.gpm)-parseFloat(b.gpm)||b.totalMarks-a.totalMarks);
         currentClassData.forEach(s => s.rank=sorted.findIndex(r=>r.id===s.id)+1);
-        
         document.getElementById('stat-gpm').innerText=(currentClassData.reduce((a,b)=>a+parseFloat(b.gpm||0),0)/(currentClassData.length||1)).toFixed(2);
         document.getElementById('stat-lulus').innerText=((totalPass/(currentClassData.length||1))*100).toFixed(1)+"%";
-        document.getElementById('top-5-list').innerHTML=sorted.slice(0,5).map((s,i)=>`<div class="flex justify-between items-center p-2 border-b text-[11px]"><span>${i+1}. <b>${s.nama}</b></span><span class="bg-emerald-100 text-emerald-800 px-2 rounded font-black">GPM: ${s.gpm}</span></div>`).join('');
+        document.getElementById('top-5-list').innerHTML=sorted.slice(0,5).map((s,i)=>`<div class="flex justify-between items-center p-3 border-b text-[11px]"><span>${i+1}. <b>${s.nama}</b></span><span class="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-lg font-black">GPM: ${s.gpm}</span></div>`).join('');
         document.getElementById('excellence-panel').classList.remove('hidden'); 
         document.getElementById('print-btn-area').classList.remove('hidden');
-        renderTable(); generateSijil(getGrade); showToast("Analisis Siap!");
+        renderTable(); generateSijil(getGrade); showToast("Analisis Cloud Siap!");
     }
 
     function generateSijil(getGrade) {
-        const sortedAZ = [...currentClassData].sort((a, b) => a.nama.localeCompare(b.nama));
         const pentaksiran = document.getElementById('sesiPentaksiran').options[document.getElementById('sesiPentaksiran').selectedIndex].text;
         const sesi = document.getElementById('sesiAkademik').value;
-        
-        document.getElementById('section-sijil').innerHTML = sortedAZ.map(s => `
-            <div class="page-break">
-                <div class="certificate-border">
-                    <div class="text-center">
-                        <img src="https://via.placeholder.com/100x100?text=SKAG" class="w-24 mx-auto mb-4" onerror="this.style.display='none'">
-                        <h2 class="text-2xl font-black text-blue-900">SK ABANG GESA, BELAWAI</h2>
-                        <p class="text-xs font-bold text-slate-500 uppercase">${pentaksiran} (${sesi})</p>
-                    </div>
-                    <div class="text-center"><h1 style="font-family: 'Cinzel', serif;" class="text-5xl font-bold text-blue-900">SIJIL PENCAPAIAN</h1><p class="mt-4 italic text-sm text-slate-500">Dianugerahkan kepada</p><h2 class="text-3xl font-black my-4 uppercase text-blue-950 border-b-4 border-double border-blue-900 inline-block px-12 pb-2">${s.nama}</h2></div>
-                    <div class="flex justify-center flex-grow py-4">
-                        <table class="w-11/12 border-2 border-slate-800 text-[11px]"><thead class="bg-blue-900 text-white uppercase text-sm"><tr><th class="p-3 border text-left">MATAPELAJARAN</th><th class="p-3 border text-center">MARKAH</th><th class="p-3 border text-center">GRED</th></tr></thead>
-                            <tbody class="font-bold">${selectedSubjects.map(sub => { let m=s.marks?.[sub]; if(m===undefined||m==="")return""; return `<tr><td class="border border-slate-800 p-2 px-6 uppercase">${ALL_SUBJECTS.find(k=>k.id===sub)?.name||sub}</td><td class="border border-slate-800 text-center p-2 text-base">${m}</td><td class="border border-slate-800 text-center p-2 text-base font-black text-blue-900">${getGrade(m).g}</td></tr>`; }).join('')}</tbody></table>
-                    </div>
-                    <div class="grid grid-cols-4 gap-4 text-center max-w-3xl mx-auto font-black text-xs w-full"><div class="bg-slate-100 p-3 border rounded-xl">GPM: ${s.gpm}</div><div class="bg-slate-100 p-3 border rounded-xl">KEDUDUKAN: ${s.rank}</div><div class="bg-blue-900 text-white p-3 rounded-xl uppercase">${s.statusLulus}</div><div class="bg-slate-100 p-3 border rounded-xl">PERATUS: ${s.percent}%</div></div>
-                    <div class="mt-12 flex justify-between px-16 text-sm font-black text-center uppercase"><div class="w-56"><div class="border-b-2 border-black h-12 mb-2"></div><p>Guru Kelas</p></div><div class="w-56"><div class="border-b-2 border-black h-12 mb-2"></div><p>Guru Besar</p></div></div>
+        document.getElementById('section-sijil').innerHTML = currentClassData.sort((a,b)=>a.nama.localeCompare(b.nama)).map(s => `
+            <div class="page-break"><div class="certificate-border">
+                <div class="text-center"><img src="myeasy.png" class="h-16 mx-auto mb-4"><h2 class="text-2xl font-black text-blue-900 uppercase">SK ABANG GESA, BELAWAI</h2><p class="text-xs font-bold text-slate-500 uppercase">${pentaksiran} (${sesi})</p></div>
+                <div class="text-center"><h1 style="font-family: 'Cinzel', serif;" class="text-5xl font-bold text-blue-900">SIJIL PENCAPAIAN</h1><p class="mt-4 italic text-sm text-slate-500">Dianugerahkan kepada</p><h2 class="text-3xl font-black my-6 uppercase text-blue-950 border-b-4 border-blue-900 inline-block px-12 pb-2">${s.nama}</h2></div>
+                <div class="flex justify-center flex-grow py-6">
+                    <table class="w-11/12 border-2 border-slate-800 text-[11px]"><thead class="bg-blue-900 text-white uppercase text-sm"><tr><th class="p-3 border text-left">MATAPELAJARAN</th><th class="p-3 border text-center">MARKAH</th><th class="p-3 border text-center">GRED</th></tr></thead>
+                        <tbody class="font-bold">${selectedSubjects.map(sub => { let m=s.marks?.[sub]; if(m===undefined||m==="")return""; return `<tr><td class="border border-slate-800 p-2.5 px-6 uppercase">${ALL_SUBJECTS.find(k=>k.id===sub)?.name||sub}</td><td class="border border-slate-800 text-center p-2.5 text-base">${m}</td><td class="border border-slate-800 text-center p-2.5 text-base font-black text-blue-900">${getGrade(m).g}</td></tr>`; }).join('')}</tbody></table>
                 </div>
-            </div>`).join('');
+                <div class="grid grid-cols-4 gap-4 text-center max-w-3xl mx-auto font-black text-xs w-full"><div class="bg-slate-50 p-3 border rounded-xl">GPM: ${s.gpm}</div><div class="bg-slate-50 p-3 border rounded-xl">KEDUDUKAN: ${s.rank}</div><div class="bg-blue-900 text-white p-3 rounded-xl uppercase">${s.statusLulus}</div><div class="bg-slate-50 p-3 border rounded-xl">${s.percent}%</div></div>
+                <div class="mt-12 flex justify-between px-16 text-xs font-black text-center uppercase"><div class="w-48"><div class="border-b-2 border-black h-12 mb-2"></div><p>Guru Kelas</p></div><div class="w-48"><div class="border-b-2 border-black h-12 mb-2"></div><p>Guru Besar</p></div></div>
+            </div></div>`).join('');
     }
 
     function exportToExcel() {
-        const data = currentClassData.map(m => ({ Nama: m.nama, ...m.marks, GPM: m.gpm, Rank: m.rank, Status: m.statusLulus }));
+        const data = currentClassData.map(m => ({ Nama: m.nama, ...m.marks, GPM: m.gpm, Status: m.statusLulus }));
         const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Analisis"); XLSX.writeFile(wb, `Analisis_SKAG.xlsx`);
-        showToast("Excel dimuat turun.");
+        XLSX.utils.book_append_sheet(wb, ws, "Analisis"); XLSX.writeFile(wb, `Analisis_SKAG_Cloud.xlsx`);
+    }
+
+    async function addSubjectToFirebase() {
+        const name = prompt("Nama Matapelajaran:");
+        if (!name) return;
+        const id = name.substring(0,3).toUpperCase() + Math.floor(Math.random()*100);
+        await db.collection('_tetapan_sistem').doc('senarai_subjek').update({ subjects: firebase.firestore.FieldValue.arrayUnion({ id, name: name.toUpperCase() }) });
+        initSystemData();
     }
 </script>
 </body>
 </html>
-
-
