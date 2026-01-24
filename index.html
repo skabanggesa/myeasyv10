@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Malaysian Exam Analysis System V13.0 - DELIMa Cloud</title>
+    <title>Sistem Analisis SKAG V13.1 - DELIMa Cloud Plus</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -16,6 +16,7 @@
         
         body { font-family: 'Inter', sans-serif; }
 
+        /* Print Settings */
         @media print {
             body * { visibility: hidden; }
             #section-sijil, #section-sijil * { visibility: visible; }
@@ -24,6 +25,7 @@
             .page-break { page-break-after: always; break-after: page; display: block; height: 100vh; position: relative; }
         }
 
+        /* Certificate Styles */
         .certificate-border { 
             border: 20px double #1e3a8a; 
             padding: 40px; 
@@ -35,15 +37,18 @@
             justify-content: space-between;
         }
 
+        /* Input Styles */
         .mark-input { width: 50px; padding: 4px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; transition: all 0.2s; }
         .mark-input:focus { border-color: #1e3a8a; outline: none; box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1); }
 
+        /* Login & Toast Styles */
         #auth-overlay { position: fixed; inset: 0; background: #f8fafc; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
         
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; }
         .toast { padding: 12px 20px; border-radius: 8px; color: white; font-weight: bold; font-size: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); animation: slideIn 0.3s ease-out; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
+        /* Google Button Style */
         .google-btn {
             display: flex; align-items: center; justify-content: center; gap: 12px;
             background: white; color: #374151; font-weight: 700; padding: 14px 24px;
@@ -147,7 +152,7 @@
                     </div>
                     <div class="space-y-2">
                         <button onclick="deleteCurrentClass()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-400 py-2 rounded text-[9px] font-bold border border-slate-700 text-left px-3 transition-all">🗑️ Padam Kelas Dipilih</button>
-                        <button onclick="deleteAllPentaksiranData()" class="w-full bg-red-950 text-red-400 py-2 rounded text-[9px] font-bold border border-red-900 text-left px-3 transition-all hover:bg-red-900">🚨 RESET SEMUA DATA CLOUD</button>
+                        <button onclick="deleteAllPentaksiranData()" class="w-full bg-red-950 text-red-400 py-2 rounded text-[9px] font-bold border border-red-900 text-left px-3 transition-all hover:bg-red-900">🚨 PADAM SEMUA DATA</button>
                     </div>
                 </div>
 
@@ -174,7 +179,7 @@
                         <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">JUMLAH MURID</p>
                         <p id="stat-murid" class="text-3xl font-black text-slate-800">-</p>
                     </div>
-                    <button onclick="calculate()" class="bg-blue-900 text-white rounded-2xl font-black text-xs uppercase shadow-xl hover:bg-blue-800 transition-all hover:scale-105 active:scale-95">🚀 JANA SIJIL & ANALISIS</button>
+                    <button onclick="calculate()" class="bg-blue-900 text-white rounded-2xl font-black text-xs uppercase shadow-xl hover:bg-blue-800 transition-all hover:scale-105 active:scale-95">🚀 JANA ANALISIS</button>
                 </div>
 
                 <div id="manual-add-area" class="bg-emerald-50 p-4 rounded-xl border border-emerald-100 hidden flex flex-col md:flex-row gap-2 items-center shadow-inner">
@@ -200,8 +205,17 @@
 
                 <div id="excellence-panel" class="hidden">
                     <div class="bg-white p-5 rounded-xl border-t-4 border-emerald-500 shadow-sm">
-                        <h3 class="font-black text-emerald-700 text-[10px] mb-3 border-b pb-2 uppercase tracking-widest flex items-center gap-2">🏆 Kedudukan Tertinggi (GPM)</h3>
+                        <h3 class="font-black text-emerald-700 text-[10px] mb-3 border-b pb-2 uppercase tracking-widest flex items-center gap-2">🏆 Kedudukan Top 5 (GPM)</h3>
                         <div id="top-5-list" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div>
+                    </div>
+                </div>
+
+                <div id="subject-best-panel" class="hidden">
+                    <div class="bg-white p-5 rounded-xl border-t-4 border-blue-500 shadow-sm">
+                        <h3 class="font-black text-blue-700 text-[10px] mb-3 border-b pb-2 uppercase tracking-widest flex items-center gap-2">
+                            🌟 Terbaik Mengikut Subjek
+                        </h3>
+                        <div id="subject-best-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
                     </div>
                 </div>
 
@@ -226,12 +240,7 @@
         appId: "1:150403488308:web:fac9b3c52dcd9975130861"
     };
 
-    const BASE_EXAMS = [
-        {id: 'UASA', name: 'UASA'},
-        {id: 'PPT', name: 'PERTENGAHAN TAHUN'},
-        {id: 'UB1', name: 'UJIAN BULANAN 1'}
-    ];
-
+    const BASE_EXAMS = [{id: 'UASA', name: 'UASA'}, {id: 'PPT', name: 'PERTENGAHAN TAHUN'}, {id: 'UB1', name: 'UJIAN BULANAN 1'}];
     const BASE_SUBJECTS = [
         {id:'BM', name:'BAHASA MELAYU'}, {id:'BI', name:'BAHASA INGGERIS'}, {id:'MT', name:'MATEMATIK'}, 
         {id:'SN', name:'SAINS'}, {id:'SJ', name:'SEJARAH'}, {id:'PAI', name:'PENDIDIKAN ISLAM'}
@@ -257,7 +266,7 @@
     }
 
     // ==========================================
-    // SISTEM LOGIN (GOOGLE DELIMA V13.0)
+    // SISTEM LOGIN (GOOGLE DELIMA)
     // ==========================================
     
     function initAuthCheck() {
@@ -293,16 +302,15 @@
     function loginWithGoogle() {
         const provider = new firebase.auth.GoogleAuthProvider();
         auth.signInWithPopup(provider).catch(err => {
-            const errorBox = document.getElementById('login-error');
-            errorBox.innerText = "Ralat: " + err.message;
-            errorBox.classList.remove('hidden');
+            document.getElementById('login-error').innerText = "Ralat: " + err.message;
+            document.getElementById('login-error').classList.remove('hidden');
         });
     }
 
     function logoutSystem() { auth.signOut().then(() => location.reload()); }
 
     // ==========================================
-    // CORE SYSTEM FUNCTIONS (700 LINES LOGIC)
+    // DATA MANAGEMENT & SYNC
     // ==========================================
 
     async function initSystemData() {
@@ -312,13 +320,11 @@
             let availableSesi = sesiSnap.empty ? ['2025'] : sesiSnap.docs.map(doc => doc.id).sort();
             sesiSelect.innerHTML = availableSesi.map(s => `<option value="${s}">${s}</option>`).join('');
             
-            // Load Exams from global settings
             const examRef = db.collection('_tetapan_sistem').doc('senarai_pentaksiran');
             const examSnap = await examRef.get();
             let examList = examSnap.exists ? examSnap.data().exams : BASE_EXAMS;
             document.getElementById('sesiPentaksiran').innerHTML = examList.map(j => `<option value="${j.id}">${j.name}</option>`).join('');
 
-            // Load Subjects from global settings
             const subRef = db.collection('_tetapan_sistem').doc('senarai_subjek');
             const subSnap = await subRef.get();
             let extraSubjects = subSnap.exists ? subSnap.data().subjects : [];
@@ -348,7 +354,6 @@
             await db.collection('_tetapan_sistem').doc('senarai_pentaksiran').set({ exams: [{id: id, name: name.toUpperCase()}] });
         });
         initSystemData();
-        showToast("Ujian baru ditambah secara global!");
     }
 
     async function addSubjectToFirebase() {
@@ -361,7 +366,6 @@
             await db.collection('_tetapan_sistem').doc('senarai_subjek').set({ subjects: [{id: id, name: name.toUpperCase()}] });
         });
         initSystemData();
-        showToast("Subjek ditambah!");
     }
 
     function renderSubjectGrid() {
@@ -397,6 +401,10 @@
           .onSnapshot(snap => { currentClassData = snap.docs.map(d => ({id: d.id, ...d.data()})); renderTable(); });
     }
 
+    // ==========================================
+    // CRUD OPERATIONS
+    // ==========================================
+
     async function updateMark(sid, sub, val) {
         const sesi = document.getElementById('sesiAkademik').value, jenis = document.getElementById('sesiPentaksiran').value, kelas = document.getElementById('classDropdown').value;
         let c = parseFloat(val); if(isNaN(c)) c=0;
@@ -407,8 +415,11 @@
         const nama = document.getElementById('newStudentName').value.toUpperCase().trim();
         const sesi = document.getElementById('sesiAkademik').value, jenis = document.getElementById('sesiPentaksiran').value, kelas = document.getElementById('classDropdown').value;
         if(!nama || !kelas) return;
-        await db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(kelas).collection('murid').add({ nama: nama, marks: {} });
+        // Gunakan ID unik berdasarkan nama untuk elak duplikasi
+        const sid = nama.replace(/[^a-zA-Z0-9]/g, '_');
+        await db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(kelas).collection('murid').doc(sid).set({ nama: nama, marks: {} });
         document.getElementById('newStudentName').value = '';
+        showToast("Murid ditambah!");
     }
 
     async function deleteStudent(sid) {
@@ -426,62 +437,61 @@
         let batch = db.batch();
         snap.forEach(doc => batch.delete(doc.ref));
         await batch.commit();
-        showToast("Satu kelas telah dikosongkan.");
+        showToast("Kelas telah dikosongkan.");
     }
 
-async function deleteAllPentaksiranData() {
-    const sesi = document.getElementById('sesiAkademik').value;
-    const jenisID = document.getElementById('sesiPentaksiran').value;
-    
-    if(!sesi || !jenisID) return showToast("Sila pilih Sesi dan Pentaksiran dahulu", "error");
-
-    if(!confirm(`⚠️ AMARAN: Ini akan memadam SEMUA KELAS dan SEMUA MURID bagi sesi ${sesi}. Teruskan?`)) return;
-    
-    const code = Math.floor(1000 + Math.random() * 9000);
-    const input = prompt(`Taip kod: ${code}`);
-    if(input !== code.toString()) return;
-
-    showToast("Memulakan pembersihan menyeluruh...", "success");
-
-    try {
-        let batch = db.batch();
-        let ops = 0;
-
-        // 1. PADAM REKOD MURID & KELAS DALAM PENTAKSIRAN (Markah)
-        const penRef = db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenisID).collection('kelas');
-        const penSnap = await penRef.get();
+    // --- FUNGSI PADAM SEMUA DATA (MENYELURUH) ---
+    async function deleteAllPentaksiranData() {
+        const sesi = document.getElementById('sesiAkademik').value;
+        const jenisID = document.getElementById('sesiPentaksiran').value;
         
-        for (const docKelas of penSnap.docs) {
-            const muridSnap = await docKelas.ref.collection('murid').get();
-            muridSnap.forEach(m => {
-                batch.delete(m.ref);
+        if(!sesi || !jenisID) return showToast("Sila pilih Sesi dan Pentaksiran dahulu", "error");
+        if(!confirm(`⚠️ AMARAN: Ini akan memadam SEMUA KELAS dan SEMUA MURID bagi sesi ${sesi}. Teruskan?`)) return;
+        
+        const code = Math.floor(1000 + Math.random() * 9000);
+        const input = prompt(`Taip kod: ${code}`);
+        if(input !== code.toString()) return;
+
+        showToast("Memulakan pembersihan menyeluruh...", "success");
+
+        try {
+            let batch = db.batch();
+            let ops = 0;
+
+            // 1. Padam Rekod Murid & Kelas dalam Pentaksiran
+            const penRef = db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenisID).collection('kelas');
+            const penSnap = await penRef.get();
+            
+            for (const docKelas of penSnap.docs) {
+                const muridSnap = await docKelas.ref.collection('murid').get();
+                muridSnap.forEach(m => {
+                    batch.delete(m.ref);
+                    ops++;
+                });
+                batch.delete(docKelas.ref);
                 ops++;
+                if(ops >= 400) { await batch.commit(); batch = db.batch(); ops = 0; }
+            }
+
+            // 2. Padam Senarai Kelas Global
+            const globalKelasRef = db.collection('sesi').doc(sesi).collection('kelas');
+            const globalSnap = await globalKelasRef.get();
+            
+            globalSnap.forEach(doc => {
+                batch.delete(doc.ref);
+                ops++;
+                if(ops >= 400) { batch.commit(); batch = db.batch(); ops = 0; }
             });
-            batch.delete(docKelas.ref);
-            ops++;
-            if(ops >= 400) { await batch.commit(); batch = db.batch(); ops = 0; }
+
+            if (ops > 0) await batch.commit();
+            showToast("Database telah dikosongkan sepenuhnya!", "success");
+            setTimeout(() => location.reload(), 1000);
+
+        } catch(e) {
+            showToast("Ralat: " + e.message, "error");
         }
-
-        // 2. PADAM SENARAI KELAS GLOBAL (Yang muncul dalam dropdown)
-        const globalKelasRef = db.collection('sesi').doc(sesi).collection('kelas');
-        const globalSnap = await globalKelasRef.get();
-        
-        globalSnap.forEach(doc => {
-            batch.delete(doc.ref);
-            ops++;
-            if(ops >= 400) { batch.commit(); batch = db.batch(); ops = 0; }
-        });
-
-        if (ops > 0) await batch.commit();
-
-        showToast("Database telah dikosongkan sepenuhnya!", "success");
-        setTimeout(() => location.reload(), 1000);
-
-    } catch(e) {
-        showToast("Ralat: " + e.message, "error");
     }
-}
-    
+
     function renderTable() {
         const search = document.getElementById('searchInput').value.toUpperCase();
         const header = document.getElementById('tableHeader');
@@ -501,6 +511,10 @@ async function deleteAllPentaksiranData() {
         document.getElementById('dashboard').classList.remove('hidden');
         document.getElementById('stat-murid').innerText = currentClassData.length;
     }
+
+    // ==========================================
+    // ANALISIS & PENJANAAN SIJIL
+    // ==========================================
 
     function calculate() {
         const getGrade = (m) => { 
@@ -528,19 +542,70 @@ async function deleteAllPentaksiranData() {
         const sorted = [...currentClassData].sort((a,b)=>parseFloat(a.gpm)-parseFloat(b.gpm)||b.totalMarks-a.totalMarks);
         currentClassData.forEach(s => s.rank = sorted.findIndex(r => r.id === s.id) + 1);
         
+        // Update Stats
         document.getElementById('stat-gpm').innerText = (currentClassData.reduce((a,b)=>a+parseFloat(b.gpm||0),0)/(currentClassData.length||1)).toFixed(2);
         document.getElementById('stat-lulus').innerText = ((totalPass/(currentClassData.length||1))*100).toFixed(1)+"%";
+        
+        // Update Top 5
         document.getElementById('top-5-list').innerHTML = sorted.slice(0,5).map((s,i) => `
             <div class="flex justify-between items-center p-3 border border-slate-100 rounded-xl bg-slate-50">
                 <span class="font-bold text-slate-700">${i+1}. ${s.nama}</span>
                 <span class="bg-emerald-600 text-white px-3 py-1 rounded-full font-black text-[10px]">GPM: ${s.gpm}</span>
             </div>`).join('');
         
+        // --- NEW: Generate Best Subjects ---
+        generateSubjectBest();
+        
         document.getElementById('excellence-panel').classList.remove('hidden'); 
         document.getElementById('print-btn-area').classList.remove('hidden');
         renderTable(); 
         generateSijil(getGrade); 
         showToast("Analisis Cloud Berjaya!");
+    }
+
+    // --- FUNGSI TERBAIK SUBJEK (NEW FEATURE) ---
+    function generateSubjectBest() {
+        const listContainer = document.getElementById('subject-best-list');
+        const panel = document.getElementById('subject-best-panel');
+        let htmlContent = '';
+        let hasData = false;
+
+        selectedSubjects.forEach(subCode => {
+            const subName = ALL_SUBJECTS.find(s => s.id === subCode)?.name || subCode;
+            let maxScore = -1;
+            
+            // Cari markah tertinggi
+            currentClassData.forEach(student => {
+                const mark = parseFloat(student.marks?.[subCode]);
+                if (!isNaN(mark) && mark > maxScore) maxScore = mark;
+            });
+
+            // Jika ada markah valid (>0)
+            if (maxScore > 0) {
+                hasData = true;
+                // Cari semua pelajar dengan markah tertinggi (Handle Ties)
+                const bestStudents = currentClassData.filter(student => {
+                    const mark = parseFloat(student.marks?.[subCode]);
+                    return mark === maxScore;
+                });
+                
+                const studentNames = bestStudents.map(s => s.nama).join(', ');
+
+                htmlContent += `
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                        <div class="text-[9px] font-bold text-slate-400 uppercase mb-1">${subName}</div>
+                        <div class="font-black text-blue-900 text-xs leading-tight mb-2">${studentNames}</div>
+                        <div class="text-[10px] font-bold text-emerald-600 bg-emerald-100 inline-block px-2 py-0.5 rounded">Markah: ${maxScore}</div>
+                    </div>`;
+            }
+        });
+
+        if (hasData) {
+            listContainer.innerHTML = htmlContent;
+            panel.classList.remove('hidden');
+        } else {
+            panel.classList.add('hidden');
+        }
     }
 
     function generateSijil(getGrade) {
@@ -630,59 +695,46 @@ async function deleteAllPentaksiranData() {
         XLSX.writeFile(wb, "Templat_Import_SKAG.xlsx"); 
     }
 
-async function processCSV() {
-    const file = document.getElementById('csvInput').files[0];
-    const sesi = document.getElementById('sesiAkademik').value;
-    const jenis = document.getElementById('sesiPentaksiran').value;
-    
-    if (!file) return showToast("Pilih fail CSV!", "error");
-    if (!sesi || !jenis) return showToast("Sila pilih Sesi dan Ujian dahulu!", "error");
+    // --- PROCESS CSV (NO DUPLICATES) ---
+    async function processCSV() {
+        const file = document.getElementById('csvInput').files[0];
+        const sesi = document.getElementById('sesiAkademik').value;
+        const jenis = document.getElementById('sesiPentaksiran').value;
 
-    showToast("Sedang memproses... Sila tunggu.", "success");
+        if (!file) return showToast("Sila pilih fail CSV!", "error");
+        if (!sesi || !jenis) return showToast("Pilih Sesi & Ujian dahulu!", "error");
 
-    Papa.parse(file, {
-        header: true, skipEmptyLines: true,
-        complete: async (res) => {
+        showToast("Memproses fail... Sila tunggu.");
+        
+        Papa.parse(file, { header: true, skipEmptyLines: true, complete: async (res) => {
             const data = res.data;
-            if (data.length === 0) return showToast("Fail kosong.", "error");
+            if (data.length === 0) return showToast("Fail kosong atau format salah.", "error");
 
-            const BATCH_SIZE = 400; 
-            let batch = db.batch(); 
-            let batchOps = 0;
+            let batch = db.batch();
+            let ops = 0;
 
             for (const row of data) {
                 const d = Object.keys(row).reduce((acc, k) => { acc[k.toLowerCase().trim()] = row[k]; return acc; }, {});
-                
                 if (d.nama && d.kelas) {
                     const cleanName = d.nama.toUpperCase().trim();
                     const cleanClass = d.kelas.toString().toUpperCase().trim();
-                    
-                    // Jana ID unik berdasarkan nama (supaya tidak duplikasi)
-                    const studentID = cleanName.replace(/[^a-zA-Z0-9]/g, '_');
-                    const classID = cleanClass.replace(/[^a-zA-Z0-9]/g, '_');
+                    const sid = cleanName.replace(/[^a-zA-Z0-9]/g, '_'); // ID Unik
+                    const cid = cleanClass.replace(/[^a-zA-Z0-9]/g, '_');
 
-                    const classRef = db.collection('sesi').doc(sesi).collection('kelas').doc(classID);
-                    const muridRef = db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis)
-                                       .collection('kelas').doc(classID).collection('murid').doc(studentID);
+                    const classRef = db.collection('sesi').doc(sesi).collection('kelas').doc(cid);
+                    const muridRef = db.collection('sesi').doc(sesi).collection('pentaksiran').doc(jenis).collection('kelas').doc(cid).collection('murid').doc(sid);
 
-                    batch.set(classRef, { nama_kelas: cleanClass }, { merge: true });
-                    batch.set(muridRef, { nama: cleanName, marks: {} }, { merge: true });
-                    
-                    batchOps += 2;
+                    batch.set(classRef, { nama_kelas: cleanClass }, {merge:true});
+                    batch.set(muridRef, { nama: cleanName, marks: {} }, {merge:true});
+                    ops += 2;
 
-                    if (batchOps >= BATCH_SIZE) {
-                        await batch.commit();
-                        batch = db.batch();
-                        batchOps = 0;
-                    }
+                    if (ops >= 400) { await batch.commit(); batch = db.batch(); ops = 0; }
                 }
             }
-            if (batchOps > 0) await batch.commit();
-            showToast("Selesai! Data telah dikemaskini.");
-            loadClassList();
-        }
-    });
-}
+            if (ops > 0) await batch.commit();
+            showToast("Import Berjaya!"); loadClassList();
+        }});
+    }
 
     function exportToExcel() {
         const data = currentClassData.map(m => ({ Nama: m.nama, ...m.marks, GPM: m.gpm, Status: m.statusLulus }));
@@ -692,6 +744,3 @@ async function processCSV() {
 </script>
 </body>
 </html>
-
-
-
