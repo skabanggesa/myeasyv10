@@ -3,169 +3,265 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAPS Cloud V14 - Edisi Sheets (Custom Login)</title>
-    
+    <title>Sistem Analisis Penilaian V10 - SK ABANG GESA</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Great+Vibes&family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        @media print {
-            body * { visibility: hidden; }
-            #section-sijil, #section-sijil * { visibility: visible; }
-            #section-sijil { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; }
-            .no-print { display: none !important; }
-            .page-break { page-break-after: always; break-after: page; display: block; height: 100vh; position: relative; }
+<style>
+    /* =========================
+       CETAK / PRINT
+    ========================== */
+    @media print {
+
+        /* Sembunyikan semua dahulu */
+        body * {
+            visibility: hidden;
         }
-        .certificate-border { border: 20px double #1e3a8a; padding: 40px; background: white; height: 98vh; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; }
-        .mark-input { width: 50px; padding: 4px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; transition: all 0.2s; }
-        .mark-input:focus { border-color: #1e3a8a; outline: none; box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1); }
-        #auth-overlay { position: fixed; inset: 0; background: #f8fafc; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; }
-        .toast { padding: 12px 20px; border-radius: 8px; color: white; font-weight: bold; font-size: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); animation: slideIn 0.3s ease-out; }
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        
-    </style>
+
+        /* Paparkan kawasan sijil */
+        #section-sijil,
+        #section-sijil * {
+            visibility: visible;
+        }
+
+        /* Paparkan kawasan analisis */
+        #analisis-print-area,
+        #analisis-print-area * {
+            visibility: visible;
+        }
+
+        /* Tetapan sijil */
+        #section-sijil {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            display: block !important;
+            background: white;
+        }
+
+        /* Tetapan analisis */
+        #analisis-print-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            padding: 20px;
+            background: white;
+            display: block !important;
+        }
+
+        /* Sembunyikan UI utama */
+        #main-app,
+        #login-section,
+        .no-print {
+            display: none !important;
+        }
+
+        /* Page break */
+        .page-break {
+            page-break-after: always;
+        }
+
+        /* Jadual analisis */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid #000;
+            padding: 6px;
+        }
+
+        th {
+            background: #1e3a8a !important;
+            color: white !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        /* Pastikan warna dicetak */
+        * {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+    }
+
+    /* =========================
+       GAYA SIJIL
+    ========================== */
+    .certificate-border {
+        border: 15px double #1e3a8a;
+        padding: 35px;
+        background: white;
+        min-height: 98vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* =========================
+       STATUS BADGE
+    ========================== */
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-weight: 800;
+        font-size: 14px;
+        border: 2px solid;
+        display: inline-block;
+    }
+
+    .status-cemerlang {
+        color: #15803d;
+        border-color: #15803d;
+        background: #f0fdf4;
+    }
+
+    .status-lulus {
+        color: #1d4ed8;
+        border-color: #1d4ed8;
+        background: #eff6ff;
+    }
+
+    .status-gagal {
+        color: #b91c1c;
+        border-color: #b91c1c;
+        background: #fef2f2;
+    }
+
+    /* =========================
+       UTILITI
+    ========================== */
+    .hidden-section {
+        display: none !important;
+    }
+</style>
 </head>
-<body class="bg-slate-50 text-slate-800 text-sm">
+<body class="bg-slate-100 font-sans text-sm">
 
-<div id="toast-container"></div>
-
-<div id="global-loader" style="display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 100000; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(2px);">
-    <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-900 mb-4 mx-auto"></div>
-    <p class="font-bold text-blue-900 animate-pulse uppercase tracking-widest text-xs" id="loader-text">Sila Tunggu...</p>
-</div>
-
-<div id="auth-overlay">
-    <div id="login-state" class="text-center bg-white p-10 rounded-[2.5rem] shadow-2xl border border-slate-100 max-w-sm w-full mx-4">
-        <h2 class="text-2xl font-black text-blue-900 mb-1 leading-tight uppercase tracking-tight">SAPS CLOUD V14</h2>
-        <p class="text-[10px] font-bold text-slate-400 uppercase mb-8 tracking-[0.2em]">Pangkalan Data Google Sheets</p>
-        
-        <div class="mb-4">
-            <label class="block text-left text-[10px] font-bold text-slate-500 mb-1 ml-1 uppercase">Emel Pengguna (DELIMa)</label>
-            <input type="email" id="login-email" placeholder="Cth: g---------@moe-dl.edu.my" class="w-full p-4 border-2 border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:border-blue-500 transition-colors text-center">
+<div id="login-section" class="min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border-t-8 border-blue-900">
+        <div class="text-center mb-8">
+            <h1 class="text-2xl font-black text-blue-900 uppercase">Sistem Penilaian V10</h1>
+            <p class="text-slate-500 font-bold">SK ABANG GESA</p>
         </div>
-
-        <button onclick="processLogin()" class="w-full bg-blue-700 text-white py-4 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-800 shadow-lg shadow-blue-900/20 transition-all">Log Masuk Sistem</button>
-
-        <div class="mt-6 pt-6 border-t border-slate-100">
-            <button onclick="showRegisterForm()" class="text-xs font-bold text-slate-500 hover:text-blue-600 underline">Belum ada akaun? Mohon Akses</button>
-        </div>
-
-        <div id="login-error" class="mt-4 p-3 bg-red-50 text-red-600 text-[10px] font-bold rounded-xl hidden border border-red-100"></div>
-    </div>
-
-    <div id="request-access-state" class="hidden text-center bg-white p-10 rounded-[2.5rem] shadow-2xl border border-slate-100 max-w-sm w-full mx-4">
-        <h2 class="text-xl font-black text-emerald-700 mb-2 uppercase">Mohon Akses Guru</h2>
-        <p class="text-[10px] font-bold text-slate-400 uppercase mb-6 tracking-widest">Daftar Akaun Baharu</p>
-        
-        <input type="email" id="req-email" placeholder="Emel (Cth: g-123@moe-dl.edu.my)" class="w-full mb-3 p-3 border rounded-xl bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-bold text-center">
-        <input type="text" id="req-name" placeholder="Nama Penuh (Cth: Cikgu Ali)" class="w-full mb-3 p-3 border rounded-xl bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-bold text-center">
-        <input type="text" id="req-class" placeholder="Kelas Seliaan (Cth: 6 Merah)" class="w-full mb-3 p-3 border rounded-xl bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-bold text-center">
-        <input type="password" id="req-password" placeholder="Cipta Kata Laluan Baru" class="w-full mb-6 p-3 border rounded-xl bg-slate-50 focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-bold text-center">
-        
-        <button onclick="submitRequestAccess()" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold uppercase shadow-md hover:bg-emerald-700">Hantar Permohonan</button>
-        <button onclick="showLoginForm()" class="mt-4 text-[10px] text-slate-400 font-bold underline">Batal & Kembali</button>
-    </div>
-</div>
-
-<div id="main-content" class="hidden">
-    <div class="bg-white p-5 shadow-sm border-b-4 border-blue-900 no-print">
-        <div class="container mx-auto flex justify-between items-center gap-4">
+        <div class="space-y-4">
             <div>
-                <h1 class="text-xl font-black text-blue-900 uppercase leading-none tracking-tighter">SAPS CLOUD SHEETS</h1>
-                <p id="user-welcome" class="text-[10px] font-bold text-emerald-600 uppercase mt-1 tracking-wider italic">...</p>
+                <label class="block text-xs font-black text-slate-700 mb-1">EMEL DELIMa</label>
+                <input type="email" id="loginEmail" placeholder="contoh: g-12345678@moe-dl.edu.my" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
-            <button onclick="localStorage.removeItem('sapsCloudUser'); location.reload();" class="bg-slate-100 hover:bg-red-50 hover:text-red-600 text-slate-500 px-5 py-2 rounded-xl font-black text-[10px] uppercase border border-slate-200 shadow-sm">🚪 Log Keluar</button>
+            <button onclick="handleLogin()" class="w-full bg-blue-900 text-white py-3 rounded-lg font-black hover:bg-blue-800 transition">MASUK SISTEM</button>
+            <p id="loginError" class="text-red-500 text-xs font-bold text-center hidden">Emel tidak berdaftar!</p>
+        </div>
+    </div>
+</div>
+
+<div id="main-app" class="container mx-auto p-4 no-print hidden-section">
+    
+    <div class="bg-blue-900 text-white p-6 rounded-xl shadow-lg mb-6 flex justify-between items-center">
+        <div>
+            <h1 class="text-xl font-black italic">SK ABANG GESA</h1>
+            <p id="userStatus" class="text-xs opacity-80 uppercase font-bold"></p>
+        </div>
+        <button onclick="location.reload()" class="bg-red-500 px-4 py-2 rounded font-bold text-xs">LOG KELUAR</button>
+    </div>
+
+    <div id="admin-area" class="hidden-section space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white p-6 rounded-xl shadow border">
+                <h2 class="font-black text-blue-900 mb-4 uppercase border-b pb-2">Daftar Guru Baharu</h2>
+                <div class="space-y-3">
+                    <input type="text" id="regName" placeholder="Nama Guru" class="w-full p-2 border rounded">
+                    <input type="email" id="regEmail" placeholder="Emel DELIMa" class="w-full p-2 border rounded">
+                    <button onclick="registerUser('guru')" class="w-full bg-emerald-600 text-white py-2 rounded font-bold">SIMPAN GURU</button>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow border">
+                <h2 class="font-black text-blue-900 mb-4 uppercase border-b pb-2">Muat Naik Senarai Murid (CSV)</h2>
+                <p class="text-[10px] text-slate-500 mb-2 font-bold">Header: nama, kelas, tahun</p>
+                <input type="file" id="csvStudentInput" accept=".csv" class="w-full mb-3 text-xs">
+                <button onclick="uploadStudentCSV()" class="w-full bg-blue-900 text-white py-2 rounded font-bold">PROSES & SIMPAN DATA</button>
+            </div>
         </div>
     </div>
 
-    <div class="container mx-auto p-6 no-print">
+<div class="bg-white p-6 rounded-xl shadow border mt-6">
+        <h2 class="font-black text-purple-900 mb-4 uppercase border-b pb-2">📊 Papan Pemuka Analisis Kelas</h2>
         
-        <div id="admin-panel" class="hidden mb-6 bg-red-50 p-5 rounded-xl border border-red-200 shadow-sm">
-            <div class="flex justify-between items-center mb-3">
-                <h2 class="font-black text-red-800 text-[11px] uppercase tracking-widest flex items-center gap-2">🛡️ Panel Admin: Kelulusan Guru Baru</h2>
-                <button onclick="loadPendingUsers()" class="text-xs bg-red-200 text-red-800 px-3 py-1 rounded font-bold hover:bg-red-300 shadow-sm">🔄 Segar Semula</button>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            <div>
+                <label class="block text-[10px] font-black text-purple-900 uppercase">Tahun</label>
+                <select id="anaTahun" class="w-full p-2 border rounded font-bold bg-slate-50"></select>
+            </div>
+            <div>
+                <label class="block text-[10px] font-black text-purple-900 uppercase">Penilaian</label>
+                <select id="anaPenilaian" class="w-full p-2 border rounded font-bold bg-slate-50">
+                    <option>Penilaian Semester Pertama</option>
+                    <option>Ujian Tahun 4</option>
+                    <option>Penilaian Semester Kedua</option>
+                    <option>Ujian Akhir Sesi Akademik</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-[10px] font-black text-purple-900 uppercase">Kelas</label>
+                <select id="anaKelas" class="w-full p-2 border rounded font-bold bg-slate-50">
+                    <option value="">Pilih Kelas</option>
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button onclick="janaAnalisis()" class="w-full bg-purple-700 text-white py-2 rounded font-black hover:bg-purple-800 shadow-md transition">JANA ANALISIS</button>
+<button onclick="printAnalisis()" 
+class="w-full bg-slate-800 text-white py-2 rounded font-black hover:bg-slate-900 shadow-md transition">
+    CETAK ANALISIS
+</button>
+            </div>
+        </div>
+
+        <div id="analisis-result" class="hidden-section space-y-8 mt-6 border-t pt-6"></div>
+    </div>
+
+    <div id="guru-area" class="hidden-section space-y-6">
+        <div class="bg-white p-6 rounded-xl shadow border grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-[10px] font-black text-blue-900 uppercase">Tahun</label>
+                <select id="selTahun" class="w-full p-2 border rounded font-bold bg-slate-50 border-blue-200"></select>
+            </div>
+            <div>
+                <label class="block text-[10px] font-black text-blue-900 uppercase">Penilaian</label>
+                <select id="selPenilaian" class="w-full p-2 border rounded font-bold bg-slate-50 border-blue-200">
+                    <option>Penilaian Semester Pertama</option>
+                    <option>Ujian Tahun 4</option>
+                    <option>Penilaian Semester Kedua</option>
+                    <option>Ujian Akhir Sesi Akademik</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-[10px] font-black text-blue-900 uppercase">Kelas</label>
+                <select id="selKelas" class="w-full p-2 border rounded font-bold bg-slate-50 border-blue-200">
+                    <option value="">Sila Pilih Tahun Dulu</option>
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button onclick="fetchStudentList()" class="w-full bg-blue-900 text-white py-2 rounded font-black hover:bg-blue-800">CARI MURID</button>
+            </div>
+        </div>
+
+        <div id="mark-table-container" class="bg-white p-6 rounded-xl shadow border hidden-section">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="font-black text-blue-900 uppercase">Kemasukan Markah</h2>
+                <div id="subject-selectors" class="flex gap-2 flex-wrap max-w-xl justify-end">
+                    </div>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full text-left bg-white rounded-lg overflow-hidden border">
-                    <thead class="bg-red-900 text-white text-[10px] uppercase">
-                        <tr><th class="p-2">Emel</th><th class="p-2">Nama</th><th class="p-2">Kelas Diminta</th><th class="p-2 text-center">Tindakan</th></tr>
-                    </thead>
-                    <tbody id="pending-users-list" class="text-[11px] font-medium text-slate-700">
-                        <tr><td colspan="4" class="p-3 text-center italic">Tiada permohonan baru.</td></tr>
-                    </tbody>
+                <table class="w-full border-collapse text-[10px]">
+                    <thead class="bg-slate-800 text-white"><tr id="tableHeader"></tr></thead>
+                    <tbody id="tableBody" class="divide-y"></tbody>
                 </table>
             </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <div class="space-y-4">
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                    <h2 class="font-bold text-blue-700 uppercase mb-4 text-[10px] tracking-widest border-b pb-2">⚙️ Tetapan Pangkalan Data</h2>
-                    
-                    <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase">Sesi & Pentaksiran</label>
-                    <input type="text" id="sesiAkademik" value="2025" onblur="handleSesiChange()" onkeyup="if(event.key === 'Enter') handleSesiChange()" placeholder="Tahun (Cth: 2025)" class="w-full mb-2 p-2 border rounded font-bold text-blue-900 bg-blue-50 text-xs outline-none text-center">
-                    <select id="sesiPentaksiran" onchange="fetchStudents()" class="w-full mb-4 p-2 border rounded font-bold text-emerald-800 bg-emerald-50 text-xs outline-none">
-                        <option value="USP">Ujian Semester Pertama</option>
-                        <option value="UPS">Ujian Pertengahan Semester</option>
-                        <option value="UASA">Ujian Akhir Sesi Akademik</option>
-                        <option value="PT4">Penilaian Tahun 4</option>
-                        <option value="UPDLP">Ujian Penilaian Dual Language Programme</option>
-                    </select>
-
-                    <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase">Kelas Seliaan Anda</label>
-                    <select id="classDropdown" onchange="fetchStudents()" class="w-full p-2 border border-amber-300 rounded font-bold text-blue-900 bg-amber-50 text-xs outline-none">
-                        <option value="">-- Pilih Kelas --</option>
-                    </select>
-                </div>
-                
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                    <h2 class="font-bold text-blue-700 uppercase text-[10px] tracking-widest border-b pb-2 mb-3">📚 Pilih Subjek</h2>
-                    <div id="subject-grid" class="grid grid-cols-1 gap-1 text-[10px]"></div>
-                </div>
-
-<div id="csv-section" class="bg-slate-900 p-5 rounded-xl shadow-lg border border-slate-800 text-white hidden">
-                    <h2 class="font-black text-[10px] text-yellow-400 uppercase mb-3 border-b border-slate-700 pb-1 tracking-widest">📥 Import Murid (CSV)</h2>
-                    <input type="file" id="csvInput" accept=".csv" class="w-full text-[10px] mb-2 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-semibold file:bg-blue-50 file:text-blue-700">
-                    <button onclick="processCSV()" class="w-full bg-blue-600 text-white py-2 rounded text-[10px] font-bold uppercase hover:bg-blue-700 shadow-md">Tambah dari CSV</button>
-                </div>
-            </div>
-
-            <div class="lg:col-span-3 space-y-6">
-                
-                <div id="table-card" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hidden">
-                    <div class="p-4 bg-slate-50 border-b flex items-center justify-between gap-3 flex-wrap">
-                        <h3 class="font-black text-blue-900 text-sm uppercase">Senarai Murid & Markah</h3>
-                        <div class="flex gap-2">
-                            <button onclick="addStudentManual()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-2 rounded-lg font-bold text-[10px] uppercase transition-all">
-                                ➕ Tambah Murid
-                            </button>
-                            <button onclick="saveDataMarkah()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-lg font-bold text-[10px] shadow uppercase transition-all flex items-center gap-2">
-                                💾 Simpan Ke Google Sheets
-                            </button>
-                        </div>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left">
-                            <thead class="bg-blue-900 text-white text-[9px] uppercase tracking-wider">
-                                <tr id="tableHeader"></tr>
-                            </thead>
-                            <tbody id="tableBody" class="text-[11px] font-medium"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div id="top-scorer-panel" class="hidden bg-white p-5 rounded-xl border-t-4 border-emerald-500 shadow-sm">
-                    <div class="flex justify-between items-center mb-3 border-b pb-2">
-                        <h3 class="font-black text-emerald-700 text-[10px] uppercase tracking-widest">🏆 Pencapai Terbaik Mengikut Subjek</h3>
-                        <button onclick="generateSijil()" class="bg-blue-600 text-white px-4 py-1 rounded text-[10px] font-bold uppercase hover:bg-blue-700 shadow">🖨️ Cetak Sijil Penuh</button>
-                    </div>
-                    <div id="top-scorer-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
-                </div>
-
+            <div class="mt-6 flex gap-3">
+                <button onclick="calculateAndSaveToCloud()" class="flex-1 bg-emerald-600 text-white py-4 rounded-xl font-black text-lg shadow-lg hover:scale-105 transition">SIMPAN & KIRA GPM</button>
+                <button onclick="prepareAndPrint()" class="bg-slate-800 text-white px-8 py-4 rounded-xl font-black">CETAK SEMUA SIJIL</button>
             </div>
         </div>
     </div>
@@ -173,633 +269,694 @@
 
 <div id="section-sijil"></div>
 
-<script>
-    // ==========================================
-    // 1. KONFIGURASI GOOGLE APPS SCRIPT (GAS)
-    // ==========================================
-    // Gantikan dengan URL Web App anda yang sah (Deploy Baru)
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby1tV6NTDqqxjlhmiODCECT1MX7IN_cFOCxZ7WwS0fLqA7ueD8ujE9_WsoQGNzix4f3ow/exec";
-    
-    let currentUser = null; 
-    let currentClassData = [];
-    let allCSVData = [];
-    let selectedSubjects = ['BM', 'BI', 'MT', 'SN'];
-    
-    const BASE_SUBJECTS = [
-        {id:'BM', name:'BAHASA MELAYU'}, {id:'BI', name:'BAHASA INGGERIS'}, 
-        {id:'MT', name:'MATEMATIK'}, {id:'SN', name:'SAINS'}, 
-        {id:'SJ', name:'SEJARAH'}, {id:'PAI', name:'PENDIDIKAN ISLAM'},
-	{id:'PM', name:'PENDIDIKAN MORAL'}, {id:'PJ', name:'PENDIDIKAN JASMANI'},
-	{id:'PK', name:'PENDIDIKAN KESIHATAN'}, {id:'MZ', name:'PENDIDIKAN MUZIK'},
-	{id:'PSV', name:'PENDIDIKAN SENI VISUAL'}, {id:'RBT', name:'REKA BENTUK TEKNOLOGI'},
-	{id:'BA', name:'BAHASA ARAB'}
-    ];
+<script type="module">
+    // 1. IMPORT FIREBASE
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { 
+        getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, deleteDoc 
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    window.onload = () => { 
-        renderSubjectGrid(); 
+    // 2. CONFIG
+    const firebaseConfig = {
+        apiKey: "AIzaSyDEuXGoOt9BTv6OBvpc1h-yVmARlpW-LkE",
+        authDomain: "myeasy-a1547.firebaseapp.com",
+        projectId: "myeasy-a1547",
+        storageBucket: "myeasy-a1547.firebasestorage.app",
+        messagingSenderId: "182516833076",
+        appId: "1:182516833076:web:a43961448e7ebb6ccc6361",
+        measurementId: "G-7HCS2KH67Y"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+// 3. VARIABLE GLOBAL (Kemaskini dengan subjek tambahan)
+const KPM_SUBJECTS = [
+    {id: 'BM', name: 'Bahasa Melayu'}, 
+    {id: 'BI', name: 'Bahasa Inggeris'},
+    {id: 'MT', name: 'Matematik'}, 
+    {id: 'SN', name: 'Sains'},
+    {id: 'PAI', name: 'Pendidikan Islam'}, 
+    {id: 'BA', name: 'Bahasa Arab'},      // Tambah BA
+    {id: 'PM', name: 'Pendidikan Moral'},  // Tambah PM
+    {id: 'SJ', name: 'Sejarah'},
+    {id: 'RBT', name: 'RBT'}, 
+    {id: 'PJK', name: 'PJK'},
+    {id: 'PSV', name: 'PSV'},              // Tambah PSV
+    {id: 'MZ', name: 'Muzik'}              // Tambah MZ
+];
+
+    let currentUser = null;
+    let activeStudents = [];
+    let selectedSubjects = ['BM', 'BI', 'MT', 'SN'];
+
+    // 4. FUNGSI UNTUK WINDOW (Supaya butang onclick berfungsi)
+    
+window.onload = () => {
+    const yearSel = document.getElementById('selTahun');
+    const anaYearSel = document.getElementById('anaTahun');
+
+    for(let i=2026; i<=2040; i++) {
+        let opt = document.createElement('option');
+        opt.value = i;
+        opt.innerText = i;
+        yearSel.appendChild(opt);
+
+        // Dropdown analisis
+        let optAna = document.createElement('option');
+        optAna.value = i;
+        optAna.innerText = i;
+        anaYearSel.appendChild(optAna);
+    }
+
+    const subContainer = document.getElementById('subject-selectors');
+    KPM_SUBJECTS.forEach(s => {
+        const checked = selectedSubjects.includes(s.id) ? 'checked' : '';
+        subContainer.innerHTML += `
+            <label class="text-[9px] font-bold border p-1 rounded bg-slate-50 flex items-center gap-1">
+                <input type="checkbox" value="${s.id}" ${checked} onchange="updateSelectedSubjects()"> ${s.id}
+            </label>
+        `;
+    });
+};
+
+    window.updateSelectedSubjects = () => {
+        const boxes = document.querySelectorAll('#subject-selectors input:checked');
+        selectedSubjects = Array.from(boxes).map(b => b.value);
+    };
+
+window.handleLogin = async () => {
+        console.log("1. Butang MASUK SISTEM telah ditekan!"); // Ujian pertama
         
-        // FUNGSI BARU: Semak adakah cikgu sudah log masuk sebelum ini
-        const savedUser = localStorage.getItem('sapsCloudUser');
-        if (savedUser) {
-            currentUser = JSON.parse(savedUser);
-            setupDashboard(); // Terus bawa masuk ke Dashboard!
+        const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+        console.log("2. Emel yang ditaip:", email);
+        
+        const errorMsg = document.getElementById('loginError');
+        
+        try {
+            console.log("3. Sedang menyemak dengan Firestore...");
+            const q = query(collection(db, "users"), where("email", "==", email));
+            const querySnapshot = await getDocs(q);
+            
+            console.log("4. Selesai semak! Adakah data wujud?", !querySnapshot.empty);
+            
+            if (querySnapshot.empty) {
+                if(email === "admin@gesa.com") {
+                    console.log("5. Menggunakan akaun kecemasan Admin");
+                    showDashboard({name: "Super Admin", role: "admin", email: email});
+                } else {
+                    console.log("5. GAGAL: Emel tiada dalam Firestore.");
+                    errorMsg.classList.remove('hidden');
+                }
+                return;
+            }
+
+            querySnapshot.forEach((doc) => {
+                console.log("5. BERJAYA: Data pengguna ditemui:", doc.data());
+                showDashboard(doc.data());
+            });
+        } catch (e) { 
+            console.error("RALAT KETIKA LOGIN:", e);
+            alert("Ralat sambungan: " + e.message);
         }
     };
 
-    // ==========================================
-    // 2. FUNGSI UTILITI
-    // ==========================================
-    function showToast(msg, type = 'success') {
-        const container = document.getElementById('toast-container');
-        const el = document.createElement('div');
-        el.className = `toast ${type === 'error' ? 'bg-red-600' : 'bg-emerald-600'}`;
-        el.innerText = msg;
-        container.appendChild(el);
-        setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3000);
-    }
-
-function showLoading(show, text = "Sila Tunggu...") {
-        const loader = document.getElementById('global-loader');
-        const loaderText = document.getElementById('loader-text');
+    function showDashboard(user) {
+        currentUser = user;
+        document.getElementById('login-section').classList.add('hidden-section');
+        document.getElementById('main-app').classList.remove('hidden-section');
+        document.getElementById('userStatus').innerText = `${user.role}: ${user.name}`;
         
-        if (loader && loaderText) {
-            loaderText.innerText = text;
-            // Gunakan style.display untuk atasi konflik CSS
-            loader.style.display = show ? 'flex' : 'none';
-        }
-    }
-
-    // Fungsi Pengendalian GET Request
-    async function gasGetRequest(payload) {
-        const params = new URLSearchParams(payload).toString();
-        const url = `${SCRIPT_URL}?${params}`;
-        
-        try {
-            const response = await fetch(url, { method: 'GET' });
-            const text = await response.text();
-            try { return JSON.parse(text); } 
-            catch(e) { console.error("Ralat Parse:", text); return { status: 'error', message: 'Ralat pelayan/sekatan Google. Sila semak Console (F12).' }; }
-        } catch (e) {
-            console.error("GET Error:", e);
-            return { status: "error", message: "Gagal berhubung dengan pangkalan data." };
-        }
-    }
-
-    // Fungsi Pengendalian POST Request
-    async function gasPostRequest(payload) {
-        try {
-            const response = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify(payload)
-            });
-            const text = await response.text();
-            try { return JSON.parse(text); } 
-            catch(e) { console.error("Ralat Parse:", text); return { status: 'error', message: 'Ralat pelayan/sekatan Google. Sila semak Console (F12).' }; }
-        } catch (e) {
-            console.error("POST Error:", e);
-            return { status: "error", message: "Gagal berhubung dengan pangkalan data." };
-        }
-    }
-
-    function showRegisterForm() {
-        document.getElementById('login-state').classList.add('hidden');
-        document.getElementById('request-access-state').classList.remove('hidden');
-    }
-
-    function showLoginForm() {
-        document.getElementById('request-access-state').classList.add('hidden');
-        document.getElementById('login-state').classList.remove('hidden');
-    }
-
-    // ==========================================
-    // 3. PENGESAHAN IDENTITI (CUSTOM LOGIN)
-    // ==========================================
-    
-async function processLogin() {
-        const emailInput = document.getElementById('login-email').value.trim();
-        const errorDiv = document.getElementById('login-error');
-        
-        if (!emailInput) {
-            errorDiv.innerText = "Sila isi emel DELIMa anda.";
-            errorDiv.classList.remove('hidden');
-            return;
-        }
-
-        errorDiv.classList.add('hidden');
-        
-        // SPINNER DIAKTIFKAN DI SINI (Tiada lagi tanda //)
-        showLoading(true, "Mengesahkan Identiti...");
-        
-        // HANYA HANTAR EMEL (Tiada password)
-        const res = await gasGetRequest({ action: 'login', email: emailInput });
-        
-        // SPINNER DITUTUP SELEPAS DAPAT JAWAPAN (Tiada lagi tanda //)
-        showLoading(false);
-
-        if (res.status === 'success') {
-            currentUser = res.user; 
-	    localStorage.setItem('sapsCloudUser', JSON.stringify(currentUser));
-            setupDashboard();
+        if(user.role === 'admin') {
+            document.getElementById('admin-area').classList.remove('hidden-section');
+            document.getElementById('guru-area').classList.remove('hidden-section');
         } else {
-            errorDiv.innerText = res.message;
-            errorDiv.classList.remove('hidden');
+            document.getElementById('guru-area').classList.remove('hidden-section');
         }
+        window.loadClassesForDropdown();
     }
 
-    async function submitRequestAccess() {
-        const email = document.getElementById('req-email').value.trim();
-        const name = document.getElementById('req-name').value.trim();
-        const kelas = document.getElementById('req-class').value.trim();
+    window.registerUser = async (role) => {
+        const name = document.getElementById('regName').value;
+        const email = document.getElementById('regEmail').value.toLowerCase();
+        if(!name || !email) return alert("Isi semua info!");
+        await setDoc(doc(db, "users", email), { name, email, role });
+        alert("Guru berdaftar!");
+    };
 
-        if(!email || !name || !kelas) return showToast("Sila isi semua maklumat", "error");
+window.uploadStudentCSV = async () => {
+    const fileInput = document.getElementById('csvStudentInput');
+    const btn = event.target; // Mengambil elemen butang yang ditekan
+    const file = fileInput.files[0];
 
-        // showLoading(true, "Menghantar permohonan...");
-        
-        // HANYA HANTAR DATA INI (Tiada password)
-        const res = await gasPostRequest({ 
-            action: 'register', 
-            email: email, 
-            namaPenuh: name, 
-            kelas: kelas 
-        });
-        
-        // showLoading(false);
+    if (!file) return alert("Sila pilih fail CSV terlebih dahulu!");
 
-        if(res.status === 'success') {
-            alert(res.message);
-            showLoginForm();
-        } else {
-            showToast(res.message, "error");
-        }
-    }
+    // 1. Nyahaktifkan butang & beri notifikasi visual
+    btn.disabled = true;
+    btn.innerText = "SEDANG MEMPROSES & MEMUAT NAIK...";
+    btn.classList.add('opacity-50', 'cursor-not-allowed');
 
-    async function submitRequestAccess() {
-        const email = document.getElementById('req-email').value.trim();
-        const name = document.getElementById('req-name').value.trim();
-        const kelas = document.getElementById('req-class').value.trim();
-        const password = document.getElementById('req-password').value.trim();
-
-        if(!email || !name || !kelas || !password) return showToast("Sila isi semua maklumat", "error");
-
-        showLoading(true, "Menghantar permohonan...");
-        
-        const res = await gasPostRequest({ 
-            action: 'register', 
-            email: email, 
-            password: password,
-            namaPenuh: name, 
-            kelas: kelas 
-        });
-        
-        showLoading(false);
-
-        if(res.status === 'success') {
-            alert(res.message);
-            showLoginForm();
-        } else {
-            showToast(res.message, "error");
-        }
-    }
-
-function setupDashboard() {
-        document.getElementById('auth-overlay').style.display = 'none';
-        document.getElementById('main-content').classList.remove('hidden');
-        
-        // Papar Nama dan Emel
-        document.getElementById('user-welcome').innerText = `${currentUser.peranan}: ${currentUser.nama_penuh} (${currentUser.emel})`;
-
-        const classDrop = document.getElementById('classDropdown');
-        const csvSection = document.getElementById('csv-section'); // Cari kotak CSV
-
-        if (currentUser.peranan === 'Admin') {
-            document.getElementById('admin-panel').classList.remove('hidden');
-            
-            // ADMIN: Paparkan kotak muat naik CSV
-            if(csvSection) csvSection.classList.remove('hidden'); 
-            
-            loadPendingUsers();
-            fetchClassesForDropdown(); // Tarik kelas secara automatik
-            
-        } else {
-            // GURU: Sorokkan kotak muat naik CSV
-            if(csvSection) csvSection.classList.add('hidden'); 
-            
-            const kelasArray = currentUser.kelas.split(',').map(k => k.trim());
-            classDrop.innerHTML = `<option value="">-- Pilih Kelas --</option>` + 
-                                  kelasArray.map(k => `<option value="${k}">${k}</option>`).join('');
-        }
-    }
-
-// FUNGSI BARU: Tarik senarai kelas dari Google Sheet (Data_Murid)
-    async function fetchClassesForDropdown() {
-        const sesi = document.getElementById('sesiAkademik').value;
-        const classDrop = document.getElementById('classDropdown');
-        
-        classDrop.innerHTML = `<option value="">-- Memuatkan Kelas... --</option>`;
-
-        const res = await gasGetRequest({ action: 'getClasses', sesi: sesi });
-
-        if (res.status === 'success') {
-            classDrop.innerHTML = `<option value="">-- Pilih Kelas --</option>`;
-            if (res.data && res.data.length > 0) {
-                // Susun kelas mengikut abjad dan masukkan ke dalam Dropdown
-                const sortedClasses = res.data.sort();
-                sortedClasses.forEach(cls => {
-                    classDrop.innerHTML += `<option value="${cls}">${cls}</option>`;
-                });
-            } else {
-                classDrop.innerHTML = `<option value="">-- Tiada Kelas Dijumpai --</option>`;
-            }
-        } else {
-            classDrop.innerHTML = `<option value="">-- Gagal Tarik Data --</option>`;
-            showToast("Ralat: " + res.message, "error");
-        }
-    }
-
-// FUNGSI BARU: Membersihkan skrin dan dropdown bila Sesi/Tahun ditukar
-    function handleSesiChange() {
-        // 1. Kosongkan data dalam memori
-        currentClassData = [];
-
-        // 2. Kosongkan isi jadual secara paksa & sorokkan kad jadual
-        const tableCard = document.getElementById('table-card');
-        if (tableCard) tableCard.classList.add('hidden'); // Wajib sorok
-
-        // 3. Reset Dropdown Kelas
-        const classDrop = document.getElementById('classDropdown');
-        if (classDrop) classDrop.value = "";
-
-        // 4. Tarik senarai kelas baharu jika Admin
-        if (currentUser && currentUser.peranan === 'Admin') {
-            fetchClassesForDropdown();
-        } else {
-            showToast("Sesi ditukar. Sila pilih kelas baharu.", "success");
-        }
-    }
-
-    // ==========================================
-    // 4. KAWALAN ADMIN (KELULUSAN GURU)
-    // ==========================================
-    async function loadPendingUsers() {
-        const res = await gasGetRequest({ action: 'getPendingUsers' });
-        
-        if(res.status === 'success' && res.data.length > 0) {
-            document.getElementById('pending-users-list').innerHTML = res.data.map(u => `
-                <tr class="border-b hover:bg-slate-50">
-                    <td class="p-2 font-bold">${u.email}</td><td class="p-2">${u.nama}</td><td class="p-2">${u.kelas}</td>
-                    <td class="p-2 text-center">
-                        <button onclick="approveUser('${u.email}')" class="bg-emerald-600 text-white px-4 py-1.5 rounded-lg text-[10px] font-black uppercase shadow hover:bg-emerald-700 transition-colors">Luluskan Akses</button>
-                    </td>
-                </tr>
-            `).join('');
-        } else {
-            document.getElementById('pending-users-list').innerHTML = `<tr><td colspan="4" class="p-4 text-center italic text-slate-400 font-bold">Tiada permohonan baru yang menunggu.</td></tr>`;
-        }
-    }
-
-    async function approveUser(targetEmail) {
-        if(!confirm("Anda pasti mahu meluluskan guru ini?")) return;
-        
-        showLoading(true, "Meluluskan guru...");
-        const res = await gasPostRequest({ action: 'approveUser', email: targetEmail });
-        showLoading(false);
-        
-        if(res.status === 'success') {
-            showToast(res.message);
-            loadPendingUsers();
-        } else {
-            showToast(res.message, "error");
-        }
-    }
-
-    // ==========================================
-    // 5. PENGURUSAN DATA JADUAL (FRONTEND)
-    // ==========================================
-    function renderSubjectGrid() {
-        const grid = document.getElementById('subject-grid'); grid.innerHTML = '';
-        BASE_SUBJECTS.forEach(sub => {
-            const isChecked = ['BM','BI','MT','SN'].includes(sub.id) ? 'checked' : '';
-            grid.innerHTML += `
-                <label class="flex items-center space-x-3 p-2 hover:bg-slate-50 cursor-pointer rounded border border-transparent transition-all">
-                    <input type="checkbox" value="${sub.id}" class="sub-checkbox w-4 h-4 rounded text-blue-900" ${isChecked} onchange="updateSelectedSubjects()"> 
-                    <span class="font-bold text-slate-700">${sub.name}</span>
-                </label>`;
-        });
-        updateSelectedSubjects();
-    }
-
-    function updateSelectedSubjects() { 
-        selectedSubjects = Array.from(document.querySelectorAll('.sub-checkbox:checked')).map(cb => cb.value); 
-        if(currentClassData.length > 0) renderTable();
-    }
-
-    function addStudentManual() {
-        const nama = prompt("Masukkan Nama Penuh Murid Baru:");
-        if (!nama) return;
-        currentClassData.push({ id: 'ID_' + Date.now(), nama: nama.toUpperCase(), marks: {} });
-        renderTable();
-        showToast("Murid ditambah ke jadual sementara. Sila tekan Simpan.");
-    }
-
-    function deleteStudentUI(id) {
-        if(!confirm("Padam murid ini dari jadual sementara?")) return;
-        currentClassData = currentClassData.filter(m => m.id !== id);
-        renderTable();
-    }
-
-    function updateLocalMark(id, subjek, nilai) {
-        const student = currentClassData.find(m => m.id === id);
-        if(student) {
-            if(!student.marks) student.marks = {};
-            student.marks[subjek] = nilai;
-        }
-    }
-
-    function renderTable() {
-        if(currentClassData.length === 0) return;
-        
-        const header = document.getElementById('tableHeader');
-        header.innerHTML = `<th class="p-4 bg-blue-900 min-w-[200px]">NAMA MURID</th>` + 
-            selectedSubjects.map(s => `<th class="p-2 text-center bg-blue-800 border-x border-blue-700 min-w-[60px]">${s}</th>`).join('') + 
-            `<th class="p-2 text-center bg-red-900 w-[50px]">Padam</th>`;
-        
-        const sorted = [...currentClassData].sort((a,b) => a.nama.localeCompare(b.nama));
-        
-        document.getElementById('tableBody').innerHTML = sorted.map(m => `
-            <tr class="border-b hover:bg-blue-50 transition-colors">
-                <td class="p-4 font-black uppercase text-slate-700 bg-white shadow-inner">${m.nama}</td>
-                ${selectedSubjects.map(sub => `
-                    <td class="p-1 text-center">
-                        <input type="number" class="mark-input" value="${m.marks?.[sub] ?? ''}" onchange="updateLocalMark('${m.id}', '${sub}', this.value)">
-                    </td>`).join('')}
-                <td class="p-2 text-center"><button onclick="deleteStudentUI('${m.id}')" class="text-red-300 hover:text-red-600">🗑️</button></td>
-            </tr>`).join('');
-            
-        document.getElementById('table-card').classList.remove('hidden');
-    }
-
-async function processCSV() {
-        const file = document.getElementById('csvInput').files[0];
-        if (!file) return showToast("Sila pilih fail CSV!", "error");
-
-        Papa.parse(file, { header: true, skipEmptyLines: true, complete: async (res) => {
-            const studentsToImport = [];
-            const uniqueClasses = new Set();
-            
-            res.data.forEach(row => {
-                // Seragamkan header (huruf kecil & buang jarak)
-                const d = Object.keys(row).reduce((acc, k) => { acc[k.toLowerCase().trim()] = row[k]; return acc; }, {});
-                
-                // Sistem akan cuba cari lajur bernama 'sesi', kalau tak jumpa, ia cari 'tahun'
-                const nilaiSesi = d.sesi || d.tahun; 
-                
-                // Pastikan ada nama, kelas, DAN sesi/tahun
-                if (d.nama && d.kelas && nilaiSesi) {
-                    const className = d.kelas.toUpperCase().trim();
-                    uniqueClasses.add(className);
-                    
-                    studentsToImport.push({
-                        nama: d.nama.toUpperCase().trim(),
-                        kelas: className,
-                        sesi: nilaiSesi.toString().trim() // simpan sebagai sesi
-                    });
-                }
-            });
-
-            if (studentsToImport.length === 0) {
-                return showToast("Gagal! Pastikan fail CSV mempunyai tajuk lajur: 'nama', 'kelas', dan 'tahun' atau 'sesi'.", "error");
-            }
-
-            // Hantar data terus ke Google Apps Script (Data_Murid)
-            showLoading(true, `Menyimpan ${studentsToImport.length} nama ke pangkalan data...`);
-            const response = await gasPostRequest({
-                action: 'importStudents',
-                students: studentsToImport
-            });
-            showLoading(false);
-
-            if (response.status === 'success') {
-                showToast(response.message, "success");
-                
-                // Bina semula Dropdown Kelas
-                const classDropdown = document.getElementById('classDropdown');
-                classDropdown.innerHTML = `<option value="">-- Pilih Kelas --</option>`;
-                uniqueClasses.forEach(cls => {
-                    classDropdown.innerHTML += `<option value="${cls}">${cls}</option>`;
-                });
-                
-                document.getElementById('csvInput').value = ''; // Kosongkan paparan fail
-            } else {
-                showToast("Ralat menyimpan: " + response.message, "error");
-            }
-        }});
-    }
-
-    // ==========================================
-    // 6. KOMUNIKASI DATA DENGAN GOOGLE SHEETS
-    // ==========================================
-async function fetchStudents() {
-        const kelas = document.getElementById('classDropdown').value;
-        const sesi = document.getElementById('sesiAkademik').value;
-        
-        // --- KOD BARU: Ambil Nama Penuh Pentaksiran ---
-        const dropdownPentaksiran = document.getElementById('sesiPentaksiran');
-        const namaPentaksiranPenuh = dropdownPentaksiran.options[dropdownPentaksiran.selectedIndex].text;
-
-        if(!kelas) {
-            document.getElementById('table-card').classList.add('hidden');
-            return;
-        }
-
-        showLoading(true, "Memuat turun data dari Google Sheets...");
-        
-        // --- KOD KEMASKINI: Tambah pentaksiran dalam request GET ---
-        const res = await gasGetRequest({ 
-            action: 'getStudents', 
-            kelas: kelas, 
-            sesi: sesi,
-            pentaksiran: namaPentaksiranPenuh // <-- Ini yang kita tambah
-        });
-        
-        showLoading(false);
-
-        if(res.status === 'success') {
-            currentClassData = res.data || [];
-            
-            // --- PROSES MASUKKAN MURID DARI CSV KE DALAM JADUAL ---
-            if (allCSVData.length > 0) {
-                let addedFromCSV = 0;
-                allCSVData.forEach(csvStudent => {
-                    if (csvStudent.kelas === kelas) {
-                        const isDuplicate = currentClassData.find(m => m.nama === csvStudent.nama);
-                        if (!isDuplicate) {
-                            currentClassData.push({
-                                id: csvStudent.id,
-                                nama: csvStudent.nama,
-                                marks: csvStudent.marks
-                            });
-                            addedFromCSV++;
-                        }
-                    }
-                });
-                if (addedFromCSV > 0) {
-                    showToast(`${addedFromCSV} murid baru dari CSV dimasukkan ke jadual sementara. Sila tekan Simpan.`);
-                }
-            }
-            // ------------------------------------------------------
-
-            if(currentClassData.length === 0) showToast("Tiada rekod lama dijumpai. Anda boleh mula mengisi.", "success");
-            renderTable();
-            if(res.topScorers) displayTopScorers(res.topScorers);
-        } else {
-            showToast(res.message, "error");
-        }
-    }
-
-async function saveDataMarkah() {
-        const kelas = document.getElementById('classDropdown').value;
-        const sesi = document.getElementById('sesiAkademik').value;
-        
-        // --- KOD BARU: Ambil Nama Penuh Pentaksiran ---
-        const dropdownPentaksiran = document.getElementById('sesiPentaksiran');
-        const namaPentaksiranPenuh = dropdownPentaksiran.options[dropdownPentaksiran.selectedIndex].text;
-        
-        if(!kelas) return showToast("Sila pilih kelas dahulu.", "error");
-
-        const payloadData = currentClassData.map(m => ({ nama: m.nama, marks: m.marks }));
-
-        showLoading(true, "Mengunci Data & Menyimpan ke Google Sheets...");
-        
-        const res = await gasPostRequest({
-            action: 'saveMarks',
-            kelas: kelas,
-            sesi: sesi,
-            pentaksiran: namaPentaksiranPenuh, // <--- MASUKKAN PENTAKSIRAN DI SINI
-            studentsData: payloadData
-        });
-
-        showLoading(false);
-
-        if(res.status === 'success') {
-            showToast(res.message);
-            // Kemaskini paparan top scorer jika backend mula hantar data ini
-            if(res.topScorers) displayTopScorers(res.topScorers);
-        } else {
-            showToast("Gagal menyimpan: " + res.message, "error");
-        }
-    }
-
-    function displayTopScorers(topScorersObj) {
-        const list = document.getElementById('top-scorer-list');
-        list.innerHTML = '';
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        const text = e.target.result;
+        const rows = text.split('\n').filter(r => r.trim() !== "");
         let count = 0;
 
-        for (let sub in topScorersObj) {
-            const data = topScorersObj[sub];
-            if(data && data.markah > 0) {
-                count++;
-                list.innerHTML += `
-                    <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100 shadow-sm flex flex-col justify-between">
-                        <div class="text-[10px] font-black text-emerald-800 uppercase mb-2 border-b border-emerald-200 pb-1">${sub}</div>
-                        <div class="font-bold text-slate-800 text-xs leading-relaxed mb-3">${data.nama.join('<br>')}</div>
-                        <div class="self-start text-[10px] font-black text-white bg-emerald-600 px-3 py-1 rounded-full shadow-sm">
-                            MARKAH: ${data.markah}%
-                        </div>
-                    </div>
-                `;
+        try {
+            console.log("Memulakan proses simpan ke Firestore...");
+            
+            for (let i = 1; i < rows.length; i++) {
+                const data = rows[i].split(',').map(s => s.trim());
+                
+                // Pastikan data cukup (nama, kelas, tahun)
+                if (data.length >= 3) {
+                    const [nama, kelas, tahun] = data;
+                    if (nama && kelas && tahun) {
+                        // Memasukkan data ke dalam koleksi 'students'
+                        await addDoc(collection(db, "students"), { 
+                            nama: nama.toUpperCase(), 
+                            kelas: kelas.toUpperCase(), 
+                            tahun: tahun 
+                        });
+                        count++;
+                    }
+                }
             }
+
+            alert(`Berjaya! ${count} data murid telah disimpan ke koleksi Firestore.`);
+            fileInput.value = ""; // Reset input fail
+            window.loadClassesForDropdown();
+
+        } catch (error) {
+            console.error("Ralat muat naik:", error);
+            alert("Ralat sistem: Gagal memuat naik data.");
+        } finally {
+            // 2. Aktifkan semula butang selepas selesai (berjaya atau gagal)
+            btn.disabled = false;
+            btn.innerText = "PROSES & SIMPAN DATA";
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
         }
+    };
+
+    reader.readAsText(file);
+};
+
+window.loadClassesForDropdown = async () => {
+        const q = collection(db, "students");
+        const snapshot = await getDocs(q);
+        const classes = new Set();
+        snapshot.forEach(doc => classes.add(doc.data().kelas));
         
-        if(count > 0) document.getElementById('top-scorer-panel').classList.remove('hidden');
-        else document.getElementById('top-scorer-panel').classList.add('hidden');
+        const sel = document.getElementById('selKelas');
+        const anaSel = document.getElementById('anaKelas'); // Untuk Analisis
+        
+        sel.innerHTML = '<option value="">Pilih Kelas</option>';
+        anaSel.innerHTML = '<option value="">Pilih Kelas</option>'; // Reset
+        
+        Array.from(classes).sort().forEach(c => {
+            sel.innerHTML += `<option value="${c}">${c}</option>`;
+            anaSel.innerHTML += `<option value="${c}">${c}</option>`; // Tambah ke Analisis
+        });
+    };
+
+window.fetchStudentList = async () => {
+
+    const tahun = document.getElementById('selTahun').value;
+    const kelas = document.getElementById('selKelas').value;
+    const penilaian = document.getElementById('selPenilaian').value;
+
+    if(!kelas) return alert("Pilih kelas!");
+
+    try {
+
+        // =========================
+        // AMBIL SENARAI MURID
+        // =========================
+        const q = query(
+            collection(db, "students"),
+            where("tahun", "==", tahun),
+            where("kelas", "==", kelas)
+        );
+
+        const snapshot = await getDocs(q);
+
+        activeStudents = [];
+
+        // =========================
+        // LOOP MURID
+        // =========================
+        for (const studentDoc of snapshot.docs) {
+
+            let studentData = {
+                id: studentDoc.id,
+                ...studentDoc.data()
+            };
+
+            // =========================
+            // CARI MARKAH DALAM CLOUD
+            // =========================
+            const markDocId = `${studentDoc.id}_${penilaian.replace(/\s+/g, '_')}`;
+
+            const markQuery = query(
+                collection(db, "marks_v10"),
+                where("studentId", "==", studentDoc.id),
+                where("penilaian", "==", penilaian)
+            );
+
+            const markSnapshot = await getDocs(markQuery);
+
+            // =========================
+            // JIKA ADA DATA MARKAH
+            // =========================
+            if (!markSnapshot.empty) {
+
+                const markData = markSnapshot.docs[0].data();
+
+                if(markData.marks) {
+                    studentData = {
+                        ...studentData,
+                        ...markData.marks
+                    };
+                }
+            }
+
+            activeStudents.push(studentData);
+        }
+
+        // =========================
+        // SUSUN NAMA
+        // =========================
+        activeStudents.sort((a, b) =>
+            a.nama.localeCompare(b.nama)
+        );
+
+        // =========================
+        // PAPAR JADUAL
+        // =========================
+        window.renderMarkTable();
+
+    } catch(error) {
+
+        console.error(error);
+        alert("Ralat mengambil data markah.");
+
+    }
+};
+
+    window.renderMarkTable = () => {
+        const header = document.getElementById('tableHeader');
+        const body = document.getElementById('tableBody');
+        let hHtml = `<th class="border p-2">NAMA MURID</th>`;
+        selectedSubjects.forEach(s => hHtml += `<th class="border bg-blue-700 text-white">${s}</th>`);
+        header.innerHTML = hHtml;
+        body.innerHTML = activeStudents.map((s, idx) => `
+            <tr>
+                <td class="border font-bold uppercase p-2">${s.nama}</td>
+                ${selectedSubjects.map(sub => `
+                    <td class="border text-center">
+                        <input type="number" onchange="window.updateLocalMark(${idx}, '${sub}', this.value)" 
+                        class="mark-input border rounded p-1 w-12 text-center" value="${s[sub] || 0}">
+                    </td>
+                `).join('')}
+            </tr>
+        `).join('');
+        document.getElementById('mark-table-container').classList.remove('hidden-section');
+    };
+
+    window.updateLocalMark = (idx, sub, val) => {
+        activeStudents[idx][sub] = parseFloat(val) || 0;
+    };
+
+    function getGrade(mark) {
+        if (mark >= 80) return { gred: 'A', point: 1 };
+        if (mark >= 70) return { gred: 'B', point: 2 };
+        if (mark >= 60) return { gred: 'C', point: 3 };
+        if (mark >= 50) return { gred: 'D', point: 4 };
+        if (mark >= 40) return { gred: 'E', point: 5 };
+        return { gred: 'F', point: 6 };
     }
 
-    // ==========================================
-    // 7. PENJANAAN SIJIL (OFFLINE/LOCAL PRINTING)
-    // ==========================================
-    function getGrade(m) { 
-        m=parseFloat(m)||0; 
-        if(m>=80)return{g:'A',p:1}; if(m>=70)return{g:'B',p:2}; if(m>=60)return{g:'C',p:3}; 
-        if(m>=50)return{g:'D',p:4}; if(m>=40)return{g:'E',p:5}; return{g:'F',p:6}; 
-    }
+window.calculateAndSaveToCloud = async () => {
 
-    function generateSijil() {
-        const pentaksiran = document.getElementById('sesiPentaksiran').options[document.getElementById('sesiPentaksiran').selectedIndex].text;
-        const sesi = document.getElementById('sesiAkademik').value;
-        const kelas = document.getElementById('classDropdown').value;
+    const tahun = document.getElementById('selTahun').value;
+    const penilaian = document.getElementById('selPenilaian').value;
 
-        currentClassData.forEach(s => {
-            let tm=0, tp=0, count=0, l=true;
-            selectedSubjects.forEach(sub => { 
-                let m=s.marks?.[sub]; 
-                if(m!==undefined&&m!==""){ 
-                    m=parseFloat(m); let r=getGrade(m); tm+=m; tp+=r.p; count++; 
-                    if(['BM','BI','MT','SN'].includes(sub)&&m<40)l=false; 
-                } 
-            });
-            s.gpm = count>0?(tp/count).toFixed(2):'0.00'; 
-            s.statusLulus=(count>0&&l)?"LULUS":"GAGAL"; 
+    for (let s of activeStudents) {
+
+        let totalMarks = 0;
+        let totalPoints = 0;
+
+        // =========================
+        // KIRA GPM & PERATUS
+        // =========================
+        selectedSubjects.forEach(sub => {
+
+            const mark = parseFloat(s[sub]) || 0;
+
+            totalMarks += mark;
+            totalPoints += getGrade(mark).point;
+
         });
 
-document.getElementById('section-sijil').innerHTML = currentClassData.sort((a,b)=>a.nama.localeCompare(b.nama)).map(s => `
-            <div class="page-break"><div class="certificate-border">
-                
-                <div class="text-center flex flex-col items-center justify-center">
-                    <img src="https://i.postimg.cc/q7hbxDJD/logo.png" alt="Logo Sekolah" class="h-24 object-contain mb-3 drop-shadow-sm">
-                    <h2 class="text-2xl font-black text-slate-900 uppercase tracking-widest">SK ABANG GESA, BELAWAI</h2>
-                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-2 border-t border-slate-200 pt-2 inline-block px-8">
-                        ${pentaksiran} ${sesi} <br> KELAS: ${kelas}
-                    </p>
-                </div>
+        s.gpm = (
+            totalPoints / selectedSubjects.length
+        ).toFixed(2);
 
-                <div class="text-center">
-                    <h1 style="font-family: 'Cinzel', serif;" class="text-5xl font-bold text-blue-900 mt-4">SIJIL PENCAPAIAN</h1>
-                    <p class="mt-4 italic text-sm text-slate-500">Dianugerahkan kepada</p>
-                    <h2 class="text-2xl font-black my-4 uppercase text-blue-950 border-b-2 border-blue-900 inline-block px-12 pb-2 leading-none">${s.nama}</h2>
-                </div>
+        s.percent = (
+            (totalMarks / (selectedSubjects.length * 100)) * 100
+        ).toFixed(2);
 
-                <div class="flex justify-center flex-grow py-4">
-                    <table class="w-10/12 border-2 border-slate-800 text-[11px]">
-                        <thead class="bg-blue-900 text-white uppercase text-xs font-black">
-                            <tr><th class="p-2 border-2 border-slate-800 text-left">MATAPELAJARAN</th><th class="p-2 border-2 border-slate-800 text-center">MARKAH</th><th class="p-2 border-2 border-slate-800 text-center">GRED</th></tr>
-                        </thead>
-                        <tbody class="font-bold">
-                            ${selectedSubjects.map(sub => { 
-                                let m=s.marks?.[sub]; 
-                                if(m===undefined||m==="")return""; 
-                                return `<tr>
-                                    <td class="border-2 border-slate-800 p-2 px-6 uppercase text-slate-700">${BASE_SUBJECTS.find(k=>k.id===sub)?.name||sub}</td>
-                                    <td class="border-2 border-slate-800 text-center p-2 text-sm font-black">${m}</td>
-                                    <td class="border-2 border-slate-800 text-center p-2 text-sm font-black text-blue-900">${getGrade(m).g}</td>
-                                </tr>`; 
-                            }).join('')}
-                        </tbody>
-                    </table>
-                </div>
+        s.totalMarks = totalMarks;
 
-                <div class="grid grid-cols-4 gap-3 text-center mx-auto font-black text-[10px] w-10/12 mt-2">
-                    <div class="bg-slate-50 p-3 border-2 border-slate-200 rounded-xl flex flex-col justify-center">
-                        <span class="text-slate-400 text-[8px] tracking-widest mb-1">KEDUDUKAN KELAS</span>
-                        <span class="text-lg text-blue-900">${s.rankingKelas || '-'}</span>
-                    </div>
-                    <div class="bg-slate-50 p-3 border-2 border-slate-200 rounded-xl flex flex-col justify-center">
-                        <span class="text-slate-400 text-[8px] tracking-widest mb-1">KEDUDUKAN ALIRAN</span>
-                        <span class="text-lg text-blue-900">${s.rankingAliran || '-'}</span>
-                    </div>
-                    <div class="bg-slate-50 p-3 border-2 border-slate-200 rounded-xl flex flex-col justify-center">
-                        <span class="text-slate-400 text-[8px] tracking-widest mb-1">GRED PURATA</span>
-                        <span class="text-lg text-blue-900">${s.gpm}</span>
-                    </div>
-                    <div class="bg-blue-900 text-white p-3 rounded-xl shadow-md flex flex-col justify-center border-2 border-blue-900">
-                        <span class="text-blue-300 text-[8px] tracking-widest mb-1">KEPUTUSAN</span>
-                        <span class="text-lg">${s.statusLulus}</span>
-                    </div>
-                </div>
+        // =========================
+        // FIRESTORE DOC ID
+        // =========================
+        const resRef = doc(
+            db,
+            "marks_v10",
+            `${s.id}_${penilaian.replace(/\s+/g, '_')}`
+        );
 
-            </div></div>`).join('');
-            
-        window.print();
+        // =========================
+        // DATA ASAS
+        // =========================
+        const saveData = {
+
+            studentId: s.id,
+            nama: s.nama,
+            kelas: s.kelas,
+            tahun: tahun,
+            penilaian: penilaian,
+
+            gpm: s.gpm,
+            percent: s.percent,
+            totalMarks: s.totalMarks
+
+        };
+
+        // =========================
+        // SIMPAN SUBJEK SECARA BERASINGAN
+        // (ELAK OVERWRITE MULTI GURU)
+        // =========================
+        selectedSubjects.forEach(sub => {
+
+            saveData[`marks.${sub}`] =
+                parseFloat(s[sub]) || 0;
+
+        });
+
+        // =========================
+        // SIMPAN SECARA MERGE
+        // =========================
+        await setDoc(
+            resRef,
+            saveData,
+            { merge: true }
+        );
     }
+
+    window.generateSijilCloud();
+
+    alert("Data Berjaya Disimpan ke Cloud!");
+};
+
+window.generateSijilCloud = () => {
+    let html = '';
+    activeStudents.sort((a,b) => a.gpm - b.gpm).forEach((s, idx) => {
+        const rank = idx + 1;
+        
+        // Membina baris subjek dengan nama penuh
+        let subRows = selectedSubjects.map(subId => {
+            // Cari objek subjek untuk dapatkan nama penuh
+            const subjectObj = KPM_SUBJECTS.find(sub => sub.id === subId);
+            const fullName = subjectObj ? subjectObj.name.toUpperCase() : subId;
+            
+            const info = getGrade(s[subId] || 0);
+            
+            return `
+                <tr>
+                    <td class="border border-slate-300 px-4 py-1 font-medium">${fullName}</td>
+                    <td class="border border-slate-300 px-4 py-1 text-center font-bold">${s[subId] || 0}</td>
+                    <td class="border border-slate-300 px-4 py-1 text-center font-black">${info.gred}</td>
+                </tr>`;
+        }).join('');
+
+        html += `
+            <div class="page-break">
+                <div class="certificate-border">
+                    <div class="text-center mb-6">
+                        <h2 class="text-2xl font-black text-blue-900 uppercase">SK ABANG GESA</h2>
+                        <h1 class="text-4xl font-serif font-bold text-slate-800 underline mt-4">SIJIL PENCAPAIAN</h1>
+                        <h2 class="text-2xl font-black my-4 uppercase text-blue-900">${s.nama}</h2>
+                        <p class="text-lg font-bold">KELAS: ${s.kelas}</p>
+                    </div>
+                    
+                    <div class="flex justify-center flex-grow">
+                        <table class="w-4/5 border-collapse border-2 border-slate-800 text-xs">
+                            <thead class="bg-slate-800 text-white">
+                                <tr>
+                                    <th class="py-2">MATAPELAJARAN</th>
+                                    <th>MARKAH</th>
+                                    <th>GRED</th>
+                                </tr>
+                            </thead>
+                            <tbody>${subRows}</tbody>
+                        </table>
+                    </div>
+
+                    <div class="mt-8 grid grid-cols-4 gap-2 max-w-2xl mx-auto text-center">
+                        <div class="bg-slate-50 p-2 border text-[10px]">Peratus<br><b class="text-sm">${s.percent}%</b></div>
+                        <div class="bg-slate-50 p-2 border text-[10px]">Jumlah<br><b class="text-sm">${s.totalMarks}</b></div>
+                        <div class="bg-blue-900 text-white p-2 border text-[10px]">GPM<br><b class="text-sm">${s.gpm}</b></div>
+                        <div class="bg-slate-50 p-2 border text-[10px]">Kedudukan<br><b class="text-sm">#${rank}</b></div>
+                    </div>
+                </div>
+            </div>`;
+    });
+    document.getElementById('section-sijil').innerHTML = html;
+};
+
+window.prepareAndPrint = () => {
+    // Pastikan ada data untuk dicetak
+    if (activeStudents.length === 0) {
+        return alert("Sila cari murid dan masukkan markah terlebih dahulu!");
+    }
+
+    // Jana semula HTML sijil untuk pastikan data terkini & tidak kosong
+    window.generateSijilCloud();
+
+    // Beri masa 500ms untuk browser proses HTML baru sebelum buka dialog cetak
+    setTimeout(() => {
+        window.print();
+    }, 500);
+};
+
+window.janaAnalisis = async () => {
+        const tahun = document.getElementById('anaTahun').value;
+        const penilaian = document.getElementById('anaPenilaian').value;
+        const kelas = document.getElementById('anaKelas').value;
+
+        if(!kelas) return alert("Sila pilih kelas untuk dianalisis!");
+
+        const btn = event.target;
+        btn.innerText = "SEDANG MENJANA...";
+        btn.disabled = true;
+
+        try {
+            // Ambil markah dari koleksi marks_v10 (Bukan dari 'students')
+            const q = query(collection(db, "marks_v10"), 
+                where("tahun", "==", tahun), 
+                where("penilaian", "==", penilaian),
+                where("kelas", "==", kelas)
+            );
+            const snapshot = await getDocs(q);
+
+            if(snapshot.empty) {
+                document.getElementById('analisis-result').innerHTML = `<p class="text-red-600 font-bold bg-red-50 p-4 rounded text-center">Tiada rekod markah ditemui. Sila simpan markah kelas ini dahulu.</p>`;
+                document.getElementById('analisis-result').classList.remove('hidden-section');
+                return;
+            }
+
+            let students = [];
+            snapshot.forEach(doc => students.push(doc.data()));
+
+            // ----------------------------------------------------
+            // LOGIK 1: KEDUDUKAN 3 TERBAIK (TIE-BREAKER Saringan Penuh)
+            // ----------------------------------------------------
+            students.sort((a, b) => {
+                let gpmDiff = parseFloat(a.gpm) - parseFloat(b.gpm);
+                if (gpmDiff !== 0) return gpmDiff; // 1. GPM Terendah
+                
+                let pctDiff = parseFloat(b.percent) - parseFloat(a.percent);
+                if (pctDiff !== 0) return pctDiff; // 2. Peratus Tertinggi
+
+                return a.nama.localeCompare(b.nama); // 3. Susunan Abjad A-Z
+            });
+
+            const top3 = students.slice(0, 3); // Ambil 3 Teratas
+
+            // ----------------------------------------------------
+            // LOGIK 2 & 3: TERBAIK SUBJEK & ANALISIS LULUS/GAGAL
+            // ----------------------------------------------------
+            // Kenalpasti subjek yang diduduki oleh kelas ini sahaja
+            let activeSubjects = KPM_SUBJECTS.filter(sub => students.some(s => s.marks[sub.id] !== undefined));
+            
+            let subjectAnalysisHtml = '';
+            let topSubjectHtml = '';
+
+            activeSubjects.forEach(sub => {
+                // A. Cari markah tertinggi untuk subjek ini
+                let maxMark = -1;
+                students.forEach(s => {
+                    let mark = parseFloat(s.marks[sub.id]) || 0;
+                    if (mark > maxMark) maxMark = mark;
+                });
+
+                // Gabungkan nama semua pelajar yang dapat markah tertinggi
+                let topScorers = students.filter(s => (parseFloat(s.marks[sub.id]) || 0) === maxMark).map(s => s.nama);
+                let scorersText = topScorers.join(', ');
+
+                topSubjectHtml += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="border p-2 font-bold text-[11px]">${sub.name.toUpperCase()}</td>
+                        <td class="border p-2 text-center font-black text-blue-900">${maxMark}</td>
+                        <td class="border p-2 text-[10px] font-bold text-slate-700">${scorersText}</td>
+                    </tr>`;
+
+                // B. Kira Peratus Lulus / Gagal
+                let totalPelajar = students.length;
+                let lulus = 0; let gagal = 0;
+
+                students.forEach(s => {
+                    let mark = parseFloat(s.marks[sub.id]) || 0;
+                    if (mark >= 40) lulus++; else gagal++;
+                });
+
+                let pctLulus = ((lulus / totalPelajar) * 100).toFixed(1);
+                let pctGagal = ((gagal / totalPelajar) * 100).toFixed(1);
+
+                subjectAnalysisHtml += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="border p-2 font-bold text-[11px]">${sub.name.toUpperCase()}</td>
+                        <td class="border p-2 text-center text-green-700 font-bold bg-green-50">${lulus} <span class="text-[9px]">(${pctLulus}%)</span></td>
+                        <td class="border p-2 text-center text-red-600 font-bold bg-red-50">${gagal} <span class="text-[9px]">(${pctGagal}%)</span></td>
+                    </tr>`;
+            });
+
+            // ----------------------------------------------------
+            // BINA PAPARAN HTML
+            // ----------------------------------------------------
+            let html = `
+                <div>
+                    <h3 class="font-black text-sm text-blue-900 bg-blue-100 p-2 rounded inline-block mb-2">🏆 3 TERBAIK KELAS</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse text-xs">
+                            <thead class="bg-blue-900 text-white">
+                                <tr>
+                                    <th class="p-2 border">KEDUDUKAN</th>
+                                    <th class="p-2 border text-left">NAMA MURID</th>
+                                    <th class="p-2 border">GPM</th>
+                                    <th class="p-2 border">PERATUS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${top3.map((s, idx) => `
+                                    <tr>
+                                        <td class="border p-2 text-center font-black text-lg text-blue-600">#${idx + 1}</td>
+                                        <td class="border p-2 font-bold uppercase">${s.nama}</td>
+                                        <td class="border p-2 text-center font-black">${s.gpm}</td>
+                                        <td class="border p-2 text-center font-bold text-slate-600">${s.percent}%</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                    <div>
+                        <h3 class="font-black text-sm text-emerald-900 bg-emerald-100 p-2 rounded inline-block mb-2">⭐ TERBAIK MENGIKUT SUBJEK</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full border-collapse text-xs">
+                                <thead class="bg-emerald-700 text-white">
+                                    <tr>
+                                        <th class="p-2 border">SUBJEK</th>
+                                        <th class="p-2 border">MAX</th>
+                                        <th class="p-2 border text-left">NAMA MURID</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${topSubjectHtml}</tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-black text-sm text-purple-900 bg-purple-100 p-2 rounded inline-block mb-2">📈 ANALISIS LULUS & GAGAL</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full border-collapse text-xs">
+                                <thead class="bg-purple-800 text-white">
+                                    <tr>
+                                        <th class="p-2 border">SUBJEK</th>
+                                        <th class="p-2 border">LULUS (>=40)</th>
+                                        <th class="p-2 border">GAGAL (<40)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${subjectAnalysisHtml}</tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('analisis-result').innerHTML = html;
+            document.getElementById('analisis-result').classList.remove('hidden-section');
+
+        } catch (error) {
+            console.error("Ralat Analisis:", error);
+            alert("Ralat sistem semasa menjana analisis.");
+        } finally {
+            btn.innerText = "JANA ANALISIS";
+            btn.disabled = false;
+        }
+    };
+
+window.printAnalisis = () => {
+
+    const result = document.getElementById('analisis-result');
+
+    if(result.innerHTML.trim() === '') {
+        return alert("Sila jana analisis dahulu!");
+    }
+
+    // Buang area lama jika ada
+    const oldArea = document.getElementById('analisis-print-area');
+    if(oldArea) oldArea.remove();
+
+    // Cipta area cetakan
+    const printArea = document.createElement('div');
+    printArea.id = 'analisis-print-area';
+
+    printArea.innerHTML = `
+        <div style="text-align:center; margin-bottom:20px;">
+            <h1 style="font-size:24px; font-weight:bold;">
+                LAPORAN ANALISIS KELAS
+            </h1>
+            <p>
+                ${document.getElementById('anaKelas').value}
+                -
+                ${document.getElementById('anaPenilaian').value}
+            </p>
+        </div>
+
+        ${result.innerHTML}
+    `;
+
+    document.body.appendChild(printArea);
+
+    setTimeout(() => {
+        window.print();
+    }, 300);
+};
 </script>
 </body>
 </html>
