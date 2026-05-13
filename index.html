@@ -143,6 +143,8 @@
 <div id="login-section" class="min-h-screen flex items-center justify-center">
     <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border-t-8 border-blue-900">
         <div class="text-center mb-8">
+            <img src="logo.png" alt="Logo SK Abang Gesa" class="w-28 h-28 mx-auto mb-4 object-contain drop-shadow-md">
+            
             <h1 class="text-2xl font-black text-blue-900 uppercase">Sistem Penilaian V10</h1>
             <p class="text-slate-500 font-bold">SK ABANG GESA</p>
         </div>
@@ -160,11 +162,14 @@
 <div id="main-app" class="container mx-auto p-4 no-print hidden-section">
     
     <div class="bg-blue-900 text-white p-6 rounded-xl shadow-lg mb-6 flex justify-between items-center">
-        <div>
-            <h1 class="text-xl font-black italic">SK ABANG GESA</h1>
-            <p id="userStatus" class="text-xs opacity-80 uppercase font-bold"></p>
+        <div class="flex items-center gap-4">
+            <img src="logo.png" alt="Logo Sekolah" class="w-12 h-12 bg-white rounded-full p-1 shadow-md object-contain">
+            <div>
+                <h1 class="text-xl font-black italic">SK ABANG GESA</h1>
+                <p id="userStatus" class="text-xs opacity-80 uppercase font-bold"></p>
+            </div>
         </div>
-        <button onclick="location.reload()" class="bg-red-500 px-4 py-2 rounded font-bold text-xs">LOG KELUAR</button>
+        <button onclick="location.reload()" class="bg-red-500 hover:bg-red-600 transition px-4 py-2 rounded font-bold text-xs shadow">LOG KELUAR</button>
     </div>
 
     <div id="admin-area" class="hidden-section space-y-6">
@@ -186,40 +191,43 @@
         </div>
     </div>
 
-<div class="bg-white p-6 rounded-xl shadow border mt-6">
-        <h2 class="font-black text-purple-900 mb-4 uppercase border-b pb-2">📊 Papan Pemuka Analisis Kelas</h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-            <div>
-                <label class="block text-[10px] font-black text-purple-900 uppercase">Tahun</label>
-                <select id="anaTahun" class="w-full p-2 border rounded font-bold bg-slate-50"></select>
-            </div>
-            <div>
-                <label class="block text-[10px] font-black text-purple-900 uppercase">Penilaian</label>
-                <select id="anaPenilaian" class="w-full p-2 border rounded font-bold bg-slate-50">
-                    <option>Penilaian Semester Pertama</option>
-                    <option>Ujian Tahun 4</option>
-                    <option>Penilaian Semester Kedua</option>
-                    <option>Ujian Akhir Sesi Akademik</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-[10px] font-black text-purple-900 uppercase">Kelas</label>
-                <select id="anaKelas" class="w-full p-2 border rounded font-bold bg-slate-50">
-                    <option value="">Pilih Kelas</option>
-                </select>
-            </div>
-            <div class="flex items-end">
-                <button onclick="janaAnalisis()" class="w-full bg-purple-700 text-white py-2 rounded font-black hover:bg-purple-800 shadow-md transition">JANA ANALISIS</button>
-<button onclick="printAnalisis()" 
-class="w-full bg-slate-800 text-white py-2 rounded font-black hover:bg-slate-900 shadow-md transition">
-    CETAK ANALISIS
-</button>
-            </div>
-        </div>
+<div class="flex gap-2 mb-4">
+    <button onclick="toggleAnalisis()" class="bg-purple-600 text-white px-6 py-2 rounded-lg font-black shadow hover:bg-purple-700 transition">
+        📊 PAPAR/SEMBUNYI ANALISIS
+    </button>
+</div>
 
-        <div id="analisis-result" class="hidden-section space-y-8 mt-6 border-t pt-6"></div>
+<div id="analisis-section-main" class="bg-white p-6 rounded-xl shadow border mt-6 hidden-section">
+    <h2 class="font-black text-purple-900 mb-4 uppercase border-b pb-2">📊 Papan Pemuka Analisis Kelas</h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+        <div>
+            <label class="block text-[10px] font-black text-purple-900 uppercase">Tahun</label>
+            <select id="anaTahun" class="w-full p-2 border rounded font-bold bg-slate-50"></select>
+        </div>
+        <div>
+            <label class="block text-[10px] font-black text-purple-900 uppercase">Penilaian</label>
+            <select id="anaPenilaian" class="w-full p-2 border rounded font-bold bg-slate-50">
+                <option>Penilaian Semester Pertama</option>
+                <option>Ujian Tahun 4</option>
+                <option>Penilaian Semester Kedua</option>
+                <option>Ujian Akhir Sesi Akademik</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-[10px] font-black text-purple-900 uppercase">Kelas</label>
+            <select id="anaKelas" class="w-full p-2 border rounded font-bold bg-slate-50">
+                <option value="">Pilih Kelas</option>
+            </select>
+        </div>
+        <div class="flex items-end gap-2">
+            <button onclick="janaAnalisis()" class="w-full bg-purple-700 text-white py-2 rounded font-black hover:bg-purple-800 shadow-md transition">JANA ANALISIS</button>
+            <button onclick="printAnalisis()" class="w-full bg-slate-800 text-white py-2 rounded font-black hover:bg-slate-900 shadow-md transition">CETAK ANALISIS</button>
+        </div>
     </div>
+
+    <div id="analisis-result" class="hidden-section space-y-8 mt-6 border-t pt-6"></div>
+</div>
 
     <div id="guru-area" class="hidden-section space-y-6">
         <div class="bg-white p-6 rounded-xl shadow border grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -308,7 +316,7 @@ const KPM_SUBJECTS = [
 
     let currentUser = null;
     let activeStudents = [];
-    let selectedSubjects = ['BM', 'BI', 'MT', 'SN'];
+    let selectedSubjects = ['BM', 'BI', 'MT', 'SN', 'PAI', 'BA', 'PM', 'SJ', 'RBT', 'PJK', 'PSV', 'MZ'];
 
     // 4. FUNGSI UNTUK WINDOW (Supaya butang onclick berfungsi)
     
@@ -346,40 +354,54 @@ window.onload = () => {
     };
 
 window.handleLogin = async () => {
-        console.log("1. Butang MASUK SISTEM telah ditekan!"); // Ujian pertama
-        
-        const email = document.getElementById('loginEmail').value.trim().toLowerCase();
-        console.log("2. Emel yang ditaip:", email);
-        
-        const errorMsg = document.getElementById('loginError');
-        
-        try {
-            console.log("3. Sedang menyemak dengan Firestore...");
-            const q = query(collection(db, "users"), where("email", "==", email));
-            const querySnapshot = await getDocs(q);
-            
-            console.log("4. Selesai semak! Adakah data wujud?", !querySnapshot.empty);
-            
-            if (querySnapshot.empty) {
-                if(email === "admin@gesa.com") {
-                    console.log("5. Menggunakan akaun kecemasan Admin");
-                    showDashboard({name: "Super Admin", role: "admin", email: email});
-                } else {
-                    console.log("5. GAGAL: Emel tiada dalam Firestore.");
-                    errorMsg.classList.remove('hidden');
-                }
-                return;
-            }
+    const btn = event.target;
+    const originalText = btn.innerText;
 
-            querySnapshot.forEach((doc) => {
-                console.log("5. BERJAYA: Data pengguna ditemui:", doc.data());
-                showDashboard(doc.data());
-            });
-        } catch (e) { 
-            console.error("RALAT KETIKA LOGIN:", e);
-            alert("Ralat sambungan: " + e.message);
+    console.log("1. Butang MASUK SISTEM telah ditekan!"); 
+    
+    const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+    console.log("2. Emel yang ditaip:", email);
+    
+    const errorMsg = document.getElementById('loginError');
+    
+    // 1. Kunci butang & ubah rupa
+    btn.disabled = true;
+    btn.innerText = "MENYEMAK AKSES...";
+    btn.classList.add('opacity-50', 'cursor-not-allowed');
+
+    try {
+        console.log("3. Sedang menyemak dengan Firestore...");
+        const q = query(collection(db, "users"), where("email", "==", email));
+        const querySnapshot = await getDocs(q);
+        
+        console.log("4. Selesai semak! Adakah data wujud?", !querySnapshot.empty);
+        
+        if (querySnapshot.empty) {
+            if(email === "admin@gesa.com") {
+                console.log("5. Menggunakan akaun kecemasan Admin");
+                showDashboard({name: "Super Admin", role: "admin", email: email});
+            } else {
+                console.log("5. GAGAL: Emel tiada dalam Firestore.");
+                errorMsg.classList.remove('hidden');
+            }
+            return;
         }
-    };
+
+        querySnapshot.forEach((doc) => {
+            console.log("5. BERJAYA: Data pengguna ditemui:", doc.data());
+            showDashboard(doc.data());
+        });
+
+    } catch (e) { 
+        console.error("RALAT KETIKA LOGIN:", e);
+        alert("Ralat sambungan: " + e.message);
+    } finally {
+        // 2. Buka semula kunci butang tidak kira berjaya atau gagal
+        btn.disabled = false;
+        btn.innerText = originalText;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+};
 
     function showDashboard(user) {
         currentUser = user;
@@ -480,18 +502,22 @@ window.loadClassesForDropdown = async () => {
     };
 
 window.fetchStudentList = async () => {
+    // 1. Kenalpasti butang dan simpan teks asal
+    const btn = event.target;
+    const originalText = btn.innerText;
 
     const tahun = document.getElementById('selTahun').value;
     const kelas = document.getElementById('selKelas').value;
     const penilaian = document.getElementById('selPenilaian').value;
 
-    if(!kelas) return alert("Pilih kelas!");
+    if(!kelas) return alert("Sila pilih kelas terlebih dahulu!");
+
+    // 2. Kunci butang & beri maklum balas visual
+    btn.disabled = true;
+    btn.innerText = "SEDANG MENCARI...";
+    btn.classList.add('opacity-50', 'cursor-not-allowed');
 
     try {
-
-        // =========================
-        // AMBIL SENARAI MURID
-        // =========================
         const q = query(
             collection(db, "students"),
             where("tahun", "==", tahun),
@@ -499,23 +525,13 @@ window.fetchStudentList = async () => {
         );
 
         const snapshot = await getDocs(q);
-
         activeStudents = [];
 
-        // =========================
-        // LOOP MURID
-        // =========================
         for (const studentDoc of snapshot.docs) {
-
             let studentData = {
                 id: studentDoc.id,
                 ...studentDoc.data()
             };
-
-            // =========================
-            // CARI MARKAH DALAM CLOUD
-            // =========================
-            const markDocId = `${studentDoc.id}_${penilaian.replace(/\s+/g, '_')}`;
 
             const markQuery = query(
                 collection(db, "marks_v10"),
@@ -525,13 +541,8 @@ window.fetchStudentList = async () => {
 
             const markSnapshot = await getDocs(markQuery);
 
-            // =========================
-            // JIKA ADA DATA MARKAH
-            // =========================
             if (!markSnapshot.empty) {
-
                 const markData = markSnapshot.docs[0].data();
-
                 if(markData.marks) {
                     studentData = {
                         ...studentData,
@@ -539,27 +550,20 @@ window.fetchStudentList = async () => {
                     };
                 }
             }
-
             activeStudents.push(studentData);
         }
 
-        // =========================
-        // SUSUN NAMA
-        // =========================
-        activeStudents.sort((a, b) =>
-            a.nama.localeCompare(b.nama)
-        );
-
-        // =========================
-        // PAPAR JADUAL
-        // =========================
+        activeStudents.sort((a, b) => a.nama.localeCompare(b.nama));
         window.renderMarkTable();
 
     } catch(error) {
-
         console.error(error);
-        alert("Ralat mengambil data markah.");
-
+        alert("Ralat mengambil data: " + error.message);
+    } finally {
+        // 3. Aktifkan semula butang
+        btn.disabled = false;
+        btn.innerText = originalText;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
     }
 };
 
@@ -956,6 +960,12 @@ window.printAnalisis = () => {
     setTimeout(() => {
         window.print();
     }, 300);
+};
+
+window.toggleAnalisis = () => {
+    const section = document.getElementById('analisis-section-main');
+    // Fungsi toggle akan menambah/membuang kelas hidden-section secara automatik
+    section.classList.toggle('hidden-section');
 };
 </script>
 </body>
