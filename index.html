@@ -608,89 +608,75 @@ window.fetchStudentList = async () => {
     }
 
 window.calculateAndSaveToCloud = async () => {
+    // 1. Kunci butang supaya tidak boleh ditekan berkali-kali
+    const btn = window.event ? window.event.target : null;
+    let originalText = "";
+    
+    if (btn) {
+        originalText = btn.innerText;
+        btn.disabled = true;
+        btn.innerText = "SEDANG MENYIMPAN... JANGAN TUTUP";
+        btn.classList.add('opacity-50', 'cursor-not-allowed');
+    }
 
     const tahun = document.getElementById('selTahun').value;
     const penilaian = document.getElementById('selPenilaian').value;
 
-    for (let s of activeStudents) {
+    try {
+        for (let s of activeStudents) {
+            let totalMarks = 0;
+            let totalPoints = 0;
 
-        let totalMarks = 0;
-        let totalPoints = 0;
+            // Kira GPM & Peratus
+            selectedSubjects.forEach(sub => {
+                const mark = parseFloat(s[sub]) || 0;
+                totalMarks += mark;
+                totalPoints += getGrade(mark).point;
+            });
 
-        // =========================
-        // KIRA GPM & PERATUS
-        // =========================
-        selectedSubjects.forEach(sub => {
+            s.gpm = (totalPoints / selectedSubjects.length).toFixed(2);
+            s.percent = ((totalMarks / (selectedSubjects.length * 100)) * 100).toFixed(2);
+            s.totalMarks = totalMarks;
 
-            const mark = parseFloat(s[sub]) || 0;
+            const resRef = doc(db, "marks_v10", `${s.id}_${penilaian.replace(/\s+/g, '_')}`);
 
-            totalMarks += mark;
-            totalPoints += getGrade(mark).point;
+            // Sediakan data untuk disimpan
+            const saveData = {
+                studentId: s.id,
+                nama: s.nama,
+                kelas: s.kelas,
+                tahun: tahun,
+                penilaian: penilaian,
+                gpm: s.gpm,
+                percent: s.percent,
+                totalMarks: s.totalMarks
+            };
 
-        });
+            // Masukkan markah subjek mengikut format 'marks.SUBJEK' untuk { merge: true }
+            selectedSubjects.forEach(sub => {
+                saveData[`marks.${sub}`] = parseFloat(s[sub]) || 0;
+            });
 
-        s.gpm = (
-            totalPoints / selectedSubjects.length
-        ).toFixed(2);
+            // Simpan secara MERGE supaya tidak overwrite markah guru lain
+            await setDoc(resRef, saveData, { merge: true });
+        }
 
-        s.percent = (
-            (totalMarks / (selectedSubjects.length * 100)) * 100
-        ).toFixed(2);
+        // 2. Paparkan mesej berjaya (SIJIL TIDAK DIPANGGIL LAGI DI SINI)
+        alert("Data Berjaya Disimpan ke Cloud!");
 
-        s.totalMarks = totalMarks;
-
-        // =========================
-        // FIRESTORE DOC ID
-        // =========================
-        const resRef = doc(
-            db,
-            "marks_v10",
-            `${s.id}_${penilaian.replace(/\s+/g, '_')}`
-        );
-
-        // =========================
-        // DATA ASAS
-        // =========================
-        const saveData = {
-
-            studentId: s.id,
-            nama: s.nama,
-            kelas: s.kelas,
-            tahun: tahun,
-            penilaian: penilaian,
-
-            gpm: s.gpm,
-            percent: s.percent,
-            totalMarks: s.totalMarks
-
-        };
-
-        // =========================
-        // SIMPAN SUBJEK SECARA BERASINGAN
-        // (ELAK OVERWRITE MULTI GURU)
-        // =========================
-        selectedSubjects.forEach(sub => {
-
-            saveData[`marks.${sub}`] =
-                parseFloat(s[sub]) || 0;
-
-        });
-
-        // =========================
-        // SIMPAN SECARA MERGE
-        // =========================
-        await setDoc(
-            resRef,
-            saveData,
-            { merge: true }
-        );
+    } catch (e) {
+        console.error("Ralat simpan:", e);
+        alert("Gagal simpan: " + e.message);
+    } finally {
+        // 3. Aktifkan semula butang selepas selesai proses
+        if (btn) {
+            btn.disabled = false;
+            btn.innerText = originalText;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
     }
-
-    window.generateSijilCloud();
-
-    alert("Data Berjaya Disimpan ke Cloud!");
 };
-
+    
 window.generateSijilCloud = () => {
     let html = '';
     activeStudents.sort((a,b) => a.gpm - b.gpm).forEach((s, idx) => {
