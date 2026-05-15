@@ -633,25 +633,43 @@ window.calculateAndSaveToCloud = async () => {
     const tahun = document.getElementById('selTahun').value;
     const penilaian = document.getElementById('selPenilaian').value;
 
+    // Senarai induk semua subjek untuk pengiraan peratus yang tepat
+    const masterSubjectList = ['BM', 'BI', 'MT', 'SN', 'PAI', 'BA', 'PM', 'SJ', 'RBT', 'PJK', 'PSV', 'MZ'];
+
     try {
         for (let s of activeStudents) {
             let totalMarks = 0;
             let totalPoints = 0;
+            let countSubjekDikirakan = 0;
 
-            // Kira GPM & Peratus
-            selectedSubjects.forEach(sub => {
-                const mark = parseFloat(s[sub]) || 0;
-                totalMarks += mark;
-                totalPoints += getGrade(mark).point;
+            // KIRA GPM & PERATUS
+            // Kita semak semua subjek dalam masterList untuk pastikan peratus tepat
+            masterSubjectList.forEach(sub => {
+                const mark = parseFloat(s[sub]);
+                
+                // Hanya ambil kira jika markah adalah nombor dan lebih dari 0
+                if (!isNaN(mark) && mark > 0) {
+                    totalMarks += mark;
+                    totalPoints += getGrade(mark).point;
+                    countSubjekDikirakan++;
+                }
             });
 
-            s.gpm = (totalPoints / selectedSubjects.length).toFixed(2);
-            s.percent = ((totalMarks / (selectedSubjects.length * 100)) * 100).toFixed(2);
+            // Elakkan ralat pembahagian dengan sifar jika tiada markah dimasukkan
+            if (countSubjekDikirakan > 0) {
+                s.gpm = (totalPoints / countSubjekDikirakan).toFixed(2);
+                s.percent = ((totalMarks / (countSubjekDikirakan * 100)) * 100).toFixed(2);
+            } else {
+                s.gpm = "0.00";
+                s.percent = "0.00";
+            }
+            
             s.totalMarks = totalMarks;
 
+            // Tentukan Document Reference (ID: IDPelajar_NamaPenilaian)
             const resRef = doc(db, "marks_v10", `${s.id}_${penilaian.replace(/\s+/g, '_')}`);
 
-            // Sediakan data untuk disimpan
+            // Sediakan data asas untuk disimpan
             const saveData = {
                 studentId: s.id,
                 nama: s.nama,
@@ -660,20 +678,24 @@ window.calculateAndSaveToCloud = async () => {
                 penilaian: penilaian,
                 gpm: s.gpm,
                 percent: s.percent,
-                totalMarks: s.totalMarks
+                totalMarks: s.totalMarks,
+                lastUpdated: serverTimestamp() // Bagus untuk rujukan masa simpan
             };
 
-            // Masukkan markah subjek mengikut format 'marks.SUBJEK' untuk { merge: true }
+            // Masukkan markah subjek yang sedang dipaparkan/dipilih sahaja
+            // Format 'marks.SUBJEK' digunakan untuk menyokong { merge: true }
             selectedSubjects.forEach(sub => {
-                saveData[`marks.${sub}`] = parseFloat(s[sub]) || 0;
+                const markVal = parseFloat(s[sub]);
+                if (!isNaN(markVal)) {
+                    saveData[`marks.${sub}`] = markVal;
+                }
             });
 
-            // Simpan secara MERGE supaya tidak overwrite markah guru lain
+            // Simpan secara MERGE supaya tidak overwrite markah yang dimasukkan guru lain
             await setDoc(resRef, saveData, { merge: true });
         }
 
-        // 2. Paparkan mesej berjaya (SIJIL TIDAK DIPANGGIL LAGI DI SINI)
-        alert("Data Berjaya Disimpan ke Cloud!");
+        alert("Data Berjaya Disimpan! Peratus dan GPM telah dikemaskini.");
 
     } catch (e) {
         console.error("Ralat simpan:", e);
