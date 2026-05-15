@@ -766,7 +766,6 @@ window.janaAnalisis = async () => {
 
     if(!kelas) return alert("Sila pilih kelas untuk dianalisis!");
 
-    // Kenalpasti butang menggunakan event atau selector
     const btn = window.event ? window.event.target : document.querySelector('button[onclick="janaAnalisis()"]');
     if(btn) {
         btn.innerText = "SEDANG MENJANA...";
@@ -774,6 +773,7 @@ window.janaAnalisis = async () => {
     }
 
     try {
+        // 1. Ambil data dari Firestore
         const q = query(collection(db, "marks_v10"), 
             where("tahun", "==", tahun), 
             where("penilaian", "==", penilaian),
@@ -791,76 +791,125 @@ window.janaAnalisis = async () => {
         snapshot.forEach(doc => {
             const rawData = doc.data();
             let cleanedStudent = { ...rawData };
-
-            // DATA CLEANER: Tukar format 'marks.BM' kepada 'BM'
+            // Data Cleaner: Tukar 'marks.BM' -> 'BM'
             Object.keys(rawData).forEach(key => {
                 if (key.startsWith('marks.')) {
-                    const subName = key.split('.')[1];
-                    cleanedStudent[subName] = rawData[key];
+                    cleanedStudent[key.split('.')[1]] = rawData[key];
                 }
             });
             students.push(cleanedStudent);
         });
 
-        // --- BAHAGIAN PENGIRAAN ANALISIS ---
-        let html = `
-            <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-200 mt-6">
-                <h3 class="font-black text-xl mb-4 text-slate-800 uppercase text-center">ANALISIS MATA PELAJARAN: ${kelas} (${penilaian})</h3>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left border-collapse">
-                        <thead>
-                            <tr class="bg-slate-100 border-b-2 border-slate-300">
-                                <th class="p-3">MATA PELAJARAN</th>
-                                <th class="p-3 text-center">A</th>
-                                <th class="p-3 text-center">B</th>
-                                <th class="p-3 text-center">C</th>
-                                <th class="p-3 text-center">D</th>
-                                <th class="p-3 text-center">E</th>
-                                <th class="p-3 text-center">F</th>
-                                <th class="p-3 text-center bg-green-50 text-green-700">LULUS %</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-        `;
+        // 2. Logik Susunan (Tie-Breaker) untuk Top 3
+        students.sort((a, b) => {
+            let gpmDiff = parseFloat(a.gpm) - parseFloat(b.gpm);
+            if (gpmDiff !== 0) return gpmDiff;
+            let pctDiff = parseFloat(b.percent) - parseFloat(a.percent);
+            if (pctDiff !== 0) return pctDiff;
+            return a.nama.localeCompare(b.nama);
+        });
+
+        const top3 = students.slice(0, 3);
+
+        // 3. Logik Analisis Subjek & Terbaik Subjek
+        let subjectAnalysisHtml = '';
+        let topSubjectHtml = '';
 
         selectedSubjects.forEach(sub => {
             let stats = { A: 0, B: 0, C: 0, D: 0, E: 0, F: 0 };
-            let totalTook = 0;
+            let maxMark = -1;
+            let totalTook = students.length;
 
             students.forEach(s => {
                 const m = parseFloat(s[sub]) || 0;
                 const g = getGrade(m).grade;
                 if(stats[g] !== undefined) stats[g]++;
-                totalTook++;
+                if (m > maxMark) maxMark = m;
             });
 
-            const lulusCount = stats.A + stats.B + stats.C + stats.D + stats.E;
-            const peratusLulus = totalTook > 0 ? ((lulusCount / totalTook) * 100).toFixed(2) : "0.00";
+            // Cari siapa yang dapat markah tertinggi subjek ini
+            let topScorers = students.filter(s => (parseFloat(s[sub]) || 0) === maxMark).map(s => s.nama);
+            
+            topSubjectHtml += `
+                <tr class="hover:bg-slate-50">
+                    <td class="border p-2 font-bold text-[11px]">${sub.toUpperCase()}</td>
+                    <td class="border p-2 text-center font-black text-blue-900">${maxMark}</td>
+                    <td class="border p-2 text-[10px] font-bold text-slate-700">${topScorers.join(', ')}</td>
+                </tr>`;
 
-            html += `
-                <tr class="border-b hover:bg-slate-50">
-                    <td class="p-3 font-bold text-slate-700">${sub}</td>
-                    <td class="p-3 text-center">${stats.A}</td>
-                    <td class="p-3 text-center">${stats.B}</td>
-                    <td class="p-3 text-center">${stats.C}</td>
-                    <td class="p-3 text-center">${stats.D}</td>
-                    <td class="p-3 text-center">${stats.E}</td>
-                    <td class="p-3 text-center text-red-600">${stats.F}</td>
-                    <td class="p-3 text-center font-black text-green-700 bg-green-50">${peratusLulus}%</td>
-                </tr>
-            `;
+            const lulusCount = stats.A + stats.B + stats.C + stats.D + stats.E;
+            const pctLulus = ((lulusCount / totalTook) * 100).toFixed(1);
+            const pctGagal = ((stats.F / totalTook) * 100).toFixed(1);
+
+            subjectAnalysisHtml += `
+                <tr class="hover:bg-slate-50">
+                    <td class="border p-2 font-bold text-[11px]">${sub.toUpperCase()}</td>
+                    <td class="border p-2 text-center text-green-700 font-bold bg-green-50">${lulusCount} <span class="text-[9px]">(${pctLulus}%)</span></td>
+                    <td class="border p-2 text-center text-red-600 font-bold bg-red-50">${stats.F} <span class="text-[9px]">(${pctGagal}%)</span></td>
+                </tr>`;
         });
 
-        html += `</tbody></table></div></div>`;
-        
+        // 4. Bina Paparan HTML Penuh
+        let finalHtml = `
+            <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-200 mt-6 print:shadow-none print:border-none">
+                <h2 class="font-black text-xl mb-6 text-slate-800 uppercase text-center border-b-4 border-slate-800 pb-2">
+                    LAPORAN ANALISIS PRESTASI: ${kelas}
+                </h2>
+                
+                <div class="mb-8">
+                    <h3 class="font-black text-sm text-blue-900 bg-blue-100 p-2 rounded inline-block mb-2">🏆 3 MURID TERBAIK KELAS</h3>
+                    <table class="w-full border-collapse text-xs">
+                        <thead class="bg-blue-900 text-white">
+                            <tr>
+                                <th class="p-2 border">KEDUDUKAN</th>
+                                <th class="p-2 border text-left">NAMA MURID</th>
+                                <th class="p-2 border">GPM</th>
+                                <th class="p-2 border">PERATUS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${top3.map((s, idx) => `
+                                <tr>
+                                    <td class="border p-2 text-center font-black text-blue-600">#${idx + 1}</td>
+                                    <td class="border p-2 font-bold uppercase">${s.nama}</td>
+                                    <td class="border p-2 text-center font-black">${s.gpm}</td>
+                                    <td class="border p-2 text-center font-bold text-slate-600">${s.percent}%</td>
+                                </tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="font-black text-sm text-emerald-900 bg-emerald-100 p-2 rounded inline-block mb-2">⭐ TERBAIK SUBJEK</h3>
+                        <table class="w-full border-collapse text-xs">
+                            <thead class="bg-emerald-700 text-white">
+                                <tr><th class="p-2 border">SUBJEK</th><th class="p-2 border">MAX</th><th class="p-2 border text-left">NAMA</th></tr>
+                            </thead>
+                            <tbody>${topSubjectHtml}</tbody>
+                        </table>
+                    </div>
+                    <div>
+                        <h3 class="font-black text-sm text-purple-900 bg-purple-100 p-2 rounded inline-block mb-2">📈 LULUS & GAGAL</h3>
+                        <table class="w-full border-collapse text-xs">
+                            <thead class="bg-purple-800 text-white">
+                                <tr><th class="p-2 border">SUBJEK</th><th class="p-2 border">LULUS</th><th class="p-2 border">GAGAL</th></tr>
+                            </thead>
+                            <tbody>${subjectAnalysisHtml}</tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+
         const resultDiv = document.getElementById('analisis-result');
-        resultDiv.innerHTML = html;
+        resultDiv.innerHTML = finalHtml;
         resultDiv.classList.remove('hidden-section');
         resultDiv.scrollIntoView({ behavior: 'smooth' });
 
-    } catch (e) {
-        console.error("Ralat Analisis:", e);
-        alert("Gagal menjana analisis: " + e.message);
+    } catch (error) {
+        console.error("Ralat Analisis:", error);
+        alert("Ralat: " + error.message);
     } finally {
         if(btn) {
             btn.innerText = "JANA ANALISIS";
@@ -868,147 +917,7 @@ window.janaAnalisis = async () => {
         }
     }
 };
-
-            // ----------------------------------------------------
-            // LOGIK 1: KEDUDUKAN 3 TERBAIK (TIE-BREAKER Saringan Penuh)
-            // ----------------------------------------------------
-            students.sort((a, b) => {
-                let gpmDiff = parseFloat(a.gpm) - parseFloat(b.gpm);
-                if (gpmDiff !== 0) return gpmDiff; // 1. GPM Terendah
-                
-                let pctDiff = parseFloat(b.percent) - parseFloat(a.percent);
-                if (pctDiff !== 0) return pctDiff; // 2. Peratus Tertinggi
-
-                return a.nama.localeCompare(b.nama); // 3. Susunan Abjad A-Z
-            });
-
-            const top3 = students.slice(0, 3); // Ambil 3 Teratas
-
-            // ----------------------------------------------------
-            // LOGIK 2 & 3: TERBAIK SUBJEK & ANALISIS LULUS/GAGAL
-            // ----------------------------------------------------
-            // Kenalpasti subjek yang diduduki oleh kelas ini sahaja
-            let activeSubjects = KPM_SUBJECTS.filter(sub => students.some(s => s.marks[sub.id] !== undefined));
-            
-            let subjectAnalysisHtml = '';
-            let topSubjectHtml = '';
-
-            activeSubjects.forEach(sub => {
-                // A. Cari markah tertinggi untuk subjek ini
-                let maxMark = -1;
-                students.forEach(s => {
-                    let mark = parseFloat(s.marks[sub.id]) || 0;
-                    if (mark > maxMark) maxMark = mark;
-                });
-
-                // Gabungkan nama semua pelajar yang dapat markah tertinggi
-                let topScorers = students.filter(s => (parseFloat(s.marks[sub.id]) || 0) === maxMark).map(s => s.nama);
-                let scorersText = topScorers.join(', ');
-
-                topSubjectHtml += `
-                    <tr class="hover:bg-slate-50">
-                        <td class="border p-2 font-bold text-[11px]">${sub.name.toUpperCase()}</td>
-                        <td class="border p-2 text-center font-black text-blue-900">${maxMark}</td>
-                        <td class="border p-2 text-[10px] font-bold text-slate-700">${scorersText}</td>
-                    </tr>`;
-
-                // B. Kira Peratus Lulus / Gagal
-                let totalPelajar = students.length;
-                let lulus = 0; let gagal = 0;
-
-                students.forEach(s => {
-                    let mark = parseFloat(s.marks[sub.id]) || 0;
-                    if (mark >= 40) lulus++; else gagal++;
-                });
-
-                let pctLulus = ((lulus / totalPelajar) * 100).toFixed(1);
-                let pctGagal = ((gagal / totalPelajar) * 100).toFixed(1);
-
-                subjectAnalysisHtml += `
-                    <tr class="hover:bg-slate-50">
-                        <td class="border p-2 font-bold text-[11px]">${sub.name.toUpperCase()}</td>
-                        <td class="border p-2 text-center text-green-700 font-bold bg-green-50">${lulus} <span class="text-[9px]">(${pctLulus}%)</span></td>
-                        <td class="border p-2 text-center text-red-600 font-bold bg-red-50">${gagal} <span class="text-[9px]">(${pctGagal}%)</span></td>
-                    </tr>`;
-            });
-
-            // ----------------------------------------------------
-            // BINA PAPARAN HTML
-            // ----------------------------------------------------
-            let html = `
-                <div>
-                    <h3 class="font-black text-sm text-blue-900 bg-blue-100 p-2 rounded inline-block mb-2">🏆 3 TERBAIK KELAS</h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full border-collapse text-xs">
-                            <thead class="bg-blue-900 text-white">
-                                <tr>
-                                    <th class="p-2 border">KEDUDUKAN</th>
-                                    <th class="p-2 border text-left">NAMA MURID</th>
-                                    <th class="p-2 border">GPM</th>
-                                    <th class="p-2 border">PERATUS</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${top3.map((s, idx) => `
-                                    <tr>
-                                        <td class="border p-2 text-center font-black text-lg text-blue-600">#${idx + 1}</td>
-                                        <td class="border p-2 font-bold uppercase">${s.nama}</td>
-                                        <td class="border p-2 text-center font-black">${s.gpm}</td>
-                                        <td class="border p-2 text-center font-bold text-slate-600">${s.percent}%</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-                    <div>
-                        <h3 class="font-black text-sm text-emerald-900 bg-emerald-100 p-2 rounded inline-block mb-2">⭐ TERBAIK MENGIKUT SUBJEK</h3>
-                        <div class="overflow-x-auto">
-                            <table class="w-full border-collapse text-xs">
-                                <thead class="bg-emerald-700 text-white">
-                                    <tr>
-                                        <th class="p-2 border">SUBJEK</th>
-                                        <th class="p-2 border">MAX</th>
-                                        <th class="p-2 border text-left">NAMA MURID</th>
-                                    </tr>
-                                </thead>
-                                <tbody>${topSubjectHtml}</tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h3 class="font-black text-sm text-purple-900 bg-purple-100 p-2 rounded inline-block mb-2">📈 ANALISIS LULUS & GAGAL</h3>
-                        <div class="overflow-x-auto">
-                            <table class="w-full border-collapse text-xs">
-                                <thead class="bg-purple-800 text-white">
-                                    <tr>
-                                        <th class="p-2 border">SUBJEK</th>
-                                        <th class="p-2 border">LULUS (>=40)</th>
-                                        <th class="p-2 border">GAGAL (<40)</th>
-                                    </tr>
-                                </thead>
-                                <tbody>${subjectAnalysisHtml}</tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            document.getElementById('analisis-result').innerHTML = html;
-            document.getElementById('analisis-result').classList.remove('hidden-section');
-
-        } catch (error) {
-            console.error("Ralat Analisis:", error);
-            alert("Ralat sistem semasa menjana analisis.");
-        } finally {
-            btn.innerText = "JANA ANALISIS";
-            btn.disabled = false;
-        }
-    };
-
+    
 window.printAnalisis = () => {
 
     const result = document.getElementById('analisis-result');
