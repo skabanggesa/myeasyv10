@@ -531,8 +531,7 @@ window.fetchStudentList = async () => {
         let tempStudents = [];
         studentSnap.forEach(doc => tempStudents.push({ id: doc.id, ...doc.data() }));
 
-        // Langkah B: Ambil markah dari 'marks_v10' 
-        // (Jimat kuota! Kita panggil sekali sahaja untuk seluruh kelas)
+// Langkah B: Ambil markah dari 'marks_v10'
         const qMarks = query(
             collection(db, "marks_v10"),
             where("tahun", "==", tahun),
@@ -544,12 +543,24 @@ window.fetchStudentList = async () => {
         let savedMarksMap = {};
         marksSnap.forEach(doc => {
             let data = doc.data();
-            savedMarksMap[data.studentId] = data.marks; 
+            let extractedMarks = {};
+
+            // TEKNIK BARU: Cari semua field yang ada titik (contoh: marks.BI)
+            // dan masukkan ke dalam objek extractedMarks
+            Object.keys(data).forEach(key => {
+                if (key.startsWith('marks.')) {
+                    const subName = key.split('.')[1]; // Ambil 'BI' daripada 'marks.BI'
+                    extractedMarks[subName] = data[key];
+                }
+            });
+
+            savedMarksMap[data.studentId] = extractedMarks; 
         });
 
         // Langkah C: Gabungkan nama dan markah
         activeStudents = tempStudents.map(student => {
             if(savedMarksMap[student.id]) {
+                // Sekarang savedMarksMap[student.id] berisi { BI: 64, BM: 70, ... }
                 return { ...student, ...savedMarksMap[student.id] };
             }
             return student;
