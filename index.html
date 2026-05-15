@@ -760,33 +760,114 @@ window.prepareAndPrint = () => {
 };
 
 window.janaAnalisis = async () => {
-        const tahun = document.getElementById('anaTahun').value;
-        const penilaian = document.getElementById('anaPenilaian').value;
-        const kelas = document.getElementById('anaKelas').value;
+    const tahun = document.getElementById('anaTahun').value;
+    const penilaian = document.getElementById('anaPenilaian').value;
+    const kelas = document.getElementById('anaKelas').value;
 
-        if(!kelas) return alert("Sila pilih kelas untuk dianalisis!");
+    if(!kelas) return alert("Sila pilih kelas untuk dianalisis!");
 
-        const btn = event.target;
+    // Kenalpasti butang menggunakan event atau selector
+    const btn = window.event ? window.event.target : document.querySelector('button[onclick="janaAnalisis()"]');
+    if(btn) {
         btn.innerText = "SEDANG MENJANA...";
         btn.disabled = true;
+    }
 
-        try {
-            // Ambil markah dari koleksi marks_v10 (Bukan dari 'students')
-            const q = query(collection(db, "marks_v10"), 
-                where("tahun", "==", tahun), 
-                where("penilaian", "==", penilaian),
-                where("kelas", "==", kelas)
-            );
-            const snapshot = await getDocs(q);
+    try {
+        const q = query(collection(db, "marks_v10"), 
+            where("tahun", "==", tahun), 
+            where("penilaian", "==", penilaian),
+            where("kelas", "==", kelas)
+        );
+        const snapshot = await getDocs(q);
 
-            if(snapshot.empty) {
-                document.getElementById('analisis-result').innerHTML = `<p class="text-red-600 font-bold bg-red-50 p-4 rounded text-center">Tiada rekod markah ditemui. Sila simpan markah kelas ini dahulu.</p>`;
-                document.getElementById('analisis-result').classList.remove('hidden-section');
-                return;
-            }
+        if(snapshot.empty) {
+            document.getElementById('analisis-result').innerHTML = `<p class="text-red-600 font-bold bg-red-50 p-4 rounded text-center">Tiada rekod markah ditemui. Sila simpan markah kelas ini dahulu.</p>`;
+            document.getElementById('analisis-result').classList.remove('hidden-section');
+            return;
+        }
 
-            let students = [];
-            snapshot.forEach(doc => students.push(doc.data()));
+        let students = [];
+        snapshot.forEach(doc => {
+            const rawData = doc.data();
+            let cleanedStudent = { ...rawData };
+
+            // DATA CLEANER: Tukar format 'marks.BM' kepada 'BM'
+            Object.keys(rawData).forEach(key => {
+                if (key.startsWith('marks.')) {
+                    const subName = key.split('.')[1];
+                    cleanedStudent[subName] = rawData[key];
+                }
+            });
+            students.push(cleanedStudent);
+        });
+
+        // --- BAHAGIAN PENGIRAAN ANALISIS ---
+        let html = `
+            <div class="bg-white p-6 rounded-xl shadow-lg border border-slate-200 mt-6">
+                <h3 class="font-black text-xl mb-4 text-slate-800 uppercase text-center">ANALISIS MATA PELAJARAN: ${kelas} (${penilaian})</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 border-b-2 border-slate-300">
+                                <th class="p-3">MATA PELAJARAN</th>
+                                <th class="p-3 text-center">A</th>
+                                <th class="p-3 text-center">B</th>
+                                <th class="p-3 text-center">C</th>
+                                <th class="p-3 text-center">D</th>
+                                <th class="p-3 text-center">E</th>
+                                <th class="p-3 text-center">F</th>
+                                <th class="p-3 text-center bg-green-50 text-green-700">LULUS %</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+        `;
+
+        selectedSubjects.forEach(sub => {
+            let stats = { A: 0, B: 0, C: 0, D: 0, E: 0, F: 0 };
+            let totalTook = 0;
+
+            students.forEach(s => {
+                const m = parseFloat(s[sub]) || 0;
+                const g = getGrade(m).grade;
+                if(stats[g] !== undefined) stats[g]++;
+                totalTook++;
+            });
+
+            const lulusCount = stats.A + stats.B + stats.C + stats.D + stats.E;
+            const peratusLulus = totalTook > 0 ? ((lulusCount / totalTook) * 100).toFixed(2) : "0.00";
+
+            html += `
+                <tr class="border-b hover:bg-slate-50">
+                    <td class="p-3 font-bold text-slate-700">${sub}</td>
+                    <td class="p-3 text-center">${stats.A}</td>
+                    <td class="p-3 text-center">${stats.B}</td>
+                    <td class="p-3 text-center">${stats.C}</td>
+                    <td class="p-3 text-center">${stats.D}</td>
+                    <td class="p-3 text-center">${stats.E}</td>
+                    <td class="p-3 text-center text-red-600">${stats.F}</td>
+                    <td class="p-3 text-center font-black text-green-700 bg-green-50">${peratusLulus}%</td>
+                </tr>
+            `;
+        });
+
+        html += `</tbody></table></div></div>`;
+        
+        const resultDiv = document.getElementById('analisis-result');
+        resultDiv.innerHTML = html;
+        resultDiv.classList.remove('hidden-section');
+        resultDiv.scrollIntoView({ behavior: 'smooth' });
+
+    } catch (e) {
+        console.error("Ralat Analisis:", e);
+        alert("Gagal menjana analisis: " + e.message);
+    } finally {
+        if(btn) {
+            btn.innerText = "JANA ANALISIS";
+            btn.disabled = false;
+        }
+    }
+};
 
             // ----------------------------------------------------
             // LOGIK 1: KEDUDUKAN 3 TERBAIK (TIE-BREAKER Saringan Penuh)
