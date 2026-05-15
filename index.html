@@ -502,9 +502,9 @@ window.loadClassesForDropdown = async () => {
     };
 
 window.fetchStudentList = async () => {
-    // 1. Kenalpasti butang dan simpan teks asal
-    const btn = event.target;
-    const originalText = btn.innerText;
+    // 1. Kenalpasti butang dan simpan teks asal (Guna window.event supaya tak error)
+    const btn = window.event ? window.event.target : document.querySelector('button[onclick="fetchStudentList()"]');
+    const originalText = btn ? btn.innerText : "CARI MURID";
 
     const tahun = document.getElementById('selTahun').value;
     const kelas = document.getElementById('selKelas').value;
@@ -513,47 +513,52 @@ window.fetchStudentList = async () => {
     if(!kelas) return alert("Sila pilih kelas terlebih dahulu!");
 
     // 2. Kunci butang & beri maklum balas visual
-    btn.disabled = true;
-    btn.innerText = "SEDANG MENCARI...";
-    btn.classList.add('opacity-50', 'cursor-not-allowed');
+    if(btn) {
+        btn.disabled = true;
+        btn.innerText = "SEDANG MENCARI...";
+        btn.classList.add('opacity-50', 'cursor-not-allowed');
+    }
 
     try {
-        const q = query(
+        // Langkah A: Ambil senarai nama dari 'students'
+        const qStudents = query(
             collection(db, "students"),
             where("tahun", "==", tahun),
             where("kelas", "==", kelas)
         );
+        const studentSnap = await getDocs(qStudents);
+        
+        let tempStudents = [];
+        studentSnap.forEach(doc => tempStudents.push({ id: doc.id, ...doc.data() }));
 
-        const snapshot = await getDocs(q);
-        activeStudents = [];
+        // Langkah B: Ambil markah dari 'marks_v10' 
+        // (Jimat kuota! Kita panggil sekali sahaja untuk seluruh kelas)
+        const qMarks = query(
+            collection(db, "marks_v10"),
+            where("tahun", "==", tahun),
+            where("kelas", "==", kelas),
+            where("penilaian", "==", penilaian)
+        );
+        const marksSnap = await getDocs(qMarks);
+        
+        let savedMarksMap = {};
+        marksSnap.forEach(doc => {
+            let data = doc.data();
+            savedMarksMap[data.studentId] = data.marks; 
+        });
 
-        for (const studentDoc of snapshot.docs) {
-            let studentData = {
-                id: studentDoc.id,
-                ...studentDoc.data()
-            };
-
-            const markQuery = query(
-                collection(db, "marks_v10"),
-                where("studentId", "==", studentDoc.id),
-                where("penilaian", "==", penilaian)
-            );
-
-            const markSnapshot = await getDocs(markQuery);
-
-            if (!markSnapshot.empty) {
-                const markData = markSnapshot.docs[0].data();
-                if(markData.marks) {
-                    studentData = {
-                        ...studentData,
-                        ...markData.marks
-                    };
-                }
+        // Langkah C: Gabungkan nama dan markah
+        activeStudents = tempStudents.map(student => {
+            if(savedMarksMap[student.id]) {
+                return { ...student, ...savedMarksMap[student.id] };
             }
-            activeStudents.push(studentData);
-        }
+            return student;
+        });
 
+        // Langkah D: Susun nama ikut abjad (A-Z) seperti kod asal anda
         activeStudents.sort((a, b) => a.nama.localeCompare(b.nama));
+        
+        // Paparkan jadual
         window.renderMarkTable();
 
     } catch(error) {
@@ -561,9 +566,11 @@ window.fetchStudentList = async () => {
         alert("Ralat mengambil data: " + error.message);
     } finally {
         // 3. Aktifkan semula butang
-        btn.disabled = false;
-        btn.innerText = originalText;
-        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        if(btn) {
+            btn.disabled = false;
+            btn.innerText = originalText;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
     }
 };
 
