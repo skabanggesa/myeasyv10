@@ -679,7 +679,7 @@ window.calculateAndSaveToCloud = async () => {
                 gpm: s.gpm,
                 percent: s.percent,
                 totalMarks: s.totalMarks,
-                lastUpdated: serverTimestamp() // Bagus untuk rujukan masa simpan
+                lastUpdated: new Date() // Bagus untuk rujukan masa simpan
             };
 
             // Masukkan markah subjek yang sedang dipaparkan/dipilih sahaja
