@@ -712,6 +712,11 @@ window.calculateAndSaveToCloud = async () => {
     
 window.generateSijilCloud = () => {
     let html = '';
+    
+    // TAMBAHAN: Ambil nilai jenis penilaian terus dari dropdown halaman
+    const penilaianElement = document.getElementById('selPenilaian');
+    const jenisPenilaian = penilaianElement ? penilaianElement.value.toUpperCase() : '';
+
     activeStudents.sort((a,b) => a.gpm - b.gpm).forEach((s, idx) => {
         const rank = idx + 1;
         
@@ -737,6 +742,9 @@ window.generateSijilCloud = () => {
                     <div class="text-center mb-6">
                         <h2 class="text-2xl font-black text-blue-900 uppercase">SK ABANG GESA</h2>
                         <h1 class="text-4xl font-serif font-bold text-slate-800 underline mt-4">SIJIL PENCAPAIAN</h1>
+                        
+                        <p class="text-lg font-bold text-blue-700 uppercase tracking-wide mt-2">${jenisPenilaian}</p>
+                        
                         <h2 class="text-2xl font-black my-4 uppercase text-blue-900">${s.nama}</h2>
                         <p class="text-lg font-bold">KELAS: ${s.kelas}</p>
                     </div>
