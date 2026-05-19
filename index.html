@@ -610,11 +610,11 @@ window.fetchStudentList = async () => {
     };
 
     function getGrade(mark) {
-        if (mark >= 80) return { gred: 'A', point: 1 };
-        if (mark >= 70) return { gred: 'B', point: 2 };
-        if (mark >= 60) return { gred: 'C', point: 3 };
-        if (mark >= 50) return { gred: 'D', point: 4 };
-        if (mark >= 40) return { gred: 'E', point: 5 };
+        if (mark >= 82) return { gred: 'A', point: 1 };
+        if (mark >= 66) return { gred: 'B', point: 2 };
+        if (mark >= 50) return { gred: 'C', point: 3 };
+        if (mark >= 35) return { gred: 'D', point: 4 };
+        if (mark >= 20) return { gred: 'E', point: 5 };
         return { gred: 'F', point: 6 };
     }
 
