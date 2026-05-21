@@ -6,49 +6,48 @@
     <title>Sistem Analisis Penilaian V10 - SK ABANG GESA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
 <style>
-    /* =========================
+/* =========================
        CETAK / PRINT
     ========================== */
-    @media print {
+    /* TAMBAHAN: Sembunyikan kawasan cetakan daripada skrin komputer/dashboard biasa */
+    #section-sijil, #analisis-print-area {
+        display: none;
+    }
 
+    @media print {
         /* Sembunyikan semua dahulu */
         body * {
             visibility: hidden;
         }
 
-        /* Paparkan kawasan sijil */
-        #section-sijil,
-        #section-sijil * {
-            visibility: visible;
-        }
-
-        /* Paparkan kawasan analisis */
-        #analisis-print-area,
-        #analisis-print-area * {
-            visibility: visible;
-        }
-
-        /* Tetapan sijil */
+        /* Paparkan kawasan sijil hanya waktu cetak */
         #section-sijil {
+            display: block !important;
             position: absolute;
             left: 0;
             top: 0;
             width: 100%;
-            display: block !important;
             background: white;
         }
+        #section-sijil * {
+            visibility: visible;
+        }
 
-        /* Tetapan analisis */
+        /* Paparkan kawasan analisis hanya waktu cetak */
         #analisis-print-area {
+            display: block !important;
             position: absolute;
             left: 0;
             top: 0;
             width: 100%;
             padding: 20px;
             background: white;
-            display: block !important;
+        }
+        #analisis-print-area * {
+            visibility: visible;
         }
 
         /* Sembunyikan UI utama */
@@ -173,7 +172,7 @@
     </div>
 
     <div id="admin-area" class="hidden-section space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="bg-white p-6 rounded-xl shadow border">
                 <h2 class="font-black text-blue-900 mb-4 uppercase border-b pb-2">Daftar Guru Baharu</h2>
                 <div class="space-y-3">
@@ -187,6 +186,11 @@
                 <p class="text-[10px] text-slate-500 mb-2 font-bold">Header: nama, kelas, tahun</p>
                 <input type="file" id="csvStudentInput" accept=".csv" class="w-full mb-3 text-xs">
                 <button onclick="uploadStudentCSV()" class="w-full bg-blue-900 text-white py-2 rounded font-bold">PROSES & SIMPAN DATA</button>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow border border-orange-200 bg-orange-50/30">
+                <h2 class="font-black text-orange-900 mb-4 uppercase border-b pb-2">⚙️ Utiliti Sistem</h2>
+                <p class="text-[11px] text-slate-600 mb-3 font-bold leading-relaxed">Klik butang ini jika data lama berasaskan nama "Penilaian Semester Pertama" tidak muncul selepas penukaran nama paparan.</p>
+                <button onclick="window.upgradeDataLama()" class="w-full bg-orange-600 hover:bg-orange-700 text-white py-2 rounded font-black shadow transition">UPGRADE DATA LAMA (1 KLIK)</button>
             </div>
         </div>
     </div>
@@ -208,7 +212,7 @@
         <div>
             <label class="block text-[10px] font-black text-purple-900 uppercase">Penilaian</label>
             <select id="anaPenilaian" class="w-full p-2 border rounded font-bold bg-slate-50">
-                <option>Penilaian Semester Pertama</option>
+                <option>Ujian Pertengahan Sesi Akademik</option>
                 <option>Ujian Tahun 4</option>
                 <option>Penilaian Semester Kedua</option>
                 <option>Ujian Akhir Sesi Akademik</option>
@@ -238,7 +242,7 @@
             <div>
                 <label class="block text-[10px] font-black text-blue-900 uppercase">Penilaian</label>
                 <select id="selPenilaian" class="w-full p-2 border rounded font-bold bg-slate-50 border-blue-200">
-                    <option>Penilaian Semester Pertama</option>
+                    <option>Ujian Pertengahan Sesi Akademik</option>
                     <option>Ujian Tahun 4</option>
                     <option>Penilaian Semester Kedua</option>
                     <option>Ujian Akhir Sesi Akademik</option>
@@ -258,8 +262,8 @@
         <div id="mark-table-container" class="bg-white p-6 rounded-xl shadow border hidden-section">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="font-black text-blue-900 uppercase">Kemasukan Markah</h2>
-                <div id="subject-selectors" class="flex gap-2 flex-wrap max-w-xl justify-end">
-                    </div>
+                <div id="subject-selectors" class="flex gap-2 flex-wrap max-w-xl justify-end items-center">
+                     </div>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full border-collapse text-[10px]">
@@ -298,27 +302,27 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-// 3. VARIABLE GLOBAL (Kemaskini dengan subjek tambahan)
+// 3. VARIABLE GLOBAL
 const KPM_SUBJECTS = [
     {id: 'BM', name: 'Bahasa Melayu'}, 
     {id: 'BI', name: 'Bahasa Inggeris'},
     {id: 'MT', name: 'Matematik'}, 
     {id: 'SN', name: 'Sains'},
     {id: 'PAI', name: 'Pendidikan Islam'}, 
-    {id: 'BA', name: 'Bahasa Arab'},      // Tambah BA
-    {id: 'PM', name: 'Pendidikan Moral'},  // Tambah PM
+    {id: 'BA', name: 'Bahasa Arab'},      
+    {id: 'PM', name: 'Pendidikan Moral'},  
     {id: 'SJ', name: 'Sejarah'},
     {id: 'RBT', name: 'RBT'}, 
     {id: 'PJK', name: 'PJK'},
-    {id: 'PSV', name: 'PSV'},              // Tambah PSV
-    {id: 'MZ', name: 'Muzik'}              // Tambah MZ
+    {id: 'PSV', name: 'PSV'},              
+    {id: 'MZ', name: 'Muzik'}              
 ];
 
     let currentUser = null;
     let activeStudents = [];
     let selectedSubjects = ['BM', 'BI', 'MT', 'SN', 'PAI', 'BA', 'PM', 'SJ', 'RBT', 'PJK', 'PSV', 'MZ'];
 
-    // 4. FUNGSI UNTUK WINDOW (Supaya butang onclick berfungsi)
+    // 4. FUNGSI UNTUK WINDOW
     
 window.onload = () => {
     const yearSel = document.getElementById('selTahun');
@@ -337,58 +341,71 @@ window.onload = () => {
         anaYearSel.appendChild(optAna);
     }
 
+    window.initSubjectSelectors();
+};
+
+// TAMBAHAN: Struktur Fungsi Pecahan Semak Checkbox Subjek
+window.initSubjectSelectors = () => {
     const subContainer = document.getElementById('subject-selectors');
+    subContainer.innerHTML = `
+        <button type="button" onclick="window.toggleSelectAllSubjects()" class="text-[10px] font-black bg-blue-100 text-blue-900 hover:bg-blue-200 px-2 py-1 rounded border border-blue-300 mr-2 uppercase">SELECT ALL</button>
+    `;
     KPM_SUBJECTS.forEach(s => {
         const checked = selectedSubjects.includes(s.id) ? 'checked' : '';
         subContainer.innerHTML += `
-            <label class="text-[9px] font-bold border p-1 rounded bg-slate-50 flex items-center gap-1">
-                <input type="checkbox" value="${s.id}" ${checked} onchange="updateSelectedSubjects()"> ${s.id}
+            <label class="text-[9px] font-bold border p-1 rounded bg-slate-50 flex items-center gap-1 cursor-pointer hover:bg-slate-100">
+                <input type="checkbox" value="${s.id}" ${checked} onchange="window.updateSelectedSubjects()"> ${s.id}
             </label>
         `;
     });
 };
 
-    window.updateSelectedSubjects = () => {
-        const boxes = document.querySelectorAll('#subject-selectors input:checked');
-        selectedSubjects = Array.from(boxes).map(b => b.value);
-    };
+// TAMBAHAN: Logik Butang Togle Select/Deselect All Checkbox
+window.toggleSelectAllSubjects = () => {
+    const checkboxes = document.querySelectorAll('#subject-selectors input[type="checkbox"]');
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    checkboxes.forEach(cb => {
+        cb.checked = !allChecked;
+    });
+    window.updateSelectedSubjects();
+};
+
+window.updateSelectedSubjects = () => {
+    const boxes = document.querySelectorAll('#subject-selectors input:checked');
+    selectedSubjects = Array.from(boxes).map(b => b.value);
+    
+    // Kemaskini jadual markah secara interaktif sekiranya sedang dibuka
+    if (!document.getElementById('mark-table-container').classList.contains('hidden-section')) {
+        window.renderMarkTable();
+    }
+};
 
 window.handleLogin = async () => {
     const btn = event.target;
     const originalText = btn.innerText;
 
     console.log("1. Butang MASUK SISTEM telah ditekan!"); 
-    
     const email = document.getElementById('loginEmail').value.trim().toLowerCase();
-    console.log("2. Emel yang ditaip:", email);
-    
     const errorMsg = document.getElementById('loginError');
     
-    // 1. Kunci butang & ubah rupa
     btn.disabled = true;
     btn.innerText = "MENYEMAK AKSES...";
     btn.classList.add('opacity-50', 'cursor-not-allowed');
 
     try {
-        console.log("3. Sedang menyemak dengan Firestore...");
         const q = query(collection(db, "users"), where("email", "==", email));
         const querySnapshot = await getDocs(q);
         
-        console.log("4. Selesai semak! Adakah data wujud?", !querySnapshot.empty);
-        
         if (querySnapshot.empty) {
             if(email === "admin@gesa.com") {
-                console.log("5. Menggunakan akaun kecemasan Admin");
                 showDashboard({name: "Super Admin", role: "admin", email: email});
             } else {
-                console.log("5. GAGAL: Emel tiada dalam Firestore.");
                 errorMsg.classList.remove('hidden');
             }
             return;
         }
 
         querySnapshot.forEach((doc) => {
-            console.log("5. BERJAYA: Data pengguna ditemui:", doc.data());
             showDashboard(doc.data());
         });
 
@@ -396,7 +413,6 @@ window.handleLogin = async () => {
         console.error("RALAT KETIKA LOGIN:", e);
         alert("Ralat sambungan: " + e.message);
     } finally {
-        // 2. Buka semula kunci butang tidak kira berjaya atau gagal
         btn.disabled = false;
         btn.innerText = originalText;
         btn.classList.remove('opacity-50', 'cursor-not-allowed');
@@ -426,14 +442,77 @@ window.handleLogin = async () => {
         alert("Guru berdaftar!");
     };
 
+// TAMBAHAN: Logik Naik Taraf Data Dokumen Penilaian Lama (Migrasi 1 Klik)
+window.upgradeDataLama = async () => {
+    const btn = window.event ? window.event.target : document.querySelector('button[onclick="window.upgradeDataLama()"]');
+    const originalText = btn ? btn.innerText : "UPGRADE DATA LAMA (1 KLIK)";
+
+    if (!confirm("Adakah anda pasti mahu migrasi semua data lama 'Penilaian Semester Pertama' kepada 'Ujian Pertengahan Sesi Akademik'? Tindakan ini akan mengemaskini ID dokumen dan nilai di Firestore.")) {
+        return;
+    }
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerText = "SEDANG MEMPROSES MIGRASI...";
+        btn.classList.add('opacity-50', 'cursor-not-allowed');
+    }
+
+    try {
+        const q = query(collection(db, "marks_v10"), where("penilaian", "==", "Penilaian Semester Pertama"));
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) {
+            alert("Tiada rekod data lama dengan penilaian 'Penilaian Semester Pertama' ditemui.");
+            return;
+        }
+
+        let upgradedCount = 0;
+        for (let docSnap of snapshot.docs) {
+            const oldData = docSnap.data();
+            const oldId = docSnap.id;
+            
+            // Tentukan ID baru mengikut format penamaan dokumen asal
+            const newId = `${oldData.studentId}_Ujian_Pertengahan_Sesi_Akademik`;
+            
+            // Sediakan objek data baharu yang dikemaskini maklumat penilaiannya
+            const newData = {
+                ...oldData,
+                penilaian: "Ujian Pertengahan Sesi Akademik",
+                lastUpdated: new Date()
+            };
+
+            // Simpan ke lokasi ID dokumen baharu
+            const newRef = doc(db, "marks_v10", newId);
+            await setDoc(newRef, newData, { merge: true });
+
+            // Padam lokasi ID dokumen lama jika berbeza
+            if (oldId !== newId) {
+                const oldRef = doc(db, "marks_v10", oldId);
+                await deleteDoc(oldRef);
+            }
+            upgradedCount++;
+        }
+
+        alert(`Berjaya! ${upgradedCount} rekod data lama telah dinaik taraf kepada 'Ujian Pertengahan Sesi Akademik'.`);
+    } catch (e) {
+        console.error("Ralat ketika migrasi data lama:", e);
+        alert("Gagal menaik taraf data lama: " + e.message);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerText = originalText;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    }
+};
+
 window.uploadStudentCSV = async () => {
     const fileInput = document.getElementById('csvStudentInput');
-    const btn = event.target; // Mengambil elemen butang yang ditekan
+    const btn = event.target;
     const file = fileInput.files[0];
 
     if (!file) return alert("Sila pilih fail CSV terlebih dahulu!");
 
-    // 1. Nyahaktifkan butang & beri notifikasi visual
     btn.disabled = true;
     btn.innerText = "SEDANG MEMPROSES & MEMUAT NAIK...";
     btn.classList.add('opacity-50', 'cursor-not-allowed');
@@ -445,16 +524,11 @@ window.uploadStudentCSV = async () => {
         let count = 0;
 
         try {
-            console.log("Memulakan proses simpan ke Firestore...");
-            
             for (let i = 1; i < rows.length; i++) {
                 const data = rows[i].split(',').map(s => s.trim());
-                
-                // Pastikan data cukup (nama, kelas, tahun)
                 if (data.length >= 3) {
                     const [nama, kelas, tahun] = data;
                     if (nama && kelas && tahun) {
-                        // Memasukkan data ke dalam koleksi 'students'
                         await addDoc(collection(db, "students"), { 
                             nama: nama.toUpperCase(), 
                             kelas: kelas.toUpperCase(), 
@@ -466,14 +540,13 @@ window.uploadStudentCSV = async () => {
             }
 
             alert(`Berjaya! ${count} data murid telah disimpan ke koleksi Firestore.`);
-            fileInput.value = ""; // Reset input fail
+            fileInput.value = ""; 
             window.loadClassesForDropdown();
 
         } catch (error) {
             console.error("Ralat muat naik:", error);
             alert("Ralat sistem: Gagal memuat naik data.");
         } finally {
-            // 2. Aktifkan semula butang selepas selesai (berjaya atau gagal)
             btn.disabled = false;
             btn.innerText = "PROSES & SIMPAN DATA";
             btn.classList.remove('opacity-50', 'cursor-not-allowed');
@@ -490,19 +563,18 @@ window.loadClassesForDropdown = async () => {
         snapshot.forEach(doc => classes.add(doc.data().kelas));
         
         const sel = document.getElementById('selKelas');
-        const anaSel = document.getElementById('anaKelas'); // Untuk Analisis
+        const anaSel = document.getElementById('anaKelas'); 
         
         sel.innerHTML = '<option value="">Pilih Kelas</option>';
-        anaSel.innerHTML = '<option value="">Pilih Kelas</option>'; // Reset
+        anaSel.innerHTML = '<option value="">Pilih Kelas</option>'; 
         
         Array.from(classes).sort().forEach(c => {
             sel.innerHTML += `<option value="${c}">${c}</option>`;
-            anaSel.innerHTML += `<option value="${c}">${c}</option>`; // Tambah ke Analisis
+            anaSel.innerHTML += `<option value="${c}">${c}</option>`; 
         });
     };
 
 window.fetchStudentList = async () => {
-    // 1. Kenalpasti butang dan simpan teks asal (Guna window.event supaya tak error)
     const btn = window.event ? window.event.target : document.querySelector('button[onclick="fetchStudentList()"]');
     const originalText = btn ? btn.innerText : "CARI MURID";
 
@@ -512,7 +584,6 @@ window.fetchStudentList = async () => {
 
     if(!kelas) return alert("Sila pilih kelas terlebih dahulu!");
 
-    // 2. Kunci butang & beri maklum balas visual
     if(btn) {
         btn.disabled = true;
         btn.innerText = "SEDANG MENCARI...";
@@ -520,7 +591,6 @@ window.fetchStudentList = async () => {
     }
 
     try {
-        // Langkah A: Ambil senarai nama dari 'students'
         const qStudents = query(
             collection(db, "students"),
             where("tahun", "==", tahun),
@@ -531,7 +601,6 @@ window.fetchStudentList = async () => {
         let tempStudents = [];
         studentSnap.forEach(doc => tempStudents.push({ id: doc.id, ...doc.data() }));
 
-// Langkah B: Ambil markah dari 'marks_v10'
         const qMarks = query(
             collection(db, "marks_v10"),
             where("tahun", "==", tahun),
@@ -545,11 +614,9 @@ window.fetchStudentList = async () => {
             let data = doc.data();
             let extractedMarks = {};
 
-            // TEKNIK BARU: Cari semua field yang ada titik (contoh: marks.BI)
-            // dan masukkan ke dalam objek extractedMarks
             Object.keys(data).forEach(key => {
                 if (key.startsWith('marks.')) {
-                    const subName = key.split('.')[1]; // Ambil 'BI' daripada 'marks.BI'
+                    const subName = key.split('.')[1]; 
                     extractedMarks[subName] = data[key];
                 }
             });
@@ -557,26 +624,20 @@ window.fetchStudentList = async () => {
             savedMarksMap[data.studentId] = extractedMarks; 
         });
 
-        // Langkah C: Gabungkan nama dan markah
         activeStudents = tempStudents.map(student => {
             if(savedMarksMap[student.id]) {
-                // Sekarang savedMarksMap[student.id] berisi { BI: 64, BM: 70, ... }
                 return { ...student, ...savedMarksMap[student.id] };
             }
             return student;
         });
 
-        // Langkah D: Susun nama ikut abjad (A-Z) seperti kod asal anda
         activeStudents.sort((a, b) => a.nama.localeCompare(b.nama));
-        
-        // Paparkan jadual
         window.renderMarkTable();
 
     } catch(error) {
         console.error(error);
         alert("Ralat mengambil data: " + error.message);
     } finally {
-        // 3. Aktifkan semula butang
         if(btn) {
             btn.disabled = false;
             btn.innerText = originalText;
@@ -619,7 +680,6 @@ window.fetchStudentList = async () => {
     }
 
 window.calculateAndSaveToCloud = async () => {
-    // 1. Kunci butang supaya tidak boleh ditekan berkali-kali
     const btn = window.event ? window.event.target : null;
     let originalText = "";
     
@@ -632,8 +692,6 @@ window.calculateAndSaveToCloud = async () => {
 
     const tahun = document.getElementById('selTahun').value;
     const penilaian = document.getElementById('selPenilaian').value;
-
-    // Senarai induk semua subjek untuk pengiraan peratus yang tepat
     const masterSubjectList = ['BM', 'BI', 'MT', 'SN', 'PAI', 'BA', 'PM', 'SJ', 'RBT', 'PJK', 'PSV', 'MZ'];
 
     try {
@@ -642,12 +700,8 @@ window.calculateAndSaveToCloud = async () => {
             let totalPoints = 0;
             let countSubjekDikirakan = 0;
 
-            // KIRA GPM & PERATUS
-            // Kita semak semua subjek dalam masterList untuk pastikan peratus tepat
             masterSubjectList.forEach(sub => {
                 const mark = parseFloat(s[sub]);
-                
-                // Hanya ambil kira jika markah adalah nombor dan lebih dari 0
                 if (!isNaN(mark) && mark > 0) {
                     totalMarks += mark;
                     totalPoints += getGrade(mark).point;
@@ -655,7 +709,6 @@ window.calculateAndSaveToCloud = async () => {
                 }
             });
 
-            // Elakkan ralat pembahagian dengan sifar jika tiada markah dimasukkan
             if (countSubjekDikirakan > 0) {
                 s.gpm = (totalPoints / countSubjekDikirakan).toFixed(2);
                 s.percent = ((totalMarks / (countSubjekDikirakan * 100)) * 100).toFixed(2);
@@ -666,10 +719,8 @@ window.calculateAndSaveToCloud = async () => {
             
             s.totalMarks = totalMarks;
 
-            // Tentukan Document Reference (ID: IDPelajar_NamaPenilaian)
             const resRef = doc(db, "marks_v10", `${s.id}_${penilaian.replace(/\s+/g, '_')}`);
 
-            // Sediakan data asas untuk disimpan
             const saveData = {
                 studentId: s.id,
                 nama: s.nama,
@@ -679,11 +730,9 @@ window.calculateAndSaveToCloud = async () => {
                 gpm: s.gpm,
                 percent: s.percent,
                 totalMarks: s.totalMarks,
-                lastUpdated: new Date() // Bagus untuk rujukan masa simpan
+                lastUpdated: new Date() 
             };
 
-            // Masukkan markah subjek yang sedang dipaparkan/dipilih sahaja
-            // Format 'marks.SUBJEK' digunakan untuk menyokong { merge: true }
             selectedSubjects.forEach(sub => {
                 const markVal = parseFloat(s[sub]);
                 if (!isNaN(markVal)) {
@@ -691,7 +740,6 @@ window.calculateAndSaveToCloud = async () => {
                 }
             });
 
-            // Simpan secara MERGE supaya tidak overwrite markah yang dimasukkan guru lain
             await setDoc(resRef, saveData, { merge: true });
         }
 
@@ -701,7 +749,6 @@ window.calculateAndSaveToCloud = async () => {
         console.error("Ralat simpan:", e);
         alert("Gagal simpan: " + e.message);
     } finally {
-        // 3. Aktifkan semula butang selepas selesai proses
         if (btn) {
             btn.disabled = false;
             btn.innerText = originalText;
@@ -717,7 +764,14 @@ window.generateSijilCloud = () => {
     const penilaianElement = document.getElementById('selPenilaian');
     const jenisPenilaian = penilaianElement ? penilaianElement.value.toUpperCase() : '';
 
-    activeStudents.sort((a,b) => a.gpm - b.gpm).forEach((s, idx) => {
+    // KEMASKINI LOGIK: GPM Rendah -> Peratus Tinggi -> Abjad Nama (Sama seperti janaAnalisis)
+    activeStudents.sort((a, b) => {
+        let gpmDiff = parseFloat(a.gpm) - parseFloat(b.gpm);
+        if (gpmDiff !== 0) return gpmDiff;
+        let pctDiff = parseFloat(b.percent) - parseFloat(a.percent);
+        if (pctDiff !== 0) return pctDiff;
+        return a.nama.localeCompare(b.nama);
+    }).forEach((s, idx) => {
         const rank = idx + 1;
         
         // Membina baris subjek dengan nama penuh
@@ -780,6 +834,10 @@ window.prepareAndPrint = () => {
         return alert("Sila cari murid dan masukkan markah terlebih dahulu!");
     }
 
+    // PENTING: Buang kawasan analisis lama supaya tidak bercampur dalam cetakan sijil
+    const oldArea = document.getElementById('analisis-print-area');
+    if(oldArea) oldArea.remove();
+
     // Jana semula HTML sijil untuk pastikan data terkini & tidak kosong
     window.generateSijilCloud();
 
@@ -803,7 +861,6 @@ window.janaAnalisis = async () => {
     }
 
     try {
-        // 1. Ambil data dari koleksi marks_v10
         const q = query(collection(db, "marks_v10"), 
             where("tahun", "==", tahun), 
             where("penilaian", "==", penilaian),
@@ -822,7 +879,6 @@ window.janaAnalisis = async () => {
             const rawData = doc.data();
             let cleanedStudent = { ...rawData };
             
-            // DATA CLEANER: Menukarkan format 'marks.BI' kepada 'BI'
             Object.keys(rawData).forEach(key => {
                 if (key.startsWith('marks.')) {
                     const subName = key.split('.')[1];
@@ -832,7 +888,7 @@ window.janaAnalisis = async () => {
             students.push(cleanedStudent);
         });
 
-        // 2. LOGIK KEDUDUKAN 3 TERBAIK (Tie-Breaker: GPM Rendah -> Peratus Tinggi)
+        // 2. LOGIK KEDUDUKAN 3 TERBAIK
         students.sort((a, b) => {
             let gpmDiff = parseFloat(a.gpm) - parseFloat(b.gpm);
             if (gpmDiff !== 0) return gpmDiff;
@@ -842,34 +898,50 @@ window.janaAnalisis = async () => {
         });
         const top3 = students.slice(0, 3);
 
-        // 3. LOGIK TERBAIK SUBJEK & LULUS/GAGAL
+        // 3. KEMASKINI LOGIK: Analisis Gred Penuh A-F & Pengumpulan Data Graf
         let subjectAnalysisHtml = '';
         let topSubjectHtml = '';
+        
+        let chartLabels = [];
+        let chartLulusData = [];
+        let chartGagalData = [];
 
-        // Menggunakan subjek yang dipilih (selectedSubjects) dari checkbox
         selectedSubjects.forEach(sub => {
             let maxMark = -1;
             let lulus = 0;
             let gagal = 0;
+            let gradesCount = { A: 0, B: 0, C: 0, D: 0, E: 0, F: 0 };
             let totalPelajar = students.length;
 
             students.forEach(s => {
-                // PENTING: Gunakan s[sub], bukan s.marks[sub]
                 const mark = parseFloat(s[sub]) || 0;
-                
-                // Cari Markah Tertinggi
                 if (mark > maxMark) maxMark = mark;
                 
-                // Kira Lulus/Gagal (Lulus >= 40)
+                const gradeInfo = getGrade(mark);
+                if (gradesCount[gradeInfo.gred] !== undefined) {
+                    gradesCount[gradeInfo.gred]++;
+                }
+                
                 if (mark >= 20) lulus++; else gagal++;
             });
 
-            // Cari nama-nama pelajar yang dapat markah tertinggi subjek tersebut
             let topScorers = students.filter(s => (parseFloat(s[sub]) || 0) === maxMark).map(s => s.nama);
             let pctLulus = ((lulus / totalPelajar) * 100).toFixed(1);
             let pctGagal = ((gagal / totalPelajar) * 100).toFixed(1);
 
-            // Bina baris untuk Jadual Terbaik Subjek
+            // Simpan data array untuk bekalan Chart.js
+            chartLabels.push(sub);
+            chartLulusData.push(parseFloat(pctLulus));
+            chartGagalData.push(parseFloat(pctGagal));
+
+            // Nilai peratus bagi setiap gred subjek
+            let pctA = ((gradesCount.A / totalPelajar) * 100).toFixed(0);
+            let pctB = ((gradesCount.B / totalPelajar) * 100).toFixed(0);
+            let pctC = ((gradesCount.C / totalPelajar) * 100).toFixed(0);
+            let pctD = ((gradesCount.D / totalPelajar) * 100).toFixed(0);
+            let pctE = ((gradesCount.E / totalPelajar) * 100).toFixed(0);
+            let pctF = ((gradesCount.F / totalPelajar) * 100).toFixed(0);
+
             topSubjectHtml += `
                 <tr class="hover:bg-slate-50 border-b">
                     <td class="p-2 font-bold text-[11px] uppercase">${sub}</td>
@@ -877,16 +949,22 @@ window.janaAnalisis = async () => {
                     <td class="p-2 text-[10px] font-bold text-slate-700">${topScorers.join(', ')}</td>
                 </tr>`;
 
-            // Bina baris untuk Jadual Lulus/Gagal
+            // Pembinaan baris untuk Analisis Jadual Gred Penuh A-F
             subjectAnalysisHtml += `
-                <tr class="hover:bg-slate-50 border-b">
-                    <td class="p-2 font-bold text-[11px] uppercase">${sub}</td>
-                    <td class="p-2 text-center text-green-700 font-bold bg-green-50">${lulus} <span class="text-[9px]">(${pctLulus}%)</span></td>
-                    <td class="p-2 text-center text-red-600 font-bold bg-red-50">${gagal} <span class="text-[9px]">(${pctGagal}%)</span></td>
+                <tr class="hover:bg-slate-50 border-b text-center">
+                    <td class="p-2 font-bold text-[11px] uppercase text-left">${sub}</td>
+                    <td class="p-1 border">${gradesCount.A}<br><span class="text-[9px] text-slate-400">${pctA}%</span></td>
+                    <td class="p-1 border">${gradesCount.B}<br><span class="text-[9px] text-slate-400">${pctB}%</span></td>
+                    <td class="p-1 border">${gradesCount.C}<br><span class="text-[9px] text-slate-400">${pctC}%</span></td>
+                    <td class="p-1 border">${gradesCount.D}<br><span class="text-[9px] text-slate-400">${pctD}%</span></td>
+                    <td class="p-1 border">${gradesCount.E}<br><span class="text-[9px] text-slate-400">${pctE}%</span></td>
+                    <td class="p-1 border bg-red-50 text-red-600 font-bold">${gradesCount.F}<br><span class="text-[9px] text-red-400">${pctF}%</span></td>
+                    <td class="p-1 border bg-green-50 text-green-700 font-bold">${lulus}<br><span class="text-[9px] text-green-600">${pctLulus}%</span></td>
+                    <td class="p-1 border bg-red-100 text-red-700 font-bold">${gagal}<br><span class="text-[9px] text-red-600">${pctGagal}%</span></td>
                 </tr>`;
         });
 
-        // 4. BINA PAPARAN HTML PENUH (GRID)
+        // 4. BINA PAPARAN HTML PENUH
         let html = `
             <div class="space-y-6 mt-6">
                 <div class="bg-white p-4 rounded-xl shadow border border-slate-200">
@@ -912,25 +990,42 @@ window.janaAnalisis = async () => {
                     </table>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-white p-4 rounded-xl shadow border border-slate-200">
-                        <h3 class="font-black text-sm text-emerald-900 bg-emerald-100 p-2 rounded inline-block mb-3">⭐ TERBAIK SUBJEK</h3>
-                        <table class="w-full border-collapse text-xs">
-                            <thead class="bg-emerald-700 text-white">
-                                <tr><th class="p-2 border">SUBJEK</th><th class="p-2 border">MAX</th><th class="p-2 border text-left">NAMA MURID</th></tr>
-                            </thead>
-                            <tbody>${topSubjectHtml}</tbody>
-                        </table>
-                    </div>
+                <div class="bg-white p-4 rounded-xl shadow border border-slate-200">
+                    <h3 class="font-black text-sm text-emerald-900 bg-emerald-100 p-2 rounded inline-block mb-3">⭐ TERBAIK SUBJEK</h3>
+                    <table class="w-full border-collapse text-xs">
+                        <thead class="bg-emerald-700 text-white">
+                            <tr><th class="p-2 border">SUBJEK</th><th class="p-2 border">MAX</th><th class="p-2 border text-left">NAMA MURID</th></tr>
+                        </thead>
+                        <tbody>${topSubjectHtml}</tbody>
+                    </table>
+                </div>
 
-                    <div class="bg-white p-4 rounded-xl shadow border border-slate-200">
-                        <h3 class="font-black text-sm text-purple-900 bg-purple-100 p-2 rounded inline-block mb-3">📈 LULUS & GAGAL</h3>
-                        <table class="w-full border-collapse text-xs">
+                <div class="bg-white p-4 rounded-xl shadow border border-slate-200">
+                    <h3 class="font-black text-sm text-purple-900 bg-purple-100 p-2 rounded inline-block mb-3">📈 ANALISIS GRED LENGKAP (A-F)</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse text-xs border text-center">
                             <thead class="bg-purple-800 text-white">
-                                <tr><th class="p-2 border">SUBJEK</th><th class="p-2 border">LULUS (>=20)</th><th class="p-2 border">GAGAL (<20)</th></tr>
+                                <tr>
+                                    <th class="p-2 border text-left">SUBJEK</th>
+                                    <th class="p-2 border">A</th>
+                                    <th class="p-2 border">B</th>
+                                    <th class="p-2 border">C</th>
+                                    <th class="p-2 border">D</th>
+                                    <th class="p-2 border">E</th>
+                                    <th class="p-2 border text-red-200">F</th>
+                                    <th class="p-2 border bg-green-900 text-white">LULUS (>=20)</th>
+                                    <th class="p-2 border bg-red-900 text-white">GAGAL (&lt;20)</th>
+                                </tr>
                             </thead>
                             <tbody>${subjectAnalysisHtml}</tbody>
                         </table>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl shadow border border-slate-200">
+                    <h3 class="font-black text-sm text-blue-900 bg-blue-100 p-2 rounded inline-block mb-3">📊 GRAF PERATUS KELULUSAN MENGIKUT SUBJEK</h3>
+                    <div style="position: relative; height:320px; width:100%;">
+                        <canvas id="analisisChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -940,6 +1035,51 @@ window.janaAnalisis = async () => {
         resultDiv.innerHTML = html;
         resultDiv.classList.remove('hidden-section');
         resultDiv.scrollIntoView({ behavior: 'smooth' });
+
+        // TAMBAHAN: Logik Menjana Komponen Graf Bar Menggunakan Pustaka Chart.js
+        setTimeout(() => {
+            const ctx = document.getElementById('analisisChart').getContext('2d');
+            if (window.myAnalysisChart) {
+                window.myAnalysisChart.destroy(); // Padam carta lama untuk elak pertindihan data
+            }
+            window.myAnalysisChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: chartLabels,
+                    datasets: [
+                        {
+                            label: 'Lulus (%)',
+                            data: chartLulusData,
+                            backgroundColor: 'rgba(21, 128, 61, 0.75)',
+                            borderColor: 'rgb(21, 128, 61)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Gagal (%)',
+                            data: chartGagalData,
+                            backgroundColor: 'rgba(185, 28, 28, 0.75)',
+                            borderColor: 'rgb(185, 28, 28)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Peratus (%)',
+                                font: { weight: 'bold' }
+                            }
+                        }
+                    }
+                }
+            });
+        }, 150);
 
     } catch (error) {
         console.error("Ralat Analisis:", error);
@@ -953,36 +1093,54 @@ window.janaAnalisis = async () => {
 };
     
 window.printAnalisis = () => {
-
     const result = document.getElementById('analisis-result');
 
     if(result.innerHTML.trim() === '') {
         return alert("Sila jana analisis dahulu!");
     }
 
-    // Buang area lama jika ada
+    // PENTING: Kosongkan sijil lama supaya tidak bercampur dalam cetakan analisis
+    document.getElementById('section-sijil').innerHTML = '';
+
+    // Buang area lama jika wujud
     const oldArea = document.getElementById('analisis-print-area');
     if(oldArea) oldArea.remove();
 
-    // Cipta area cetakan
+    // Cipta kawasan cetakan baharu
     const printArea = document.createElement('div');
     printArea.id = 'analisis-print-area';
+
+    // Cetak klon daripada keputusan asal supaya paparan skrin tidak terganggu
+    const klonResult = result.cloneNode(true);
+
+    // Tukar canvas kepada imej statik untuk cetakan graf (dari penyelesaian sebelum ini)
+    if (window.myAnalysisChart) {
+        const canvasDiDalamKlon = klonResult.querySelector('#analisisChart');
+        if (canvasDiDalamKlon) {
+            const chartImgUrl = window.myAnalysisChart.toBase64Image();
+            const imgStatik = document.createElement('img');
+            imgStatik.src = chartImgUrl;
+            imgStatik.style.width = '100%';
+            imgStatik.style.maxHeight = '280px';
+            imgStatik.style.objectFit = 'contain';
+            imgStatik.style.display = 'block';
+            imgStatik.style.margin = '0 auto';
+            canvasDiDalamKlon.parentNode.replaceChild(imgStatik, canvasDiDalamKlon);
+        }
+    }
 
     printArea.innerHTML = `
         <div style="text-align:center; margin-bottom:20px;">
             <h1 style="font-size:24px; font-weight:bold;">
                 LAPORAN ANALISIS KELAS
             </h1>
-            <p>
-                ${document.getElementById('anaKelas').value}
-                -
-                ${document.getElementById('anaPenilaian').value}
+            <p style="font-weight:bold; margin-top:5px; text-transform:uppercase;">
+                ${document.getElementById('anaKelas').value} - ${document.getElementById('anaPenilaian').value}
             </p>
         </div>
-
-        ${result.innerHTML}
     `;
 
+    printArea.appendChild(klonResult);
     document.body.appendChild(printArea);
 
     setTimeout(() => {
@@ -992,7 +1150,6 @@ window.printAnalisis = () => {
 
 window.toggleAnalisis = () => {
     const section = document.getElementById('analisis-section-main');
-    // Fungsi toggle akan menambah/membuang kelas hidden-section secara automatik
     section.classList.toggle('hidden-section');
 };
 </script>
