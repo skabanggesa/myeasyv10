@@ -1209,36 +1209,174 @@ window.janaAnalisis = async () => {
     }
 };
     
-window.printAnalisis = () => {
-    const result = document.getElementById('analisis-result');
-    if(result.innerHTML.trim() === '') return alert("Sila jana analisis dahulu!");
+window.printAnalisis = async () => {
+    // 1. Tentukan tab mana yang sedang aktif
+    const tabAkademikAktif = !document.getElementById('analisis-result').classList.contains('hidden-section');
+    const tabPbdAktif = !document.getElementById('analisis-pbd-result').classList.contains('hidden-section');
 
-    document.getElementById('section-sijil').innerHTML = '';
+    let resultToPrint, jenisLaporan;
+
+    if (tabAkademikAktif) {
+        resultToPrint = document.getElementById('analisis-result');
+        jenisLaporan = "LAPORAN ANALISIS AKADEMIK KELAS";
+        if (resultToPrint.innerHTML.trim() === '') return alert("Sila jana analisis dahulu!");
+    } else if (tabPbdAktif) {
+        resultToPrint = document.getElementById('analisis-pbd-result');
+        jenisLaporan = "LAPORAN KESELURUHAN PBD KELAS";
+        if (resultToPrint.innerHTML.trim() === '') return alert("Sila jana analisis dahulu!");
+    } else {
+        return alert("Sila jana analisis dahulu!");
+    }
+
+    // 2. Buang kawasan cetakan lama (jika ada)
+    const sijilArea = document.getElementById('section-sijil');
+    if (sijilArea) sijilArea.innerHTML = '';
     const oldArea = document.getElementById('analisis-print-area');
-    if(oldArea) oldArea.remove();
+    if (oldArea) oldArea.remove();
 
     const printArea = document.createElement('div');
     printArea.id = 'analisis-print-area';
-    const klonResult = result.cloneNode(true);
+    const klonResult = resultToPrint.cloneNode(true);
 
-    if (window.myAnalysisChart) {
-        const canvasDiDalamKlon = klonResult.querySelector('#analisisChart');
-        if (canvasDiDalamKlon) {
+    // ==========================================
+    // (A) JIKA TAB AKADEMIK AKTIF
+    // ==========================================
+    if (tabAkademikAktif && window.myAnalysisChart) {
+        const canvasAka = klonResult.querySelector('#analisisChart');
+        if (canvasAka) {
             const imgStatik = document.createElement('img');
             imgStatik.src = window.myAnalysisChart.toBase64Image();
             imgStatik.style.width = '100%'; imgStatik.style.maxHeight = '280px'; imgStatik.style.objectFit = 'contain';
-            canvasDiDalamKlon.parentNode.replaceChild(imgStatik, canvasDiDalamKlon);
+            canvasAka.parentNode.replaceChild(imgStatik, canvasAka);
         }
+        SelesaiRenderDanCetak();
     }
 
-    printArea.innerHTML = `
-        <div style="text-align:center; margin-bottom:20px;">
-            <h1 style="font-size:24px; font-weight:bold;">LAPORAN ANALISIS KELAS HYBRID</h1>
-            <p style="font-weight:bold; margin-top:5px; text-transform:uppercase;">${document.getElementById('anaKelas').value} - ${document.getElementById('anaPenilaian').value}</p>
-        </div>`;
-    printArea.appendChild(klonResult);
-    document.body.appendChild(printArea);
-    setTimeout(() => { window.print(); }, 300);
+    // ==========================================
+    // (B) JIKA TAB PBD AKTIF (Cetak Semua Subjek)
+    // ==========================================
+    if (tabPbdAktif) {
+        // Sembunyikan elemen carta asal dalam ruangan klon
+        const canvasContainers = klonResult.querySelectorAll('canvas');
+        canvasContainers.forEach(c => {
+            if(c.parentNode) c.parentNode.innerHTML = ''; 
+        });
+
+        // Kontena utama untuk kumpulkan semua carta subjek
+        const cartaBanyakContainer = document.createElement('div');
+        cartaBanyakContainer.style.display = 'grid';
+        cartaBanyakContainer.style.gridTemplateColumns = '1fr';
+        cartaBanyakContainer.style.gap = '30px';
+        cartaBanyakContainer.style.marginTop = '30px';
+        
+        const realDropdown = document.getElementById('pbdChartSubject');
+        
+        if (realDropdown && realDropdown.options.length > 0) {
+            // Simpan nilai dropdown asal yang guru sedang lihat
+            const nilaiAsal = realDropdown.value;
+            
+            // Berikan notifikasi kecil (opsyenal)
+            const notis = document.createElement('div');
+            notis.id = 'notis-cetakan';
+            notis.innerHTML = '<p class="text-center font-bold text-blue-600 bg-blue-100 p-2 rounded">Menjana laporan kesemua subjek. Sila tunggu sebentar...</p>';
+            document.body.appendChild(notis);
+
+            // Loop untuk setiap subjek di dalam dropdown
+            for (let i = 0; i < realDropdown.options.length; i++) {
+                const opt = realDropdown.options[i];
+                if (opt.value === "") continue; 
+                
+                // Tukar dropdown secara "ghaib" dan cetuskan event 'change'
+                realDropdown.value = opt.value;
+                realDropdown.dispatchEvent(new Event('change'));
+                
+                // Tunggu 600ms supaya carta sempat dirender habis sebelum ambil gambar
+                await new Promise(resolve => setTimeout(resolve, 600));
+                
+                // Bina kontena visual untuk subjek ini
+                const subjekDiv = document.createElement('div');
+                subjekDiv.style.border = '2px solid #e2e8f0';
+                subjekDiv.style.padding = '20px';
+                subjekDiv.style.borderRadius = '12px';
+                subjekDiv.style.pageBreakInside = 'avoid'; // Elak carta terpotong ke muka surat sebelah
+                
+                const tajukSubjek = document.createElement('h3');
+                tajukSubjek.innerText = "PRESTASI SUBJEK: " + opt.text.toUpperCase();
+                tajukSubjek.style.textAlign = 'center';
+                tajukSubjek.style.marginBottom = '20px';
+                tajukSubjek.style.fontWeight = '900';
+                tajukSubjek.style.color = '#1e3a8a';
+                subjekDiv.appendChild(tajukSubjek);
+                
+                // Ruangan menyusun Carta Bar & Donat bersebelahan
+                const flexImg = document.createElement('div');
+                flexImg.style.display = 'flex';
+                flexImg.style.justifyContent = 'space-around';
+                flexImg.style.alignItems = 'center';
+                flexImg.style.gap = '10px';
+
+                if (window.myPbdBarChart) {
+                    const imgBar = document.createElement('img');
+                    imgBar.src = window.myPbdBarChart.toBase64Image();
+                    imgBar.style.width = '48%'; imgBar.style.maxHeight = '280px'; imgBar.style.objectFit = 'contain';
+                    flexImg.appendChild(imgBar);
+                }
+                
+                if (window.myPbdDoughnutChart) {
+                    const imgDonut = document.createElement('img');
+                    imgDonut.src = window.myPbdDoughnutChart.toBase64Image();
+                    imgDonut.style.width = '48%'; imgDonut.style.maxHeight = '280px'; imgDonut.style.objectFit = 'contain';
+                    flexImg.appendChild(imgDonut);
+                }
+                
+                subjekDiv.appendChild(flexImg);
+                cartaBanyakContainer.appendChild(subjekDiv);
+            }
+            
+            // Selepas siap loop, kembalikan dropdown ke nilai asal guru
+            realDropdown.value = nilaiAsal;
+            realDropdown.dispatchEvent(new Event('change'));
+            
+            const buangNotis = document.getElementById('notis-cetakan');
+            if(buangNotis) buangNotis.remove();
+        }
+        
+        // Buang dropdown daripada versi cetakan (supaya lebih kemas)
+        const ddlKlon = klonResult.querySelector('select#pbdChartSubject');
+        if(ddlKlon && ddlKlon.parentNode) ddlKlon.parentNode.innerHTML = '';
+        
+        // Masukkan keseluruhan senarai carta ke bawah laporan
+        klonResult.appendChild(cartaBanyakContainer);
+        SelesaiRenderDanCetak();
+    }
+    
+    // Fungsi akhir untuk mengeluarkan popup Print
+    function SelesaiRenderDanCetak() {
+        printArea.innerHTML = `
+            <div style="text-align:center; margin-bottom:30px;">
+                <h1 style="font-size:26px; font-weight:900; text-transform:uppercase; margin-bottom:4px;">${jenisLaporan}</h1>
+                <p style="font-size:16px; font-weight:bold; color:#475569; text-transform:uppercase;">${document.getElementById('anaKelas').value} - ${document.getElementById('anaPenilaian').value}</p>
+            </div>`;
+        printArea.appendChild(klonResult);
+        document.body.appendChild(printArea);
+        
+        setTimeout(() => { window.print(); }, 500);
+    }
+};
+
+window.toggleAnalisis = () => {
+    const analisisSection = document.getElementById('analisis-section-main');
+    const guruArea = document.getElementById('guru-area');
+    
+    // Buka/Tutup Papan Pemuka Analisis
+    analisisSection.classList.toggle('hidden-section');
+    
+    // Jika analisis DIBUKA, sembunyikan kawasan jadual guru. Jika ditutup, paparkan semula.
+    if (!analisisSection.classList.contains('hidden-section')) {
+        guruArea.classList.add('hidden-section');
+    } else {
+        guruArea.classList.remove('hidden-section');
+    }
 };
 
 window.toggleAnalisis = () => {
