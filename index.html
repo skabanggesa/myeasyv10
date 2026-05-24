@@ -283,7 +283,7 @@
                 </select>
             </div>
             <div class="flex items-end">
-                <button onclick="fetchStudentList()" class="w-full bg-blue-900 text-white py-2 rounded font-black hover:bg-blue-800">CARI MURID</button>
+                <button onclick="fetchStudentList()" class="w-full bg-blue-900 text-white py-2 rounded font-black hover:bg-blue-800">MASUK</button>
             </div>
         </div>
 
@@ -619,7 +619,7 @@ window.loadClassesForDropdown = async () => {
 
 window.fetchStudentList = async () => {
     const btn = window.event ? window.event.target : document.querySelector('button[onclick="fetchStudentList()"]');
-    const originalText = btn ? btn.innerText : "CARI MURID";
+    const originalText = btn ? btn.innerText : "MASUK";
 
     const tahun = document.getElementById('selTahun').value;
     const kelas = document.getElementById('selKelas').value;
