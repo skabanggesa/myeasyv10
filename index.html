@@ -275,7 +275,7 @@
                 </select>
             </div>
             <div class="flex items-end">
-                <button onclick="fetchStudentList()" class="w-full bg-blue-900 text-white py-2 rounded font-black hover:bg-blue-800">CARI MURID</button>
+                <button onclick="fetchStudentList()" class="w-full bg-blue-900 text-white py-2 rounded font-black hover:bg-blue-800">MASUK</button>
             </div>
         </div>
 
@@ -391,7 +391,7 @@ window.onload = () => {
 window.initSubjectSelectors = () => {
     const subContainer = document.getElementById('subject-selectors');
     subContainer.innerHTML = `
-        <button type="button" onclick="window.toggleSelectAllSubjects()" class="text-[10px] font-black bg-blue-100 text-blue-900 hover:bg-blue-200 px-2 py-1 rounded border border-blue-300 mr-2 uppercase">SELECT ALL</button>
+        <button type="button" onclick="window.toggleSelectAllSubjects()" class="text-[10px] font-black bg-blue-100 text-blue-900 hover:bg-blue-200 px-2 py-1 rounded border border-blue-300 mr-2 uppercase">PILIH SEMUA</button>
     `;
     KPM_SUBJECTS.forEach(s => {
         const checked = selectedSubjects.includes(s.id) ? 'checked' : '';
@@ -611,7 +611,7 @@ window.loadClassesForDropdown = async () => {
 
 window.fetchStudentList = async () => {
     const btn = window.event ? window.event.target : document.querySelector('button[onclick="fetchStudentList()"]');
-    const originalText = btn ? btn.innerText : "CARI MURID";
+    const originalText = btn ? btn.innerText : "MASUK";
 
     const tahun = document.getElementById('selTahun').value;
     const kelas = document.getElementById('selKelas').value;
