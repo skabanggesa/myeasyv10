@@ -208,9 +208,10 @@
         </div>
         <div>
             <label class="block text-[10px] font-black text-purple-900 uppercase">Kelas</label>
-            <select id="anaKelas" class="w-full p-2 border rounded font-bold bg-slate-50">
-                <option value="">Pilih Kelas</option>
-            </select>
+<select id="anaKelas" class="w-full border p-2 rounded">
+    <option value="">-- Pilih Kelas --</option>
+    <option value="SEMUA">🌐 SEMUA KELAS (MAKRO)</option>
+    </select>
         </div>
         <div class="flex items-end gap-2">
             <button onclick="janaAnalisis()" class="w-full bg-purple-700 text-white py-2 rounded font-black hover:bg-purple-800 shadow-md transition">JANA ANALISIS</button>
@@ -218,14 +219,15 @@
         </div>
     </div>
 
-    <div id="kawasan-tab-analisis" class="hidden-section flex gap-1 border-b border-purple-200 mt-6 pt-2">
+<div id="kawasan-tab-analisis" class="hidden-section flex gap-1 border-b border-purple-200 mt-6 pt-2">
         <button id="btn-tab-akademik" onclick="window.tukarTabAnalisis('AKADEMIK')" class="px-6 py-3 font-black text-xs md:text-sm bg-purple-700 text-white rounded-t-xl transition shadow-[0_-2px_5px_rgba(0,0,0,0.1)]">📝 ANALISIS PENILAIAN</button>
         <button id="btn-tab-pbd" onclick="window.tukarTabAnalisis('PBD')" class="px-6 py-3 font-black text-xs md:text-sm bg-slate-200 text-slate-500 hover:bg-slate-300 rounded-t-xl transition">🎯 ANALISIS PBD</button>
+        <button id="btn-tab-dlp" onclick="window.tukarTabAnalisis('DLP')" class="px-6 py-3 font-black text-xs md:text-sm bg-slate-200 text-slate-500 hover:bg-slate-300 rounded-t-xl transition">🧬 ANALISIS DLP</button>
     </div>
 
     <div id="analisis-result" class="hidden-section space-y-8 mt-6"></div>
 
-    <div id="analisis-pbd-result" class="hidden-section space-y-8 mt-6">
+<div id="analisis-pbd-result" class="hidden-section space-y-8 mt-6">
         <div id="pbd-makro-matrix" class="overflow-x-auto bg-slate-50 p-4 border rounded-xl shadow-sm"></div>
         
         <div class="bg-blue-50 p-4 rounded-xl border border-blue-200 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -249,6 +251,12 @@
                     <canvas id="pbdDoughnutCanvas"></canvas>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div id="analisis-dlp-result" class="hidden-section space-y-8 mt-6">
+        <div class="p-8 border border-dashed border-purple-300 bg-purple-50 rounded-xl text-center">
+            <p class="font-bold text-purple-900 animate-pulse">🧬 Sila tekan butang 'JANA ANALISIS' untuk memaparkan data Sains & Matematik DLP.</p>
         </div>
     </div>
 </div>
@@ -275,7 +283,7 @@
                 </select>
             </div>
             <div class="flex items-end">
-                <button onclick="fetchStudentList()" class="w-full bg-blue-900 text-white py-2 rounded font-black hover:bg-blue-800">MASUK</button>
+                <button onclick="fetchStudentList()" class="w-full bg-blue-900 text-white py-2 rounded font-black hover:bg-blue-800">CARI MURID</button>
             </div>
         </div>
 
@@ -391,7 +399,7 @@ window.onload = () => {
 window.initSubjectSelectors = () => {
     const subContainer = document.getElementById('subject-selectors');
     subContainer.innerHTML = `
-        <button type="button" onclick="window.toggleSelectAllSubjects()" class="text-[10px] font-black bg-blue-100 text-blue-900 hover:bg-blue-200 px-2 py-1 rounded border border-blue-300 mr-2 uppercase">PILIH SEMUA</button>
+        <button type="button" onclick="window.toggleSelectAllSubjects()" class="text-[10px] font-black bg-blue-100 text-blue-900 hover:bg-blue-200 px-2 py-1 rounded border border-blue-300 mr-2 uppercase">SELECT ALL</button>
     `;
     KPM_SUBJECTS.forEach(s => {
         const checked = selectedSubjects.includes(s.id) ? 'checked' : '';
@@ -611,7 +619,7 @@ window.loadClassesForDropdown = async () => {
 
 window.fetchStudentList = async () => {
     const btn = window.event ? window.event.target : document.querySelector('button[onclick="fetchStudentList()"]');
-    const originalText = btn ? btn.innerText : "MASUK";
+    const originalText = btn ? btn.innerText : "CARI MURID";
 
     const tahun = document.getElementById('selTahun').value;
     const kelas = document.getElementById('selKelas').value;
@@ -974,6 +982,52 @@ window.prepareAndPrint = () => {
     setTimeout(() => { window.print(); }, 500);
 };
 
+// Fungsi untuk memuatkan senarai kelas secara dinamik berdasarkan Tahun/Tingkatan yang dipilih
+window.kemaskiniDropdownKelas = async () => {
+    const tahunSekarang = document.getElementById('anaTahun').value; // Sila pastikan ID ini betul mengikut kod cikgu
+    const selectKelas = document.getElementById('anaKelas');
+    
+    if (!tahunSekarang) return;
+
+    try {
+        // 1. Ambil semua dokumen murid bagi tahun tersebut dari Firestore
+        const q = query(collection(db, "marks_v10"), where("tahun", "==", tahunSekarang));
+        const snapshot = await getDocs(q);
+        
+        // 2. Tapis untuk dapatkan nama kelas yang unik (tiada duplikasi)
+        const senaraiKelasUnik = new Set();
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            if (data.kelas) {
+                senaraiKelasUnik.add(data.kelas);
+            }
+        });
+
+        // 3. Susun nama kelas mengikut abjad (A-Z)
+        const kelasDisusun = Array.from(senaraiKelasUnik).sort();
+
+        // 4. Set semula dropdown kelas (kekalkan pilihan default & SEMUA)
+        selectKelas.innerHTML = `
+            <option value="">-- Pilih Kelas --</option>
+            <option value="SEMUA">🌐 SEMUA KELAS (MAKRO)</option>
+        `;
+
+        // 5. Masukkan kelas-kelas yang ditemui dari Firestore ke dalam dropdown
+        kelasDisusun.forEach(namaKelas => {
+            const option = document.createElement('option');
+            option.value = namaKelas;
+            option.innerText = namaKelas;
+            selectKelas.appendChild(option);
+        });
+
+    } catch (error) {
+        console.error("Gagal mendapatkan senarai kelas dari Firestore:", error);
+    }
+};
+
+// Pautkan fungsi ini ke elemen dropdown Tahun supaya ia berjalan secara automatik apabila Tahun ditukar
+document.getElementById('anaTahun').addEventListener('change', window.kemaskiniDropdownKelas);
+
 window.janaAnalisis = async () => {
     const tahun = document.getElementById('anaTahun').value;
     const penilaian = document.getElementById('anaPenilaian').value;
@@ -984,8 +1038,15 @@ window.janaAnalisis = async () => {
     const btn = window.event ? window.event.target : document.querySelector('button[onclick="janaAnalisis()"]');
     if(btn) { btn.innerText = "SEDANG MENJANA..."; btn.disabled = true; }
 
-    try {
-        const q = query(collection(db, "marks_v10"), where("tahun", "==", tahun), where("penilaian", "==", penilaian), where("kelas", "==", kelas));
+try {
+        let q;
+        if (kelas === "SEMUA") {
+            // Jika pilih semua, tarik keseluruhan murid dalam tahun/penilaian tersebut
+            q = query(collection(db, "marks_v10"), where("tahun", "==", tahun), where("penilaian", "==", penilaian));
+        } else {
+            // Jika kelas spesifik dipilih
+            q = query(collection(db, "marks_v10"), where("tahun", "==", tahun), where("penilaian", "==", penilaian), where("kelas", "==", kelas));
+        }
         const snapshot = await getDocs(q);
 
         if(snapshot.empty) {
@@ -1200,6 +1261,7 @@ window.janaAnalisis = async () => {
                 }
             });
 		window.janaAnalisisPbdMakro(students);
+		window.janaAnalisisDLP(students);
         }, 150);
 
     } catch (error) {
@@ -1213,6 +1275,10 @@ window.printAnalisis = async () => {
     // 1. Tentukan tab mana yang sedang aktif
     const tabAkademikAktif = !document.getElementById('analisis-result').classList.contains('hidden-section');
     const tabPbdAktif = !document.getElementById('analisis-pbd-result').classList.contains('hidden-section');
+    
+    // --- KOD BAHARU: Semak tab DLP ---
+    const elDlp = document.getElementById('analisis-dlp-result');
+    const tabDlpAktif = elDlp && (!elDlp.classList.contains('hidden-section')); 
 
     let resultToPrint, jenisLaporan;
 
@@ -1223,6 +1289,11 @@ window.printAnalisis = async () => {
     } else if (tabPbdAktif) {
         resultToPrint = document.getElementById('analisis-pbd-result');
         jenisLaporan = "LAPORAN KESELURUHAN PBD KELAS";
+        if (resultToPrint.innerHTML.trim() === '') return alert("Sila jana analisis dahulu!");
+    } else if (tabDlpAktif || (elDlp && elDlp.innerHTML.includes('table'))) { 
+        // --- KOD BAHARU: Jika DLP aktif ---
+        resultToPrint = document.getElementById('analisis-dlp-result');
+        jenisLaporan = "LAPORAN PRESTASI PROGRAM DWIBAHASA (DLP)";
         if (resultToPrint.innerHTML.trim() === '') return alert("Sila jana analisis dahulu!");
     } else {
         return alert("Sila jana analisis dahulu!");
@@ -1237,6 +1308,22 @@ window.printAnalisis = async () => {
     const printArea = document.createElement('div');
     printArea.id = 'analisis-print-area';
     const klonResult = resultToPrint.cloneNode(true);
+
+    // --- KOD BAHARU: Salin lukisan Carta Donat (Dengan Sistem Keselamatan) ---
+    try {
+        const originalCanvases = resultToPrint.getElementsByTagName('canvas');
+        const clonedCanvases = klonResult.getElementsByTagName('canvas');
+        for (let i = 0; i < originalCanvases.length; i++) {
+            if (originalCanvases[i] && clonedCanvases[i]) {
+                const ctx = clonedCanvases[i].getContext('2d');
+                if (ctx) {
+                    ctx.drawImage(originalCanvases[i], 0, 0);
+                }
+            }
+        }
+    } catch (error) {
+        console.warn("Makluman: Gagal menyalin carta ke paparan cetakan.", error);
+    }
 
     // ==========================================
     // (A) JIKA TAB AKADEMIK AKTIF
@@ -1256,13 +1343,12 @@ window.printAnalisis = async () => {
     // (B) JIKA TAB PBD AKTIF (Cetak Semua Subjek)
     // ==========================================
     if (tabPbdAktif) {
-        // Sembunyikan elemen carta asal dalam ruangan klon
+        // ... (kod gelung subjek PBD asal cikgu dikekalkan di sini) ...
         const canvasContainers = klonResult.querySelectorAll('canvas');
         canvasContainers.forEach(c => {
             if(c.parentNode) c.parentNode.innerHTML = ''; 
         });
 
-        // Kontena utama untuk kumpulkan semua carta subjek
         const cartaBanyakContainer = document.createElement('div');
         cartaBanyakContainer.style.display = 'grid';
         cartaBanyakContainer.style.gridTemplateColumns = '1fr';
@@ -1272,33 +1358,27 @@ window.printAnalisis = async () => {
         const realDropdown = document.getElementById('pbdChartSubject');
         
         if (realDropdown && realDropdown.options.length > 0) {
-            // Simpan nilai dropdown asal yang guru sedang lihat
             const nilaiAsal = realDropdown.value;
             
-            // Berikan notifikasi kecil (opsyenal)
             const notis = document.createElement('div');
             notis.id = 'notis-cetakan';
             notis.innerHTML = '<p class="text-center font-bold text-blue-600 bg-blue-100 p-2 rounded">Menjana laporan kesemua subjek. Sila tunggu sebentar...</p>';
             document.body.appendChild(notis);
 
-            // Loop untuk setiap subjek di dalam dropdown
             for (let i = 0; i < realDropdown.options.length; i++) {
                 const opt = realDropdown.options[i];
                 if (opt.value === "") continue; 
                 
-                // Tukar dropdown secara "ghaib" dan cetuskan event 'change'
                 realDropdown.value = opt.value;
                 realDropdown.dispatchEvent(new Event('change'));
                 
-                // Tunggu 600ms supaya carta sempat dirender habis sebelum ambil gambar
                 await new Promise(resolve => setTimeout(resolve, 600));
                 
-                // Bina kontena visual untuk subjek ini
                 const subjekDiv = document.createElement('div');
                 subjekDiv.style.border = '2px solid #e2e8f0';
                 subjekDiv.style.padding = '20px';
                 subjekDiv.style.borderRadius = '12px';
-                subjekDiv.style.pageBreakInside = 'avoid'; // Elak carta terpotong ke muka surat sebelah
+                subjekDiv.style.pageBreakInside = 'avoid'; 
                 
                 const tajukSubjek = document.createElement('h3');
                 tajukSubjek.innerText = "PRESTASI SUBJEK: " + opt.text.toUpperCase();
@@ -1308,7 +1388,6 @@ window.printAnalisis = async () => {
                 tajukSubjek.style.color = '#1e3a8a';
                 subjekDiv.appendChild(tajukSubjek);
                 
-                // Ruangan menyusun Carta Bar & Donat bersebelahan
                 const flexImg = document.createElement('div');
                 flexImg.style.display = 'flex';
                 flexImg.style.justifyContent = 'space-around';
@@ -1333,7 +1412,6 @@ window.printAnalisis = async () => {
                 cartaBanyakContainer.appendChild(subjekDiv);
             }
             
-            // Selepas siap loop, kembalikan dropdown ke nilai asal guru
             realDropdown.value = nilaiAsal;
             realDropdown.dispatchEvent(new Event('change'));
             
@@ -1341,21 +1419,34 @@ window.printAnalisis = async () => {
             if(buangNotis) buangNotis.remove();
         }
         
-        // Buang dropdown daripada versi cetakan (supaya lebih kemas)
         const ddlKlon = klonResult.querySelector('select#pbdChartSubject');
         if(ddlKlon && ddlKlon.parentNode) ddlKlon.parentNode.innerHTML = '';
         
-        // Masukkan keseluruhan senarai carta ke bawah laporan
         klonResult.appendChild(cartaBanyakContainer);
+        SelesaiRenderDanCetak();
+    }
+
+    // ==========================================
+    // (C) JIKA TAB DLP AKTIF (KOD BAHARU)
+    // ==========================================
+    if (tabDlpAktif) {
+        // Jika DLP aktif, kita terus panggil cetakan 
+        // kerana lukisan canvas donat DLP sudah disalin (try-catch block di atas)
         SelesaiRenderDanCetak();
     }
     
     // Fungsi akhir untuk mengeluarkan popup Print
     function SelesaiRenderDanCetak() {
+        // Ambil nilai kelas dari dropdown (tambah semakan sekiranya nilai kosong)
+        const anaKelas = document.getElementById('anaKelas') ? document.getElementById('anaKelas').value : "";
+        const anaPenilaian = document.getElementById('anaPenilaian') ? document.getElementById('anaPenilaian').value : "";
+        
         printArea.innerHTML = `
             <div style="text-align:center; margin-bottom:30px;">
                 <h1 style="font-size:26px; font-weight:900; text-transform:uppercase; margin-bottom:4px;">${jenisLaporan}</h1>
-                <p style="font-size:16px; font-weight:bold; color:#475569; text-transform:uppercase;">${document.getElementById('anaKelas').value} - ${document.getElementById('anaPenilaian').value}</p>
+                <p style="font-size:16px; font-weight:bold; color:#475569; text-transform:uppercase;">
+                    ${anaKelas ? anaKelas : 'KESELURUHAN TINGKATAN'} - ${anaPenilaian}
+                </p>
             </div>`;
         printArea.appendChild(klonResult);
         document.body.appendChild(printArea);
@@ -1395,24 +1486,40 @@ window.toggleAnalisis = () => {
 };
 
 // ==========================================
-// 1. FUNGSI MENUKAR TAB (AKADEMIK VS PBD)
+// 1. FUNGSI MENUKAR TAB (AKADEMIK VS PBD VS DLP)
 // ==========================================
 window.tukarTabAnalisis = (tabName) => {
     const tabAkaBtn = document.getElementById('btn-tab-akademik');
     const tabPbdBtn = document.getElementById('btn-tab-pbd');
+    const tabDlpBtn = document.getElementById('btn-tab-dlp');
+    
     const akaResult = document.getElementById('analisis-result');
     const pbdResult = document.getElementById('analisis-pbd-result');
+    const dlpResult = document.getElementById('analisis-dlp-result');
 
+    const activeClass = "px-6 py-3 font-black text-xs md:text-sm bg-purple-700 text-white rounded-t-xl transition shadow-[0_-2px_5px_rgba(0,0,0,0.1)]";
+    const inactiveClass = "px-6 py-3 font-black text-xs md:text-sm bg-slate-200 text-slate-500 hover:bg-slate-300 rounded-t-xl transition";
+
+    // 1. Reset semua butang menjadi tidak aktif
+    if (tabAkaBtn) tabAkaBtn.className = inactiveClass;
+    if (tabPbdBtn) tabPbdBtn.className = inactiveClass;
+    if (tabDlpBtn) tabDlpBtn.className = inactiveClass;
+
+    // 2. Sembunyikan semua kontena data terlebih dahulu
+    if (akaResult) akaResult.classList.add('hidden-section');
+    if (pbdResult) pbdResult.classList.add('hidden-section');
+    if (dlpResult) dlpResult.classList.add('hidden-section');
+
+    // 3. Aktifkan butang & tunjukkan kontena yang dipilih sahaja
     if (tabName === 'AKADEMIK') {
-        tabAkaBtn.className = "px-6 py-3 font-black text-xs md:text-sm bg-purple-700 text-white rounded-t-xl transition shadow-[0_-2px_5px_rgba(0,0,0,0.1)]";
-        tabPbdBtn.className = "px-6 py-3 font-black text-xs md:text-sm bg-slate-200 text-slate-500 hover:bg-slate-300 rounded-t-xl transition";
-        akaResult.classList.remove('hidden-section');
-        pbdResult.classList.add('hidden-section');
-    } else {
-        tabPbdBtn.className = "px-6 py-3 font-black text-xs md:text-sm bg-purple-700 text-white rounded-t-xl transition shadow-[0_-2px_5px_rgba(0,0,0,0.1)]";
-        tabAkaBtn.className = "px-6 py-3 font-black text-xs md:text-sm bg-slate-200 text-slate-500 hover:bg-slate-300 rounded-t-xl transition";
-        pbdResult.classList.remove('hidden-section');
-        akaResult.classList.add('hidden-section');
+        if (tabAkaBtn) tabAkaBtn.className = activeClass;
+        if (akaResult) akaResult.classList.remove('hidden-section');
+    } else if (tabName === 'PBD') {
+        if (tabPbdBtn) tabPbdBtn.className = activeClass;
+        if (pbdResult) pbdResult.classList.remove('hidden-section');
+    } else if (tabName === 'DLP') {
+        if (tabDlpBtn) tabDlpBtn.className = activeClass;
+        if (dlpResult) dlpResult.classList.remove('hidden-section');
     }
 };
 
@@ -1524,6 +1631,131 @@ window.lukisCartaPbdDinamik = () => {
         options: { responsive: true }
     });
 };
+
+// ==========================================
+// FUNGSI JANA ANALISIS DLP (MATEMATIK & SAINS) + CARTA DONAT
+// ==========================================
+window.janaAnalisisDLP = (students) => {
+    const dlpResult = document.getElementById('analisis-dlp-result');
+    if (!dlpResult) return;
+
+    const subjekDLP = [ { id: 'MT', nama: 'MATEMATIK' }, { id: 'SN', nama: 'SAINS' } ];
+    
+    // Pembolehubah untuk kumpul data carta
+    let totalAkaLulus = 0, totalAkaGagal = 0;
+    let totalPbdMenguasai = 0, totalPbdBelum = 0;
+
+    let htmlAka = ""; let adaDataAkademik = false; let barisAka = "";
+    subjekDLP.forEach(sub => {
+        let ambil = 0, lulus = 0, gagal = 0, jumlahGPMP = 0;
+        students.forEach(s => {
+            let m = parseFloat(s[sub.id]);
+            if (isNaN(m) && s.marks && s.marks[sub.id] !== undefined) m = parseFloat(s.marks[sub.id]);
+
+            if (!isNaN(m)) {
+                ambil++; adaDataAkademik = true;
+                if (m >= 40) { lulus++; totalAkaLulus++; } 
+                else { gagal++; totalAkaGagal++; }
+                let g = m >= 80 ? 1 : m >= 65 ? 2 : m >= 50 ? 3 : m >= 40 ? 4 : 5;
+                jumlahGPMP += g;
+            }
+        });
+        
+        let peratus = ambil > 0 ? ((lulus / ambil) * 100).toFixed(2) : "0.00";
+        let gpmp = ambil > 0 ? (jumlahGPMP / ambil).toFixed(2) : "0.00";
+
+        barisAka += `
+            <tr class="border hover:bg-slate-50 transition">
+                <td class="border border-purple-100 p-3 font-bold text-left bg-purple-50">${sub.nama}</td>
+                <td class="border border-purple-100 p-3">${ambil}</td>
+                <td class="border border-purple-100 p-3 text-green-600 font-bold">${lulus}</td>
+                <td class="border border-purple-100 p-3 text-red-600 font-bold">${gagal}</td>
+                <td class="border border-purple-100 p-3 font-black text-purple-700">${peratus}%</td>
+                <td class="border border-purple-100 p-3 font-black text-blue-600">${gpmp}</td>
+            </tr>`;
+    });
+
+    let htmlPBD = ""; let adaDataPBD = false; let barisPBD = "";
+    subjekDLP.forEach(sub => {
+        let tp = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0};
+        students.forEach(s => {
+            let val = parseInt(s[`pbd_${sub.id}_tp`]);
+            if (val >= 1 && val <= 6) { tp[val]++; adaDataPBD = true; }
+        });
+        
+        let belum = tp[1] + tp[2];
+        let menguasai = tp[3] + tp[4] + tp[5] + tp[6];
+        totalPbdMenguasai += menguasai;
+        totalPbdBelum += belum;
+        
+        let jumlahAmbil = belum + menguasai;
+        let peratusPBD = jumlahAmbil > 0 ? ((menguasai / jumlahAmbil) * 100).toFixed(2) : "0.00";
+
+        barisPBD += `
+            <tr class="border hover:bg-slate-50 transition">
+                <td class="border border-blue-100 p-3 font-bold text-left bg-blue-50">${sub.nama}</td>
+                <td class="border border-blue-100 p-3">${tp[1]}</td>
+                <td class="border border-blue-100 p-3">${tp[2]}</td>
+                <td class="border border-blue-100 p-3 text-green-700">${tp[3]}</td>
+                <td class="border border-blue-100 p-3 text-green-700">${tp[4]}</td>
+                <td class="border border-blue-100 p-3 text-green-700 font-bold">${tp[5]}</td>
+                <td class="border border-blue-100 p-3 text-green-700 font-black">${tp[6]}</td>
+                <td class="border border-blue-100 p-3 font-black text-blue-800 bg-blue-50">${menguasai} <span class="text-xs text-slate-500">(${peratusPBD}%)</span></td>
+            </tr>`;
+    });
+
+    // Rangka HTML untuk paparan jadual & CARTA DONAT
+    let cartaHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            ${adaDataAkademik ? `
+            <div class="bg-white p-4 rounded-xl border shadow-sm border-purple-200 flex flex-col items-center">
+                <h3 class="font-black text-purple-900 mb-2">CARTA UJIAN AKADEMIK</h3>
+                <div style="position: relative; height:250px; width:100%"><canvas id="dlpAkaChart"></canvas></div>
+            </div>` : ''}
+            
+            ${adaDataPBD ? `
+            <div class="bg-white p-4 rounded-xl border shadow-sm border-blue-200 flex flex-col items-center">
+                <h3 class="font-black text-blue-900 mb-2">CARTA PENTAKSIRAN (PBD)</h3>
+                <div style="position: relative; height:250px; width:100%"><canvas id="dlpPbdChart"></canvas></div>
+            </div>` : ''}
+        </div>`;
+
+    if (adaDataAkademik) htmlAka = `<div class="bg-white p-6 rounded-xl border shadow-sm mb-6 border-purple-200"><h3 class="font-black text-purple-900 uppercase border-b-2 border-purple-100 pb-2 mb-4">📝 PRESTASI AKADEMIK (UJIAN)</h3><div class="overflow-x-auto"><table class="w-full text-sm border-collapse text-center"><thead><tr class="bg-purple-100 text-purple-900 font-bold"><th class="border border-purple-200 p-3">SUBJEK</th><th class="border border-purple-200 p-3">AMBIL</th><th class="border border-purple-200 p-3">LULUS (A-D)</th><th class="border border-purple-200 p-3">GAGAL (E)</th><th class="border border-purple-200 p-3">% LULUS</th><th class="border border-purple-200 p-3">GPMP</th></tr></thead><tbody>${barisAka}</tbody></table></div></div>`;
+    else htmlAka = `<div class="bg-white p-4 rounded border text-center text-red-500 font-bold mb-4">Data markah belum dimasukkan.</div>`;
+
+    if (adaDataPBD) htmlPBD = `<div class="bg-white p-6 rounded-xl border shadow-sm border-blue-200"><h3 class="font-black text-blue-900 uppercase border-b-2 border-blue-100 pb-2 mb-4">🎯 PRESTASI PENTAKSIRAN (PBD)</h3><div class="overflow-x-auto"><table class="w-full text-sm border-collapse text-center"><thead><tr class="bg-blue-100 text-blue-900 font-bold"><th class="border border-blue-200 p-3">SUBJEK</th><th class="border border-blue-200 p-3">TP 1</th><th class="border border-blue-200 p-3">TP 2</th><th class="border border-blue-200 p-3">TP 3</th><th class="border border-blue-200 p-3">TP 4</th><th class="border border-blue-200 p-3">TP 5</th><th class="border border-blue-200 p-3">TP 6</th><th class="border border-blue-200 p-3 bg-blue-200">MENGUASAI (TP3-TP6)</th></tr></thead><tbody>${barisPBD}</tbody></table></div></div>`;
+    else htmlPBD = `<div class="bg-white p-4 rounded border text-center text-slate-500 font-bold">Data PBD belum dimasukkan.</div>`;
+
+    dlpResult.innerHTML = cartaHTML + htmlAka + htmlPBD;
+
+    // --- LUKIS CARTA SELEPAS HTML DIMASUKKAN ---
+    if (adaDataAkademik) {
+        if (window.dlpChartAkaInstance) window.dlpChartAkaInstance.destroy();
+        const ctxA = document.getElementById('dlpAkaChart').getContext('2d');
+        window.dlpChartAkaInstance = new Chart(ctxA, {
+            type: 'doughnut',
+            data: {
+                labels: ['Lulus', 'Gagal'],
+                datasets: [{ data: [totalAkaLulus, totalAkaGagal], backgroundColor: ['#22c55e', '#ef4444'], hoverOffset: 4 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+
+    if (adaDataPBD) {
+        if (window.dlpChartPbdInstance) window.dlpChartPbdInstance.destroy();
+        const ctxP = document.getElementById('dlpPbdChart').getContext('2d');
+        window.dlpChartPbdInstance = new Chart(ctxP, {
+            type: 'doughnut',
+            data: {
+                labels: ['Menguasai (TP3-6)', 'Belum Menguasai (TP1-2)'],
+                datasets: [{ data: [totalPbdMenguasai, totalPbdBelum], backgroundColor: ['#3b82f6', '#f59e0b'], hoverOffset: 4 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+};
+
 </script>
 </body>
 </html>
