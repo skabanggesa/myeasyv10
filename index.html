@@ -1658,7 +1658,7 @@ window.janaAnalisisDLP = (students) => {
                 // KEMASKINI LOGIK: Gred E (markah bawah 40) kini dikira LULUS.
                 // Jika sistem sekolah cikgu tiada gred Gagal langsung (E paling bawah), letakkan >= 0.
                 // Jika ada Gred F/G (cth: bawah 20 markah baru gagal), tukar angka 0 kepada 20.
-                if (m >= 0) { 
+                if (m >= 20) { 
                     lulus++; totalAkaLulus++; 
                 } else { 
                     gagal++; totalAkaGagal++; 
