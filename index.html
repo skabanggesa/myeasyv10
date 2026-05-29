@@ -1654,8 +1654,17 @@ window.janaAnalisisDLP = (students) => {
 
             if (!isNaN(m)) {
                 ambil++; adaDataAkademik = true;
-                if (m >= 40) { lulus++; totalAkaLulus++; } 
-                else { gagal++; totalAkaGagal++; }
+                
+                // KEMASKINI LOGIK: Gred E (markah bawah 40) kini dikira LULUS.
+                // Jika sistem sekolah cikgu tiada gred Gagal langsung (E paling bawah), letakkan >= 0.
+                // Jika ada Gred F/G (cth: bawah 20 markah baru gagal), tukar angka 0 kepada 20.
+                if (m >= 0) { 
+                    lulus++; totalAkaLulus++; 
+                } else { 
+                    gagal++; totalAkaGagal++; 
+                }
+                
+                // Gred untuk GPMP (E tetap bernilai 5)
                 let g = m >= 80 ? 1 : m >= 65 ? 2 : m >= 50 ? 3 : m >= 40 ? 4 : 5;
                 jumlahGPMP += g;
             }
@@ -1720,7 +1729,8 @@ window.janaAnalisisDLP = (students) => {
             </div>` : ''}
         </div>`;
 
-    if (adaDataAkademik) htmlAka = `<div class="bg-white p-6 rounded-xl border shadow-sm mb-6 border-purple-200"><h3 class="font-black text-purple-900 uppercase border-b-2 border-purple-100 pb-2 mb-4">📝 PRESTASI AKADEMIK (UJIAN)</h3><div class="overflow-x-auto"><table class="w-full text-sm border-collapse text-center"><thead><tr class="bg-purple-100 text-purple-900 font-bold"><th class="border border-purple-200 p-3">SUBJEK</th><th class="border border-purple-200 p-3">AMBIL</th><th class="border border-purple-200 p-3">LULUS (A-D)</th><th class="border border-purple-200 p-3">GAGAL (E)</th><th class="border border-purple-200 p-3">% LULUS</th><th class="border border-purple-200 p-3">GPMP</th></tr></thead><tbody>${barisAka}</tbody></table></div></div>`;
+    // KEMASKINI PAPARAN: Label ditukar kepada LULUS (A-E) dan GAGAL (F)
+    if (adaDataAkademik) htmlAka = `<div class="bg-white p-6 rounded-xl border shadow-sm mb-6 border-purple-200"><h3 class="font-black text-purple-900 uppercase border-b-2 border-purple-100 pb-2 mb-4">📝 PRESTASI AKADEMIK (UJIAN)</h3><div class="overflow-x-auto"><table class="w-full text-sm border-collapse text-center"><thead><tr class="bg-purple-100 text-purple-900 font-bold"><th class="border border-purple-200 p-3">SUBJEK</th><th class="border border-purple-200 p-3">AMBIL</th><th class="border border-purple-200 p-3">LULUS (A-E)</th><th class="border border-purple-200 p-3">GAGAL (F)</th><th class="border border-purple-200 p-3">% LULUS</th><th class="border border-purple-200 p-3">GPMP</th></tr></thead><tbody>${barisAka}</tbody></table></div></div>`;
     else htmlAka = `<div class="bg-white p-4 rounded border text-center text-red-500 font-bold mb-4">Data markah belum dimasukkan.</div>`;
 
     if (adaDataPBD) htmlPBD = `<div class="bg-white p-6 rounded-xl border shadow-sm border-blue-200"><h3 class="font-black text-blue-900 uppercase border-b-2 border-blue-100 pb-2 mb-4">🎯 PRESTASI PENTAKSIRAN (PBD)</h3><div class="overflow-x-auto"><table class="w-full text-sm border-collapse text-center"><thead><tr class="bg-blue-100 text-blue-900 font-bold"><th class="border border-blue-200 p-3">SUBJEK</th><th class="border border-blue-200 p-3">TP 1</th><th class="border border-blue-200 p-3">TP 2</th><th class="border border-blue-200 p-3">TP 3</th><th class="border border-blue-200 p-3">TP 4</th><th class="border border-blue-200 p-3">TP 5</th><th class="border border-blue-200 p-3">TP 6</th><th class="border border-blue-200 p-3 bg-blue-200">MENGUASAI (TP3-TP6)</th></tr></thead><tbody>${barisPBD}</tbody></table></div></div>`;
@@ -1735,7 +1745,7 @@ window.janaAnalisisDLP = (students) => {
         window.dlpChartAkaInstance = new Chart(ctxA, {
             type: 'doughnut',
             data: {
-                labels: ['Lulus', 'Gagal'],
+                labels: ['Lulus (A-E)', 'Gagal (F)'],
                 datasets: [{ data: [totalAkaLulus, totalAkaGagal], backgroundColor: ['#22c55e', '#ef4444'], hoverOffset: 4 }]
             },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
