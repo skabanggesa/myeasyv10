@@ -625,6 +625,67 @@ window.uploadStudentCSV = async () => {
     reader.readAsText(file);
 };
 
+	window.addSingleStudent = async () => {
+    const nama = document.getElementById('newStudentName').value.trim().toUpperCase();
+    const kelas = document.getElementById('newStudentClass').value.trim().toUpperCase();
+    const tahun = document.getElementById('newStudentYear').value.trim();
+
+    if(!nama || !kelas || !tahun) return alert("Sila isi semua maklumat (Nama, Kelas, dan Tahun)!");
+
+    const btn = window.event.target;
+    const originalText = btn.innerText;
+    btn.disabled = true;
+    btn.innerText = "MENYIMPAN...";
+
+    try {
+        await addDoc(collection(db, "students"), {
+            nama: nama,
+            kelas: kelas,
+            tahun: tahun
+        });
+        alert(`Murid ${nama} berjaya ditambah ke kelas ${kelas}!`);
+        document.getElementById('newStudentName').value = ""; // Kosongkan kotak nama
+        window.loadClassesForDropdown(); // Muat semula senarai kelas
+    } catch (e) {
+        alert("Ralat menambah murid: " + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = originalText;
+    }
+};
+
+// FUNGSI UNTUK PADAM KELAS BERSAMA MURID DI DALAMNYA
+window.deleteClass = async () => {
+    const kelas = document.getElementById('deleteClassSelect').value;
+    if(!kelas) return alert("Sila pilih kelas untuk dipadam.");
+    
+    if(!confirm(`AMARAN! Adakah anda pasti mahu memadam kelas ${kelas}? Semua rekod murid dalam kelas ini akan dipadam secara kekal.`)) return;
+
+    const btn = window.event.target;
+    const originalText = btn.innerText;
+    btn.disabled = true;
+    btn.innerText = "MEMADAM...";
+
+    try {
+        const q = query(collection(db, "students"), where("kelas", "==", kelas));
+        const snapshot = await getDocs(q);
+        
+        let count = 0;
+        for (let docSnap of snapshot.docs) {
+            await deleteDoc(doc(db, "students", docSnap.id));
+            count++;
+        }
+        
+        alert(`Berjaya! ${count} murid berserta kelas ${kelas} telah dipadam.`);
+        window.loadClassesForDropdown();
+    } catch (e) {
+        alert("Gagal memadam kelas: " + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = originalText;
+    }
+};
+
 window.loadClassesForDropdown = async () => {
     const q = collection(db, "students");
     const snapshot = await getDocs(q);
@@ -633,12 +694,16 @@ window.loadClassesForDropdown = async () => {
     
     const sel = document.getElementById('selKelas');
     const anaSel = document.getElementById('anaKelas'); 
+    const delSel = document.getElementById('deleteClassSelect'); // Ditambah untuk Padam Kelas
+
     sel.innerHTML = '<option value="">Pilih Kelas</option>';
     anaSel.innerHTML = '<option value="">Pilih Kelas</option>'; 
+    if (delSel) delSel.innerHTML = '<option value="">-- Pilih Kelas Untuk Dipadam --</option>'; 
     
     Array.from(classes).sort().forEach(c => {
         sel.innerHTML += `<option value="${c}">${c}</option>`;
         anaSel.innerHTML += `<option value="${c}">${c}</option>`; 
+        if (delSel) delSel.innerHTML += `<option value="${c}">${c}</option>`; 
     });
 };
 
