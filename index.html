@@ -183,6 +183,23 @@
         </div>
     </div>
 
+	<div class="bg-white p-6 rounded-xl shadow border">
+    <h2 class="font-black text-blue-900 mb-4 uppercase border-b pb-2">Daftar Murid Baharu</h2>
+    <div class="space-y-3">
+        <input type="text" id="newStudentName" placeholder="Nama Murid" class="w-full p-2 border rounded text-xs uppercase">
+        <input type="text" id="newStudentClass" placeholder="Kelas (Cth: 1 INOVATIF)" class="w-full p-2 border rounded text-xs uppercase">
+        <input type="number" id="newStudentYear" placeholder="Tahun (Cth: 2026)" class="w-full p-2 border rounded text-xs">
+        <button onclick="window.addSingleStudent()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-bold shadow transition">SIMPAN MURID</button>
+    </div>
+</div>
+
+<div class="bg-white p-6 rounded-xl shadow border border-red-200 bg-red-50/30">
+    <h2 class="font-black text-red-900 mb-4 uppercase border-b pb-2">Padam Kelas</h2>
+    <p class="text-[11px] text-slate-600 mb-3 font-bold">Pilih kelas untuk memadam semua rekod murid di dalamnya.</p>
+    <select id="deleteClassSelect" class="w-full mb-3 p-2 border rounded font-bold bg-white text-xs"></select>
+    <button onclick="window.deleteClass()" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded font-black shadow transition">PADAM KELAS</button>
+</div>
+
 <div class="flex gap-2 mb-4">
     <button onclick="toggleAnalisis()" class="bg-purple-600 text-white px-6 py-2 rounded-lg font-black shadow hover:bg-purple-700 transition">
         📊 PAPAR/SEMBUNYI PAPAN PEMUKA ANALISIS KELAS (HYBRID)
