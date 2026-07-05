@@ -159,7 +159,8 @@
         <button onclick="location.reload()" class="bg-red-500 hover:bg-red-600 transition px-4 py-2 rounded font-bold text-xs shadow">LOG KELUAR</button>
     </div>
 
-    <div id="admin-area" class="hidden-section space-y-6">
+<div id="admin-area" class="hidden-section space-y-6">
+        
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="bg-white p-6 rounded-xl shadow border">
                 <h2 class="font-black text-blue-900 mb-4 uppercase border-b pb-2">Daftar Guru Baharu</h2>
@@ -169,38 +170,43 @@
                     <button onclick="registerUser('guru')" class="w-full bg-emerald-600 text-white py-2 rounded font-bold">SIMPAN GURU</button>
                 </div>
             </div>
+            
             <div class="bg-white p-6 rounded-xl shadow border">
                 <h2 class="font-black text-blue-900 mb-4 uppercase border-b pb-2">Muat Naik Senarai Murid (CSV)</h2>
                 <p class="text-[10px] text-slate-500 mb-2 font-bold">Header: nama, kelas, tahun</p>
                 <input type="file" id="csvStudentInput" accept=".csv" class="w-full mb-3 text-xs">
                 <button onclick="uploadStudentCSV()" class="w-full bg-blue-900 text-white py-2 rounded font-bold">PROSES & SIMPAN DATA</button>
             </div>
+            
             <div class="bg-white p-6 rounded-xl shadow border border-orange-200 bg-orange-50/30">
                 <h2 class="font-black text-orange-900 mb-4 uppercase border-b pb-2">⚙️ Utiliti Sistem</h2>
                 <p class="text-[11px] text-slate-600 mb-3 font-bold leading-relaxed">Klik butang ini jika data lama berasaskan nama "Penilaian Semester Pertama" tidak muncul selepas penukaran nama paparan.</p>
                 <button onclick="window.upgradeDataLama()" class="w-full bg-orange-600 hover:bg-orange-700 text-white py-2 rounded font-black shadow transition">UPGRADE DATA LAMA (1 KLIK)</button>
             </div>
         </div>
-    </div>
 
-	<div class="grid grid-cols-2 md:grid-cols-3 gap-6">
-	<div class="bg-white p-6 rounded-xl shadow border">
-    <h2 class="font-black text-blue-900 mb-4 uppercase border-b pb-2">Daftar Murid Baharu</h2>
-    <div class="space-y-3">
-        <input type="text" id="newStudentName" placeholder="Nama Murid" class="w-full p-2 border rounded text-xs uppercase">
-        <input type="text" id="newStudentClass" placeholder="Kelas (Cth: 1 INOVATIF)" class="w-full p-2 border rounded text-xs uppercase">
-        <input type="number" id="newStudentYear" placeholder="Tahun (Cth: 2026)" class="w-full p-2 border rounded text-xs">
-        <button onclick="window.addSingleStudent()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-bold shadow transition">SIMPAN MURID</button>
-    </div>
-</div>
-	</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <div class="bg-white p-6 rounded-xl shadow border">
+                <h2 class="font-black text-blue-900 mb-4 uppercase border-b pb-2">Daftar Murid Baharu</h2>
+                <div class="space-y-3">
+                    <input type="text" id="newStudentName" placeholder="Nama Murid" class="w-full p-2 border rounded text-xs uppercase">
+                    <input type="text" id="newStudentClass" placeholder="Kelas (Cth: 1 INOVATIF)" class="w-full p-2 border rounded text-xs uppercase">
+                    <input type="number" id="newStudentYear" placeholder="Tahun (Cth: 2026)" class="w-full p-2 border rounded text-xs">
+                    <button onclick="window.addSingleStudent()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-bold shadow transition">SIMPAN MURID</button>
+                </div>
+            </div>
 
-<div class="bg-white p-6 rounded-xl shadow border border-red-200 bg-red-50/30">
-    <h2 class="font-black text-red-900 mb-4 uppercase border-b pb-2">Padam Kelas</h2>
-    <p class="text-[11px] text-slate-600 mb-3 font-bold">Pilih kelas untuk memadam semua rekod murid di dalamnya.</p>
-    <select id="deleteClassSelect" class="w-full mb-3 p-2 border rounded font-bold bg-white text-xs"></select>
-    <button onclick="window.deleteClass()" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded font-black shadow transition">PADAM KELAS</button>
-</div>
+            <div class="bg-white p-6 rounded-xl shadow border border-red-200 bg-red-50/30">
+                <h2 class="font-black text-red-900 mb-4 uppercase border-b pb-2">Padam Kelas</h2>
+                <p class="text-[11px] text-slate-600 mb-3 font-bold">Pilih kelas untuk memadam semua rekod murid di dalamnya.</p>
+                <select id="deleteClassSelect" class="w-full mb-3 p-2 border rounded font-bold bg-white text-xs"></select>
+                <button onclick="window.deleteClass()" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded font-black shadow transition">PADAM KELAS</button>
+            </div>
+            
+        </div>
+        
+    </div>
 
 <div class="flex gap-2 mb-4">
     <button onclick="toggleAnalisis()" class="bg-purple-600 text-white px-6 py-2 rounded-lg font-black shadow hover:bg-purple-700 transition">
