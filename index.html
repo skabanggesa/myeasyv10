@@ -2127,7 +2127,7 @@ function dapatkanDataPBD(s, subId) {
 }
 
 // ==========================================================
-// FUNGSI UTAMA 1: CETAK KEPUTUSAN KELAS (KEMAS KINI SYARAT GAGAL)
+// FUNGSI UTAMA 1: CETAK KEPUTUSAN KELAS
 // ==========================================================
 window.cetakKeputusanKelas = () => {
     if (!activeStudents || activeStudents.length === 0) {
@@ -2141,7 +2141,6 @@ window.cetakKeputusanKelas = () => {
     if (!printArea) return alert("Ralat: Kawasan cetakan (section-sijil) tidak dijumpai.");
     printArea.innerHTML = ''; 
 
-    // PENGESANAN LANGSUNG: Membaca terus dari dropdown tanpa melalui fungsi cekPbdAktif()
     const modeDropdown = document.getElementById('systemInputMode');
     const isPBDAktif = modeDropdown ? modeDropdown.value === 'PBD' : false;
     
@@ -2149,7 +2148,7 @@ window.cetakKeputusanKelas = () => {
 
     if (isPBDAktif) {
         // ------------------------------------------
-        // FORMAT JADUAL: MODUL PBD (RUMUSAN TP KESELURUHAN KELAS)
+        // FORMAT JADUAL: MODUL PBD
         // ------------------------------------------
         let headerSubjekHtml = '';
         KPM_SUBJECTS.forEach(sub => {
@@ -2178,11 +2177,9 @@ window.cetakKeputusanKelas = () => {
         activeStudents.forEach((s, idx) => {
             let rowSubjekHtml = '';
             KPM_SUBJECTS.forEach(sub => {
-                const subIdLower = sub.id.toLowerCase();
-                const currentTp = s[`pbd_${subIdLower}_tp`] || 0;
-                const textTpKeseluruhan = currentTp > 0 ? `TP ${currentTp}` : '-';
-                
-                rowSubjekHtml += `<td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold;">${textTpKeseluruhan}</td>`;
+                // GUNAKAN UTILITI 5 ANDA UNTUK PENGESANAN DATA FLEKSIBEL
+                const dataPBD = typeof dapatkanDataPBD === 'function' ? dapatkanDataPBD(s, sub.id) : { tp: '-' };
+                rowSubjekHtml += `<td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold;">${dataPBD.tp}</td>`;
             });
 
             html += `
@@ -2237,35 +2234,25 @@ window.cetakKeputusanKelas = () => {
             const subjekTerasGagal = ['bm', 'bi', 'mt', 'sn', 'sejarah', 'sej'];
 
             senaraiSubjek.forEach(sub => {
-                const markah = dapatkanMarkah(s, sub.id);
+                // GUNAKAN UTILITI 3 ANDA
+                const markah = typeof dapatkanMarkah === 'function' ? dapatkanMarkah(s, sub.id) : '-';
                 barisMarkahHtml += `<td style="border: 1px solid black; padding:6px; text-align:center; font-weight:medium;">${markah}</td>`;
                 
                 if (markah !== '-' && markah !== '' && !isNaN(markah)) {
                     const markahNombor = Number(markah);
                     totalMarks += markahNombor;
                     countSubjekDikirakan++;
-                    
-                    const idSubjekCek = sub.id.toLowerCase();
-                    if (subjekTerasGagal.includes(idSubjekCek) && markahNombor < 20) {
-                        adaGagal = true;
-                    }
+                    if (subjekTerasGagal.includes(sub.id.toLowerCase()) && markahNombor < 20) adaGagal = true;
                 }
             });
 
-            let peratusPapar = '-';
-            if (s.percent !== undefined && s.percent !== null && s.percent !== '') {
-                peratusPapar = parseFloat(s.percent).toFixed(2);
-            } else if (countSubjekDikirakan > 0) {
-                peratusPapar = ((totalMarks / (countSubjekDikirakan * 100)) * 100).toFixed(2);
-            }
+            // GUNAKAN UTILITI 4 ANDA
+            let peratusRaw = typeof dapatkanPeratus === 'function' ? dapatkanPeratus(s) : '-';
+            let peratusPapar = peratusRaw !== '-' ? parseFloat(peratusRaw).toFixed(2) : (countSubjekDikirakan > 0 ? ((totalMarks / (countSubjekDikirakan * 100)) * 100).toFixed(2) : '-');
 
-            let keputusanPapar = dapatkanKeputusan(s); 
+            let keputusanPapar = typeof dapatkanKeputusan === 'function' ? dapatkanKeputusan(s) : '-';
             if (keputusanPapar === '-') {
-                if (countSubjekDikirakan > 0) {
-                    keputusanPapar = adaGagal ? 'GAGAL' : 'LULUS';
-                } else {
-                    keputusanPapar = 'TIDAK LENGKAP';
-                }
+                keputusanPapar = countSubjekDikirakan > 0 ? (adaGagal ? 'GAGAL' : 'LULUS') : 'TIDAK LENGKAP';
             }
 
             html += `
@@ -2274,7 +2261,7 @@ window.cetakKeputusanKelas = () => {
                     <td style="border: 1px solid black; padding:6px; text-align:left; font-weight:bold; text-transform:uppercase;">${s.nama}</td>
                     ${barisMarkahHtml}
                     <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold;">${peratusPapar}${peratusPapar !== '-' ? '%' : ''}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; text-transform:uppercase; font-size:10px; color:${keputusanPapar === 'GAGAL' ? '#b91c1c' : (keputusanPapar === 'LULUS' ? '#15803d' : '#000')}">${keputusanPapar}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; text-transform:uppercase; font-size:10px; color:${keputusanPapar.toUpperCase().includes('GAGAL') ? '#b91c1c' : '#15803d'}">${keputusanPapar}</td>
                 </tr>
             `;
         });
@@ -2287,14 +2274,13 @@ window.cetakKeputusanKelas = () => {
 
 
 // ==========================================================
-// FUNGSI UTAMA 2: CETAK MATAPELAJARAN PILIHAN (GRED DIPERBAIKI)
+// FUNGSI UTAMA 2: CETAK MATAPELAJARAN PILIHAN
 // ==========================================================
 window.cetakSubjekPilihan = () => {
     if (!activeStudents || activeStudents.length === 0) {
         return alert("Sila cari dan papar kelas terlebih dahulu sebelum mencetak!");
     }
 
-    // PENGESANAN LANGSUNG: Membaca terus dari dropdown tanpa melalui fungsi cekPbdAktif()
     const modeDropdown = document.getElementById('systemInputMode');
     const isPBDAktif = modeDropdown ? modeDropdown.value === 'PBD' : false;
 
@@ -2316,18 +2302,11 @@ window.cetakSubjekPilihan = () => {
     let html = '';
 
     if (isPBDAktif) {
-        // ==========================================
-        // KATEGORI A: JADUAL TERPERINCI MODUL PBD (1 SUBJEK)
-        // ==========================================
         const subObj = KPM_SUBJECTS.find(x => x.id.toLowerCase() === subjekFieldID);
-        if (!subObj) {
-            return alert(`Maaf, subjek ${namaSubjekPapar} tidak dijumpai dalam senarai PBD KPM.`);
-        }
+        if (!subObj) return alert(`Maaf, subjek ${namaSubjekPapar} tidak dijumpai dalam senarai PBD KPM.`);
 
         let headerSkillsHtml = '';
-        subObj.skills.forEach(sk => {
-            headerSkillsHtml += `<th style="border: 1px solid black; padding:8px; text-align:center;">${sk.toUpperCase()}</th>`;
-        });
+        subObj.skills.forEach(sk => { headerSkillsHtml += `<th style="border: 1px solid black; padding:8px; text-align:center;">${sk.toUpperCase()}</th>`; });
 
         html = `
             <div style="text-align:center; margin-bottom:20px; font-family: Arial, sans-serif;">
@@ -2353,33 +2332,29 @@ window.cetakSubjekPilihan = () => {
         activeStudents.forEach((s, idx) => {
             let skillsRowHtml = '';
             subObj.skills.forEach((sk, sIdx) => {
-                const cellVal = s[`pbd_${subjekFieldID}_k${sIdx+1}`] || 0;
-                const textTp = cellVal > 0 ? `TP ${cellVal}` : '-';
-                skillsRowHtml += `<td style="border: 1px solid black; padding:6px; text-align:center;">${textTp}</td>`;
+                // PENGESANAN KEMAHIRAN (SKILLS) FLEKSIBEL
+                let valK = s[`pbd_${subjekFieldID}_k${sIdx+1}`] || s[`${subjekFieldID}_k${sIdx+1}`] || (s.pbd && s.pbd[subjekFieldID] ? s.pbd[subjekFieldID][`k${sIdx+1}`] : null);
+                let textTpSk = valK ? `TP ${valK}` : '-';
+                skillsRowHtml += `<td style="border: 1px solid black; padding:6px; text-align:center;">${textTpSk}</td>`;
             });
 
-            const currentTp = s[`pbd_${subjekFieldID}_tp`] || 0;
-            const textTpKeseluruhan = currentTp > 0 ? `TP ${currentTp}` : '-';
-            const currentUsaha = s[`pbd_${subjekFieldID}_usaha`] || '-';
-            const currentIntervensi = s[`pbd_${subjekFieldID}_intervensi`] || '-';
+            // GUNAKAN UTILITI 5 ANDA UNTUK PENGESANAN DATA FLEKSIBEL
+            const dataPBD = typeof dapatkanDataPBD === 'function' ? dapatkanDataPBD(s, subjekFieldID) : { tp: '-', usaha: '-', intervensi: '-' };
 
             html += `
                 <tr>
                     <td style="border: 1px solid black; padding:6px; text-align:center;">${idx + 1}</td>
                     <td style="border: 1px solid black; padding:6px; text-align:left; font-weight:bold; text-transform:uppercase;">${s.nama}</td>
                     ${skillsRowHtml}
-                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; background-color:#faf5ff;">${textTpKeseluruhan}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:center; text-transform:uppercase;">${currentUsaha}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:left; text-transform:uppercase; font-size:10px;">${currentIntervensi}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; background-color:#faf5ff;">${dataPBD.tp}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:center; text-transform:uppercase;">${dataPBD.usaha}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:left; text-transform:uppercase; font-size:10px;">${dataPBD.intervensi}</td>
                 </tr>
             `;
         });
         html += `</tbody></table>`;
         
     } else {
-        // ==========================================
-        // KATEGORI B: JADUAL TUNGGAL MODUL PENILAIAN
-        // ==========================================
         html = `
             <div style="text-align:center; margin-bottom:20px; font-family: Arial, sans-serif;">
                 <h2 style="font-size:22px; font-weight:900; text-transform:uppercase; margin-bottom:5px;">LAPORAN PRESTASI MATAPELAJARAN (AKADEMIK)</h2>
@@ -2400,17 +2375,13 @@ window.cetakSubjekPilihan = () => {
         `;
 
         activeStudents.forEach((s, idx) => {
-            const markah = dapatkanMarkah(s, subjekFieldID);
+            // GUNAKAN UTILITI 3 ANDA
+            const markah = typeof dapatkanMarkah === 'function' ? dapatkanMarkah(s, subjekFieldID) : '-';
             
             let gredPapar = '-';
             if (markah !== '-' && markah !== '' && !isNaN(markah)) {
-                if (typeof getGrade === 'function') {
-                    const hasilGred = getGrade(Number(markah));
-                    gredPapar = hasilGred ? hasilGred.gred : '-';
-                } else if (typeof window.getGrade === 'function') {
-                    const hasilGred = window.getGrade(Number(markah));
-                    gredPapar = hasilGred ? hasilGred.gred : '-';
-                }
+                if (typeof getGrade === 'function') gredPapar = getGrade(Number(markah))?.gred || '-';
+                else if (typeof window.getGrade === 'function') gredPapar = window.getGrade(Number(markah))?.gred || '-';
             }
             
             html += `
