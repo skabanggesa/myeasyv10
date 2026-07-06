@@ -2127,22 +2127,6 @@ function dapatkanDataPBD(s, subId) {
 }
 
 // ==========================================================
-// FUNGSI PENGESAN MODUL PBD (TEPAT MENGGUNAKAN ID DROPDOWN)
-// ==========================================================
-window.cekPbdAktif = () => {
-    const modeDropdown = document.getElementById('systemInputMode');
-    
-    // Jika dropdown dijumpai dan nilainya ialah "PBD", maka ia mengembalikan true
-    if (modeDropdown) {
-        return modeDropdown.value === 'PBD';
-    }
-    
-    // Keselamatan (fallback) jika atas sebab tertentu dropdown tidak dijumpai
-    return false;
-};
-
-
-// ==========================================================
 // FUNGSI UTAMA 1: CETAK KEPUTUSAN KELAS (KEMAS KINI SYARAT GAGAL)
 // ==========================================================
 window.cetakKeputusanKelas = () => {
@@ -2157,13 +2141,15 @@ window.cetakKeputusanKelas = () => {
     if (!printArea) return alert("Ralat: Kawasan cetakan (section-sijil) tidak dijumpai.");
     printArea.innerHTML = ''; 
 
-    // Panggil fungsi auto-kesan modul aktif
-    const isPBDAktif = cekPbdAktif();
+    // PENGESANAN LANGSUNG: Membaca terus dari dropdown tanpa melalui fungsi cekPbdAktif()
+    const modeDropdown = document.getElementById('systemInputMode');
+    const isPBDAktif = modeDropdown ? modeDropdown.value === 'PBD' : false;
+    
     let html = '';
 
     if (isPBDAktif) {
         // ------------------------------------------
-        // FORMAT JADUAL: MODUL PBD (RUMUSAN TP KESELURUHAN KELAS) -> DI SINI TEMPATNYA!
+        // FORMAT JADUAL: MODUL PBD (RUMUSAN TP KESELURUHAN KELAS)
         // ------------------------------------------
         let headerSubjekHtml = '';
         KPM_SUBJECTS.forEach(sub => {
@@ -2308,7 +2294,10 @@ window.cetakSubjekPilihan = () => {
         return alert("Sila cari dan papar kelas terlebih dahulu sebelum mencetak!");
     }
 
-    const isPBDAktif = cekPbdAktif();
+    // PENGESANAN LANGSUNG: Membaca terus dari dropdown tanpa melalui fungsi cekPbdAktif()
+    const modeDropdown = document.getElementById('systemInputMode');
+    const isPBDAktif = modeDropdown ? modeDropdown.value === 'PBD' : false;
+
     const mesejPrompt = isPBDAktif 
         ? "Sila masukkan KOD SUBJEK PBD yang ingin dicetak.\nContoh: bm, bi, mt, sn, sej, rbt"
         : "Sila masukkan KOD SUBJEK PENILAIAN yang ingin dicetak.\nContoh: bm, bi, mt, sn, sej, rbt";
@@ -2328,7 +2317,7 @@ window.cetakSubjekPilihan = () => {
 
     if (isPBDAktif) {
         // ==========================================
-        // KATEGORI A: JADUAL TERPERINCI MODUL PBD (1 SUBJEK) -> DI SINI TEMPATNYA!
+        // KATEGORI A: JADUAL TERPERINCI MODUL PBD (1 SUBJEK)
         // ==========================================
         const subObj = KPM_SUBJECTS.find(x => x.id.toLowerCase() === subjekFieldID);
         if (!subObj) {
