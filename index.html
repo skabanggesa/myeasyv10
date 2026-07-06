@@ -1213,10 +1213,31 @@ window.cetakPilihan = (jenis) => {
 
 window.prepareAndPrint = () => {
     if (activeStudents.length === 0) return alert("Sila cari murid dan masukkan markah terlebih dahulu!");
+    
     const oldArea = document.getElementById('analisis-print-area');
     if(oldArea) oldArea.remove();
 
-    window.generateSijilCloud();
+    // 1. Semak sama ada guru sedang berada di Modul PBD
+    // (Berdasarkan pbdSubBox yang aktif atau tidak disembunyikan)
+    const pbdBox = document.getElementById('pbdSubBox'); 
+    const isPBDAktif = pbdBox && !pbdBox.classList.contains('hidden-section');
+
+    // 2. Halakan ke fungsi penjanaan sijil yang betul
+    if (isPBDAktif) {
+        // Jika sedang buka PBD, panggil fungsi sijil PBD
+        // NOTA: Sila pastikan 'generateSijilPBDCloud' adalah nama sebenar fungsi sijil PBD anda.
+        if (typeof window.generateSijilPBDCloud === 'function') {
+            window.generateSijilPBDCloud();
+        } else {
+            alert("Ralat: Fungsi sijil PBD (generateSijilPBDCloud) belum wujud atau namanya berbeza.");
+            return; // Hentikan dari mencetak jika tiada fungsi
+        }
+    } else {
+        // Jika tidak, panggil fungsi sijil Ujian Akademik seperti biasa
+        window.generateSijilCloud();
+    }
+
+    // 3. Cetak selepas sijil siap dijana
     setTimeout(() => { window.print(); }, 500);
 };
 
