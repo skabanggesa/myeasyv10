@@ -351,13 +351,46 @@
             </div>
             <div class="mt-6 flex gap-3">
                 <button onclick="calculateAndSaveToCloud()" class="flex-1 bg-emerald-600 text-white py-4 rounded-xl font-black text-lg shadow-lg hover:scale-102 transition">💾 SIMPAN KESELURUHAN DATA KELAS (HYBRID)</button>
-                <button onclick="prepareAndPrint()" class="bg-slate-800 text-white px-8 py-4 rounded-xl font-black text-lg shadow-md hover:bg-slate-900 transition">🖨️ CETAK SEMUA LAPORAN / SIJIL</button>
+                <button onclick="window.bukaModalCetak()" class="bg-slate-800 text-white px-8 py-4 rounded-xl font-black text-lg shadow-md hover:bg-slate-900 transition">🖨️ CETAK LAPORAN / SIJIL</button>
             </div>
         </div>
     </div>
 </div>
 
 <div id="section-sijil"></div>
+
+	<div id="printModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center hidden">
+    <div class="bg-white rounded-xl shadow-2xl p-6 w-11/12 max-w-md transform transition-all">
+        
+        <div class="text-center mb-6">
+            <h2 class="text-2xl font-black text-blue-900 uppercase">Pilihan Cetakan</h2>
+            <p class="text-sm text-slate-500 font-medium mt-1">Sila pilih jenis dokumen yang ingin dicetak</p>
+        </div>
+
+        <div class="space-y-4">
+            <button onclick="window.cetakPilihan('sijil')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-between transition-colors">
+                <span>Cetak Sijil (Penuh)</span>
+                <span class="text-xl">🎓</span>
+            </button>
+
+            <button onclick="window.cetakPilihan('kelas')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-between transition-colors">
+                <span>Cetak Keputusan Kelas</span>
+                <span class="text-xl">📊</span>
+            </button>
+
+            <button onclick="window.cetakPilihan('elektif')" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-between transition-colors">
+                <span>Cetak Matapelajaran Pilihan</span>
+                <span class="text-xl">📚</span>
+            </button>
+        </div>
+
+        <div class="mt-6 border-t pt-4">
+            <button onclick="window.tutupModalCetak()" class="w-full bg-red-100 hover:bg-red-200 text-red-700 font-bold py-2 rounded-lg transition-colors">
+                Batal / Tutup
+            </button>
+        </div>
+    </div>
+</div>
 
 <script type="module">
     // 1. IMPORT FIREBASE
@@ -1131,6 +1164,51 @@ window.generateSijilCloud = () => {
             </div>`;
     });
     document.getElementById('section-sijil').innerHTML = html;
+};
+
+	// --- FUNGSI KAWALAN MODAL CETAKAN ---
+
+window.bukaModalCetak = () => {
+    const modal = document.getElementById('printModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+    }
+};
+
+window.tutupModalCetak = () => {
+    const modal = document.getElementById('printModal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+};
+
+window.cetakPilihan = (jenis) => {
+    // 1. Tutup modal menu
+    window.tutupModalCetak();
+
+    // 2. Proses cetakan selepas modal ditutup sepenuhnya (delay 300ms)
+    setTimeout(() => {
+        if (jenis === 'sijil') {
+            // Panggil fungsi asal cikgu untuk cetak semua sijil
+            if (typeof window.prepareAndPrint === 'function') {
+                window.prepareAndPrint(); 
+            } else if (typeof prepareAndPrint === 'function') {
+                prepareAndPrint();
+            } else {
+                alert("Ralat: Fungsi prepareAndPrint tidak dijumpai.");
+            }
+        } 
+        else if (jenis === 'kelas') {
+            // Letakkan fungsi cetak keputusan kelas di sini
+            alert("Fungsi Cetak Keputusan Kelas akan dijalankan di sini.");
+            // Contoh: window.cetakKeputusanKelas();
+        } 
+        else if (jenis === 'elektif') {
+            // Letakkan fungsi cetak matapelajaran pilihan di sini
+            alert("Fungsi Cetak Matapelajaran Pilihan akan dijalankan di sini.");
+            // Contoh: window.cetakSubjekPilihan();
+        }
+    }, 300);
 };
 
 window.prepareAndPrint = () => {
