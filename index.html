@@ -2128,7 +2128,7 @@ function dapatkanDataPBD(s, subId) {
 
 
 // ==========================================================
-// FUNGSI UTAMA 1: CETAK KEPUTUSAN KELAS
+// FUNGSI UTAMA 1: CETAK KEPUTUSAN KELAS (PERATUS & KEPUTUSAN DIPERBAIKI)
 // ==========================================================
 window.cetakKeputusanKelas = () => {
     if (!activeStudents || activeStudents.length === 0) {
@@ -2221,23 +2221,58 @@ window.cetakKeputusanKelas = () => {
         `;
 
         activeStudents.forEach((s, idx) => {
-            const peratus = dapatkanPeratus(s);
-            const keputusan = dapatkanKeputusan(s);
+            // Pembolehubah untuk pengiraan on-the-fly
+            let totalMarks = 0;
+            let countSubjekDikirakan = 0;
+            let adaGagal = false;
+
+            let barisMarkahHtml = '';
+
+            senaraiSubjek.forEach(sub => {
+                const markah = dapatkanMarkah(s, sub.id);
+                barisMarkahHtml += `<td style="border: 1px solid black; padding:6px; text-align:center; font-weight:medium;">${markah}</td>`;
+                
+                // Kumpul data jika markah sah (bukan kosong/sempang)
+                if (markah !== '-' && markah !== '' && !isNaN(markah)) {
+                    totalMarks += Number(markah);
+                    countSubjekDikirakan++;
+                    
+                    // Semak jika ada subjek yang Gagal (Gred F atau E bergantung pada fungsi getGrade anda)
+                    let gredObj = null;
+                    if (typeof getGrade === 'function') gredObj = getGrade(Number(markah));
+                    else if (typeof window.getGrade === 'function') gredObj = window.getGrade(Number(markah));
+
+                    if (gredObj && (gredObj.gred === 'F' || gredObj.gred === 'E')) {
+                        adaGagal = true;
+                    }
+                }
+            });
+
+            // 1. Dapatkan Peratus (Guna s.percent jika ada, jika tiada kita kira on-the-fly)
+            let peratusPapar = '-';
+            if (s.percent !== undefined && s.percent !== null && s.percent !== '') {
+                peratusPapar = parseFloat(s.percent).toFixed(2);
+            } else if (countSubjekDikirakan > 0) {
+                peratusPapar = ((totalMarks / (countSubjekDikirakan * 100)) * 100).toFixed(2);
+            }
+
+            // 2. Dapatkan Keputusan Lulus / Gagal
+            let keputusanPapar = dapatkanKeputusan(s); // Cuba cari 'status' atau 'keputusan'
+            if (keputusanPapar === '-') {
+                if (countSubjekDikirakan > 0) {
+                    keputusanPapar = adaGagal ? 'GAGAL' : 'LULUS';
+                } else {
+                    keputusanPapar = 'TIDAK LENGKAP'; // Tiada sebarang markah diisi
+                }
+            }
 
             html += `
                 <tr>
                     <td style="border: 1px solid black; padding:6px; text-align:center;">${idx + 1}</td>
                     <td style="border: 1px solid black; padding:6px; text-align:left; font-weight:bold; text-transform:uppercase;">${s.nama}</td>
-            `;
-
-            senaraiSubjek.forEach(sub => {
-                const markah = dapatkanMarkah(s, sub.id);
-                html += `<td style="border: 1px solid black; padding:6px; text-align:center; font-weight:medium;">${markah}</td>`;
-            });
-
-            html += `
-                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold;">${peratus}${peratus !== '-' && !String(peratus).includes('%') ? '%' : ''}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; text-transform:uppercase; font-size:10px;">${keputusan}</td>
+                    ${barisMarkahHtml}
+                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold;">${peratusPapar}${peratusPapar !== '-' ? '%' : ''}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; text-transform:uppercase; font-size:10px; color:${keputusanPapar === 'GAGAL' ? '#b91c1c' : (keputusanPapar === 'LULUS' ? '#15803d' : '#000')}">${keputusanPapar}</td>
                 </tr>
             `;
         });
@@ -2247,7 +2282,6 @@ window.cetakKeputusanKelas = () => {
     printArea.innerHTML = html;
     setTimeout(() => { window.print(); }, 500);
 };
-
 
 // ==========================================================
 // FUNGSI UTAMA 2: CETAK MATAPELAJARAN PILIHAN (GRED DIPERBAIKI)
