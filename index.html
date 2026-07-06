@@ -2146,47 +2146,69 @@ window.cetakKeputusanKelas = () => {
     const isPBDAktif = cekPbdAktif();
     let html = '';
 
-    if (isPBDAktif) {
-        // ------------------------------------------
-        // FORMAT JADUAL: MODUL PBD
-        // ------------------------------------------
-        const subId = ambilSubjekPBDAktif();
-        const namaSubjekPapar = subId ? subId.toUpperCase() : 'SEMUA';
+if (isPBDAktif) {
+        // ==========================================
+        // KATEGORI A: JADUAL TERPERINCI MODUL PBD (1 SUBJEK)
+        // ==========================================
+        const subObj = KPM_SUBJECTS.find(x => x.id.toLowerCase() === subjekFieldID);
+        if (!subObj) {
+            return alert(`Maaf, subjek ${namaSubjekPapar} tidak dijumpai dalam senarai PBD KPM.`);
+        }
+
+        // Bina tajuk lajur (header) kemahiran secara dinamik
+        let headerSkillsHtml = '';
+        subObj.skills.forEach(sk => {
+            headerSkillsHtml += `<th style="border: 1px solid black; padding:8px; text-align:center;">${sk.toUpperCase()}</th>`;
+        });
 
         html = `
             <div style="text-align:center; margin-bottom:20px; font-family: Arial, sans-serif;">
-                <h2 style="font-size:22px; font-weight:900; text-transform:uppercase; margin-bottom:5px;">LAPORAN PENCAPAIAN PBD KELAS</h2>
-                <h3 style="font-size:14px; font-weight:bold; color:#475569; margin-top:0; text-transform:uppercase;">
-                    KELAS: ${kelas} &nbsp;|&nbsp; SUBJEK: ${namaSubjekPapar}
+                <h2 style="font-size:22px; font-weight:900; text-transform:uppercase; margin-bottom:5px;">LAPORAN PRESTASI PBD MATAPELAJARAN</h2>
+                <h3 style="font-size:14px; font-weight:bold; color:#1e40af; margin-top:0; text-transform:uppercase;">
+                    SUBJEK: ${namaSubjekPapar} &nbsp;|&nbsp; KELAS: ${kelas}
                 </h3>
             </div>
-            <table style="width:100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size:12px;" border="1">
+            <table style="width:100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size:11px;" border="1">
                 <thead>
                     <tr style="background-color:#f1f5f9; text-transform:uppercase; font-weight:bold;">
-                        <th style="border: 1px solid black; padding:8px; text-align:center; width:5%;">BIL</th>
-                        <th style="border: 1px solid black; padding:8px; text-align:left; width:45%;">NAMA MURID</th>
-                        <th style="border: 1px solid black; padding:8px; text-align:center; width:15%;">TP KESELURUHAN</th>
-                        <th style="border: 1px solid black; padding:8px; text-align:center; width:15%;">TAHAP USAHA</th>
-                        <th style="border: 1px solid black; padding:8px; text-align:left; width:20%;">INTERVENSI KPM</th>
+                        <th style="border: 1px solid black; padding:8px; text-align:center; width:4%;">BIL</th>
+                        <th style="border: 1px solid black; padding:8px; text-align:left; width:20%;">NAMA MURID</th>
+                        ${headerSkillsHtml}
+                        <th style="border: 1px solid black; padding:8px; text-align:center; width:12%;">TP KESELURUHAN</th>
+                        <th style="border: 1px solid black; padding:8px; text-align:center; width:12%;">TAHAP USAHA</th>
+                        <th style="border: 1px solid black; padding:8px; text-align:left; width:25%;">INTERVENSI KPM</th>
                     </tr>
                 </thead>
                 <tbody>
         `;
 
         activeStudents.forEach((s, idx) => {
-            const dataPbd = dapatkanDataPBD(s, subId);
+            // Dapatkan data kemahiran murid (K1, K2, K3...)
+            let skillsRowHtml = '';
+            subObj.skills.forEach((sk, sIdx) => {
+                const cellVal = s[`pbd_${subjekFieldID}_k${sIdx+1}`] || 0;
+                const textTp = cellVal > 0 ? `TP ${cellVal}` : '-';
+                skillsRowHtml += `<td style="border: 1px solid black; padding:6px; text-align:center;">${textTp}</td>`;
+            });
+
+            // Dapatkan data TP, Usaha, Intervensi
+            const currentTp = s[`pbd_${subjekFieldID}_tp`] || 0;
+            const textTpKeseluruhan = currentTp > 0 ? `TP ${currentTp}` : '-';
+            const currentUsaha = s[`pbd_${subjekFieldID}_usaha`] || '-';
+            const currentIntervensi = s[`pbd_${subjekFieldID}_intervensi`] || '-';
+
             html += `
                 <tr>
                     <td style="border: 1px solid black; padding:6px; text-align:center;">${idx + 1}</td>
                     <td style="border: 1px solid black; padding:6px; text-align:left; font-weight:bold; text-transform:uppercase;">${s.nama}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; background-color:#faf5ff;">${dataPbd.tp}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:center; text-transform:uppercase;">${dataPbd.usaha}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:left; text-transform:uppercase; font-size:11px;">${dataPbd.intervensi}</td>
+                    ${skillsRowHtml}
+                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; background-color:#faf5ff;">${textTpKeseluruhan}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:center; text-transform:uppercase;">${currentUsaha}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:left; text-transform:uppercase; font-size:10px;">${currentIntervensi}</td>
                 </tr>
             `;
         });
         html += `</tbody></table>`;
-
     } else {
         // ------------------------------------------
         // FORMAT JADUAL: MODUL PENILAIAN (AKADEMIK)
@@ -2308,43 +2330,53 @@ window.cetakSubjekPilihan = () => {
     printArea.innerHTML = ''; 
     let html = '';
 
-    if (isPBDAktif) {
-        // ==========================================
-        // KATEGORI A: JADUAL TUNGGAL MODUL PBD
-        // ==========================================
+if (isPBDAktif) {
+        // ------------------------------------------
+        // FORMAT JADUAL: MODUL PBD (RUMUSAN TP KESELURUHAN KELAS)
+        // ------------------------------------------
+        let headerSubjekHtml = '';
+        KPM_SUBJECTS.forEach(sub => {
+            headerSubjekHtml += `<th style="border: 1px solid black; padding:6px; text-align:center; font-size:10px;">${sub.id.toUpperCase()}</th>`;
+        });
+
         html = `
             <div style="text-align:center; margin-bottom:20px; font-family: Arial, sans-serif;">
-                <h2 style="font-size:22px; font-weight:900; text-transform:uppercase; margin-bottom:5px;">LAPORAN PRESTASI PBD MATAPELAJARAN</h2>
-                <h3 style="font-size:14px; font-weight:bold; color:#1e40af; margin-top:0; text-transform:uppercase;">
-                    SUBJEK: ${namaSubjekPapar} &nbsp;|&nbsp; KELAS: ${kelas}
+                <h2 style="font-size:22px; font-weight:900; text-transform:uppercase; margin-bottom:5px;">RUMUSAN TP PBD KELAS (KESELURUHAN)</h2>
+                <h3 style="font-size:14px; font-weight:bold; color:#475569; margin-top:0; text-transform:uppercase;">
+                    KELAS: ${kelas}
                 </h3>
             </div>
-            <table style="width:100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size:12px;" border="1">
+            <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size:11px;" border="1">
                 <thead>
                     <tr style="background-color:#f1f5f9; text-transform:uppercase; font-weight:bold;">
-                        <th style="border: 1px solid black; padding:8px; text-align:center; width:5%;">BIL</th>
-                        <th style="border: 1px solid black; padding:8px; text-align:left; width:45%;">NAMA MURID</th>
-                        <th style="border: 1px solid black; padding:8px; text-align:center; width:15%;">TAHAP PENGUASAAN (TP)</th>
-                        <th style="border: 1px solid black; padding:8px; text-align:center; width:15%;">TAHAP USAHA</th>
-                        <th style="border: 1px solid black; padding:8px; text-align:left; width:20%;">INTERVENSI KPM</th>
+                        <th style="border: 1px solid black; padding:6px; text-align:center; width:4%;">BIL</th>
+                        <th style="border: 1px solid black; padding:6px; text-align:left; min-width:180px;">NAMA MURID</th>
+                        ${headerSubjekHtml}
                     </tr>
                 </thead>
                 <tbody>
         `;
 
         activeStudents.forEach((s, idx) => {
-            const dataPbd = dapatkanDataPBD(s, subjekFieldID);
+            let rowSubjekHtml = '';
+            KPM_SUBJECTS.forEach(sub => {
+                const subIdLower = sub.id.toLowerCase();
+                const currentTp = s[`pbd_${subIdLower}_tp`] || 0;
+                const textTpKeseluruhan = currentTp > 0 ? `TP ${currentTp}` : '-';
+                
+                rowSubjekHtml += `<td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold;">${textTpKeseluruhan}</td>`;
+            });
+
             html += `
                 <tr>
                     <td style="border: 1px solid black; padding:6px; text-align:center;">${idx + 1}</td>
                     <td style="border: 1px solid black; padding:6px; text-align:left; font-weight:bold; text-transform:uppercase;">${s.nama}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; background-color:#faf5ff;">${dataPbd.tp}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:center; text-transform:uppercase;">${dataPbd.usaha}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:left; text-transform:uppercase; font-size:11px;">${dataPbd.intervensi}</td>
+                    ${rowSubjekHtml}
                 </tr>
             `;
         });
-        html += `</tbody></table>`;
+        html += `</tbody></table></div>`;
 
     } else {
         // ==========================================
