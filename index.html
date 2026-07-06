@@ -2023,132 +2023,263 @@ window.janaAnalisisDLP = (students) => {
     }
 };
 
-	// ==========================================
-// 1. FUNGSI CETAK KEPUTUSAN KELAS (BROADSHEET)
-// ==========================================
+// ==========================================================
+// FUNGSI CETAK KEPUTUSAN KELAS (PINTAR: IKUT MODUL AKTIF)
+// ==========================================================
 window.cetakKeputusanKelas = () => {
-    // Pastikan ada data kelas yang sedang dipaparkan
     if (!activeStudents || activeStudents.length === 0) {
         return alert("Sila cari dan papar kelas terlebih dahulu sebelum mencetak!");
     }
 
     const kelas = document.getElementById('selKelas') ? document.getElementById('selKelas').value : "TIADA KELAS";
     const penilaian = document.getElementById('selPenilaian') ? document.getElementById('selPenilaian').value : "";
-
-    // Guna kawasan cetakan sijil sedia ada
     const printArea = document.getElementById('section-sijil');
-    if (!printArea) return alert("Ralat: Kawasan cetakan (section-sijil) tidak dijumpai.");
     
-    printArea.innerHTML = ''; // Kosongkan kawasan cetakan lama
+    if (!printArea) return alert("Ralat: Kawasan cetakan (section-sijil) tidak dijumpai.");
+    printArea.innerHTML = ''; // Bersihkan kawasan cetakan lama
 
-    // Bina jadual HTML
-    let html = `
-        <div style="text-align:center; margin-bottom:20px; font-family: sans-serif;">
-            <h2 style="font-size:24px; font-weight:900; text-transform:uppercase; margin-bottom:5px;">LAPORAN KEPUTUSAN KELAS</h2>
-            <h3 style="font-size:16px; font-weight:bold; color:#475569; margin-top:0;">KELAS: ${kelas} &nbsp;|&nbsp; PENILAIAN: ${penilaian}</h3>
-        </div>
-        <table style="width:100%; border-collapse: collapse; font-family: sans-serif; font-size:12px;" border="1">
-            <thead>
-                <tr style="background-color:#f1f5f9; text-transform:uppercase;">
-                    <th style="border: 1px solid black; padding:8px; text-align:center; width:5%;">BIL</th>
-                    <th style="border: 1px solid black; padding:8px; text-align:left;">NAMA MURID</th>
-                    <th style="border: 1px solid black; padding:8px; text-align:center;">JUMLAH MARKAH</th>
-                    <th style="border: 1px solid black; padding:8px; text-align:center;">PERATUS (%)</th>
-                    <th style="border: 1px solid black; padding:8px; text-align:center;">KEPUTUSAN</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
+    // Semak modul mana yang sedang aktif
+    const pbdBox = document.getElementById('pbdSubBox'); 
+    const isPBDAktif = pbdBox && !pbdBox.classList.contains('hidden-section');
 
-    // Masukkan data setiap murid
-    activeStudents.forEach((s, idx) => {
-        // NOTA UNTUK CIKGU: Tukar 's.jumlah_markah', 's.peratus', dll mengikut nama field/pembolehubah sebenar dalam Firebase cikgu.
-        const jumlah = s.jumlah_markah || s.jumlah || '-';
-        const peratus = s.peratus || '-';
-        const keputusan = s.keputusan || s.status_lulus || s.menguasai || '-';
-        
-        html += `
-            <tr>
-                <td style="border: 1px solid black; padding:6px; text-align:center;">${idx + 1}</td>
-                <td style="border: 1px solid black; padding:6px; text-align:left; font-weight:bold; text-transform:uppercase;">${s.nama}</td>
-                <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold;">${jumlah}</td>
-                <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold;">${peratus}</td>
-                <td style="border: 1px solid black; padding:6px; text-align:center;">${keputusan}</td>
-            </tr>
+    let html = '';
+
+    if (isPBDAktif) {
+        // ==========================================
+        // A. PAPARAN JADUAL MODUL PBD
+        // ==========================================
+        const subId = document.getElementById('currentActiveSubject') ? document.getElementById('currentActiveSubject').value : '';
+        if (!subId) return alert("Sila pilih subjek PBD aktif terlebih dahulu!");
+
+        html = `
+            <div style="text-align:center; margin-bottom:20px; font-family: Arial, sans-serif;">
+                <h2 style="font-size:22px; font-weight:900; text-transform:uppercase; margin-bottom:5px;">LAPORAN PENCAPAIAN PBD KELAS</h2>
+                <h3 style="font-size:14px; font-weight:bold; color:#475569; margin-top:0; text-transform:uppercase;">
+                    KELAS: ${kelas} &nbsp;|&nbsp; SUBJEK: ${subId.toUpperCase()}
+                </h3>
+            </div>
+            <table style="width:100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size:12px;" border="1">
+                <thead>
+                    <tr style="background-color:#f1f5f9; text-transform:uppercase; font-weight:bold;">
+                        <th style="border: 1px solid black; padding:8px; text-align:center; width:5%;">BIL</th>
+                        <th style="border: 1px solid black; padding:8px; text-align:left; width:45%;">NAMA MURID</th>
+                        <th style="border: 1px solid black; padding:8px; text-align:center; width:15%;">TP KESELURUHAN</th>
+                        <th style="border: 1px solid black; padding:8px; text-align:center; width:15%;">TAHAP USAHA</th>
+                        <th style="border: 1px solid black; padding:8px; text-align:left; width:20%;">INTERVENSI KPM</th>
+                    </tr>
+                </thead>
+                <tbody>
         `;
-    });
 
-    html += `</tbody></table>`;
-    printArea.innerHTML = html; // Masukkan jadual ke dalam skrin cetak
+        activeStudents.forEach((s, idx) => {
+            const currentTp = s[`pbd_${subId}_tp`] || 0;
+            const currentUsaha = s[`pbd_${subId}_usaha`] || '-';
+            const currentIntervensi = s[`pbd_${subId}_intervensi`] || '-';
 
-    // Beri masa sedikit untuk DOM render, kemudian cetak
+            html += `
+                <tr>
+                    <td style="border: 1px solid black; padding:6px; text-align:center;">${idx + 1}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:left; font-weight:bold; text-transform:uppercase;">${s.nama}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; background-color:#faf5ff;">${currentTp > 0 ? 'TP ' + currentTp : '-'}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:center; text-transform:uppercase;">${currentUsaha}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:left; text-transform:uppercase; font-size:11px;">${currentIntervensi}</td>
+                </tr>
+            `;
+        });
+
+        html += `</tbody></table>`;
+
+    } else {
+        // ==========================================
+        // B. PAPARAN JADUAL MODUL PENILAIAN (AKADEMIK)
+        // ==========================================
+        
+        // Mengesan semua subjek akademik yang wujud dalam KPM_SUBJECTS
+        const senaraiSubjek = (typeof KPM_SUBJECTS !== 'undefined') ? KPM_SUBJECTS : [];
+
+        html = `
+            <div style="text-align:center; margin-bottom:20px; font-family: Arial, sans-serif;">
+                <h2 style="font-size:22px; font-weight:900; text-transform:uppercase; margin-bottom:5px;">LAPORAN KEPUTUSAN PENILAIAN KELAS</h2>
+                <h3 style="font-size:14px; font-weight:bold; color:#475569; margin-top:0; text-transform:uppercase;">
+                    KELAS: ${kelas} &nbsp;|&nbsp; PENILAIAN: ${penilaian}
+                </h3>
+            </div>
+            <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size:11px;" border="1">
+                <thead>
+                    <tr style="background-color:#f1f5f9; text-transform:uppercase; font-weight:bold;">
+                        <th style="border: 1px solid black; padding:6px; text-align:center; width:4%;">BIL</th>
+                        <th style="border: 1px solid black; padding:6px; text-align:left; min-width:180px;">NAMA MURID</th>
+        `;
+
+        // Bina lajur subjek secara dinamik mengikut subjek akademik yang wujud
+        senaraiSubjek.forEach(sub => {
+            html += `<th style="border: 1px solid black; padding:6px; text-align:center; font-size:10px;">${sub.id.toUpperCase()}</th>`;
+        });
+
+        // Tambah lajur Rumusan di hujung kanan jadual
+        html += `
+                        <th style="border: 1px solid black; padding:6px; text-align:center; width:8%;">PERATUS</th>
+                        <th style="border: 1px solid black; padding:6px; text-align:center; width:12%;">KEPUTUSAN</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        // Masukkan data markah bagi setiap murid
+        activeStudents.forEach((s, idx) => {
+            const peratus = s.peratus || s.purata || '-';
+            const keputusan = s.keputusan || s.status_lulus || '-';
+
+            html += `
+                <tr>
+                    <td style="border: 1px solid black; padding:6px; text-align:center;">${idx + 1}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:left; font-weight:bold; text-transform:uppercase;">${s.nama}</td>
+            `;
+
+            // Cetak markah bagi setiap subjek secara sebaris
+            senaraiSubjek.forEach(sub => {
+                const markah = (s[sub.id.toLowerCase()] !== undefined && s[sub.id.toLowerCase()] !== '') ? s[sub.id.toLowerCase()] : '-';
+                html += `<td style="border: 1px solid black; padding:6px; text-align:center; font-weight:medium;">${markah}</td>`;
+            });
+
+            html += `
+                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold;">${peratus}${peratus !== '-' ? '%' : ''}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; text-transform:uppercase; font-size:10px;">${keputusan}</td>
+                </tr>
+            `;
+        });
+
+        html += `</tbody></table></div>`;
+    }
+
+    // Masukkan keseluruhan template HTML yang dijana ke dalam seksyen cetakan
+    printArea.innerHTML = html;
+
+    // Cetak serta-merta selepas render selesai (delay 500ms)
     setTimeout(() => { window.print(); }, 500);
 };
 
-
 // ==========================================
-// 2. FUNGSI CETAK MATAPELAJARAN PILIHAN
+// 2. FUNGSI CETAK MATAPELAJARAN PILIHAN (PINTAR)
 // ==========================================
 window.cetakSubjekPilihan = () => {
     if (!activeStudents || activeStudents.length === 0) {
         return alert("Sila cari dan papar kelas terlebih dahulu sebelum mencetak!");
     }
 
-    // Tanya cikgu nak cetak subjek apa menggunakan kotak prompt
-    const inputSubjek = prompt("Sila masukkan KOD SUBJEK yang ingin dicetak.\nContoh: bm, bi, mt, sn, sej, rbt");
+    // Semak modul mana yang sedang aktif
+    const pbdBox = document.getElementById('pbdSubBox'); 
+    const isPBDAktif = pbdBox && !pbdBox.classList.contains('hidden-section');
+
+    // Paparkan mesej kotak prompt mengikut modul yang aktif
+    const mesejPrompt = isPBDAktif 
+        ? "Sila masukkan KOD SUBJEK PBD yang ingin dicetak.\nContoh: bm, bi, mt, sn, sej, rbt"
+        : "Sila masukkan KOD SUBJEK PENILAIAN yang ingin dicetak.\nContoh: bm, bi, mt, sn, sej, rbt";
     
-    // Jika cikgu tekan Cancel atau biarkan kosong, batal proses cetak
+    const inputSubjek = prompt(mesejPrompt);
+    
+    // Jika guru tekan Cancel atau biarkan kosong, batal proses cetak
     if (!inputSubjek) return; 
 
-    // Tukar ke huruf kecil sebab biasanya field dalam database huruf kecil
     const subjekFieldID = inputSubjek.trim().toLowerCase(); 
-    const namaSubjekPapar = inputSubjek.trim().toUpperCase(); // Untuk dipaparkan pada tajuk
+    const namaSubjekPapar = inputSubjek.trim().toUpperCase(); // Untuk paparan tajuk
 
     const kelas = document.getElementById('selKelas') ? document.getElementById('selKelas').value : "TIADA KELAS";
     const printArea = document.getElementById('section-sijil');
     if (!printArea) return alert("Ralat: Kawasan cetakan tidak dijumpai.");
     
     printArea.innerHTML = ''; 
+    let html = '';
 
-    let html = `
-        <div style="text-align:center; margin-bottom:20px; font-family: sans-serif;">
-            <h2 style="font-size:24px; font-weight:900; text-transform:uppercase; margin-bottom:5px;">LAPORAN PRESTASI MATAPELAJARAN</h2>
-            <h3 style="font-size:18px; font-weight:bold; color:#1e40af; margin-top:0;">SUBJEK: ${namaSubjekPapar} &nbsp;|&nbsp; KELAS: ${kelas}</h3>
-        </div>
-        <table style="width:100%; border-collapse: collapse; font-family: sans-serif; font-size:12px;" border="1">
-            <thead>
-                <tr style="background-color:#e0f2fe; text-transform:uppercase;">
-                    <th style="border: 1px solid black; padding:8px; text-align:center; width:5%;">BIL</th>
-                    <th style="border: 1px solid black; padding:8px; text-align:left;">NAMA MURID</th>
-                    <th style="border: 1px solid black; padding:8px; text-align:center; width:20%;">MARKAH</th>
-                    <th style="border: 1px solid black; padding:8px; text-align:center; width:20%;">GRED</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
-
-    activeStudents.forEach((s, idx) => {
-        // Ambil markah dari objek s (cth: s.bm, s.mt). Jika tiada data, papar '-'
-        const markah = (s[subjekFieldID] !== undefined && s[subjekFieldID] !== '') ? s[subjekFieldID] : '-';
-        // Ambil gred (cth: s.bm_gred, s.mt_gred). 
-        const gred = (s[subjekFieldID + '_gred'] !== undefined && s[subjekFieldID + '_gred'] !== '') ? s[subjekFieldID + '_gred'] : '-';
-        
-        html += `
-            <tr>
-                <td style="border: 1px solid black; padding:6px; text-align:center;">${idx + 1}</td>
-                <td style="border: 1px solid black; padding:6px; text-align:left; font-weight:bold; text-transform:uppercase;">${s.nama}</td>
-                <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; font-size:14px;">${markah}</td>
-                <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; color:#b91c1c;">${gred}</td>
-            </tr>
+    if (isPBDAktif) {
+        // ==========================================
+        // KATEGORI A: PAPARAN JADUAL SUBJEK (MODUL PBD)
+        // ==========================================
+        html = `
+            <div style="text-align:center; margin-bottom:20px; font-family: Arial, sans-serif;">
+                <h2 style="font-size:22px; font-weight:900; text-transform:uppercase; margin-bottom:5px;">LAPORAN PRESTASI PBD MATAPELAJARAN</h2>
+                <h3 style="font-size:14px; font-weight:bold; color:#1e40af; margin-top:0; text-transform:uppercase;">
+                    SUBJEK: ${namaSubjekPapar} &nbsp;|&nbsp; KELAS: ${kelas}
+                </h3>
+            </div>
+            <table style="width:100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size:12px;" border="1">
+                <thead>
+                    <tr style="background-color:#f1f5f9; text-transform:uppercase; font-weight:bold;">
+                        <th style="border: 1px solid black; padding:8px; text-align:center; width:5%;">BIL</th>
+                        <th style="border: 1px solid black; padding:8px; text-align:left; width:45%;">NAMA MURID</th>
+                        <th style="border: 1px solid black; padding:8px; text-align:center; width:15%;">TAHAP PENGUASAAN (TP)</th>
+                        <th style="border: 1px solid black; padding:8px; text-align:center; width:15%;">TAHAP USAHA</th>
+                        <th style="border: 1px solid black; padding:8px; text-align:left; width:20%;">INTERVENSI KPM</th>
+                    </tr>
+                </thead>
+                <tbody>
         `;
-    });
 
-    html += `</tbody></table>`;
+        activeStudents.forEach((s, idx) => {
+            // Membaca data spesifik PBD mengikut ID subjek (Contoh: pbd_bm_tp, pbd_bm_usaha)
+            const currentTp = s[`pbd_${subjekFieldID}_tp`] || 0;
+            const currentUsaha = s[`pbd_${subjekFieldID}_usaha`] || '-';
+            const currentIntervensi = s[`pbd_${subjekFieldID}_intervensi`] || '-';
+            
+            html += `
+                <tr>
+                    <td style="border: 1px solid black; padding:6px; text-align:center;">${idx + 1}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:left; font-weight:bold; text-transform:uppercase;">${s.nama}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; background-color:#faf5ff;">${currentTp > 0 ? 'TP ' + currentTp : '-'}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:center; text-transform:uppercase;">${currentUsaha}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:left; text-transform:uppercase; font-size:11px;">${currentIntervensi}</td>
+                </tr>
+            `;
+        });
+
+        html += `</tbody></table>`;
+
+    } else {
+        // ==========================================
+        // KATEGORI B: PAPARAN JADUAL SUBJEK (MODUL PENILAIAN / AKADEMIK)
+        // ==========================================
+        html = `
+            <div style="text-align:center; margin-bottom:20px; font-family: Arial, sans-serif;">
+                <h2 style="font-size:22px; font-weight:900; text-transform:uppercase; margin-bottom:5px;">LAPORAN PRESTASI MATAPELAJARAN (AKADEMIK)</h2>
+                <h3 style="font-size:14px; font-weight:bold; color:#1e40af; margin-top:0; text-transform:uppercase;">
+                    SUBJEK: ${namaSubjekPapar} &nbsp;|&nbsp; KELAS: ${kelas}
+                </h3>
+            </div>
+            <table style="width:100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size:12px;" border="1">
+                <thead>
+                    <tr style="background-color:#e0f2fe; text-transform:uppercase; font-weight:bold;">
+                        <th style="border: 1px solid black; padding:8px; text-align:center; width:5%;">BIL</th>
+                        <th style="border: 1px solid black; padding:8px; text-align:left;">NAMA MURID</th>
+                        <th style="border: 1px solid black; padding:8px; text-align:center; width:20%;">MARKAH</th>
+                        <th style="border: 1px solid black; padding:8px; text-align:center; width:20%;">GRED</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        activeStudents.forEach((s, idx) => {
+            const markah = (s[subjekFieldID] !== undefined && s[subjekFieldID] !== '') ? s[subjekFieldID] : '-';
+            const gred = (s[subjekFieldID + '_gred'] !== undefined && s[subjekFieldID + '_gred'] !== '') ? s[subjekFieldID + '_gred'] : '-';
+            
+            html += `
+                <tr>
+                    <td style="border: 1px solid black; padding:6px; text-align:center;">${idx + 1}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:left; font-weight:bold; text-transform:uppercase;">${s.nama}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; font-size:14px;">${markah}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; color:#b91c1c;">${gred}</td>
+                </tr>
+            `;
+        });
+
+        html += `</tbody></table>`;
+    }
+
     printArea.innerHTML = html; 
 
+    // Jalankan cetakan dokumen
     setTimeout(() => { window.print(); }, 500);
 };
-
 </script>
 </body>
 </html>
