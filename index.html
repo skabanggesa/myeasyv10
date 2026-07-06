@@ -2250,7 +2250,7 @@ window.cetakKeputusanKelas = () => {
 
 
 // ==========================================================
-// FUNGSI UTAMA 2: CETAK MATAPELAJARAN PILIHAN
+// FUNGSI UTAMA 2: CETAK MATAPELAJARAN PILIHAN (GRED DIPERBAIKI)
 // ==========================================================
 window.cetakSubjekPilihan = () => {
     if (!activeStudents || activeStudents.length === 0) {
@@ -2276,7 +2276,9 @@ window.cetakSubjekPilihan = () => {
     let html = '';
 
     if (isPBDAktif) {
-        // PBD Single Subject
+        // ==========================================
+        // KATEGORI A: JADUAL TUNGGAL MODUL PBD
+        // ==========================================
         html = `
             <div style="text-align:center; margin-bottom:20px; font-family: Arial, sans-serif;">
                 <h2 style="font-size:22px; font-weight:900; text-transform:uppercase; margin-bottom:5px;">LAPORAN PRESTASI PBD MATAPELAJARAN</h2>
@@ -2312,7 +2314,9 @@ window.cetakSubjekPilihan = () => {
         html += `</tbody></table>`;
 
     } else {
-        // Akademik Single Subject
+        // ==========================================
+        // KATEGORI B: JADUAL TUNGGAL MODUL PENILAIAN
+        // ==========================================
         html = `
             <div style="text-align:center; margin-bottom:20px; font-family: Arial, sans-serif;">
                 <h2 style="font-size:22px; font-weight:900; text-transform:uppercase; margin-bottom:5px;">LAPORAN PRESTASI MATAPELAJARAN (AKADEMIK)</h2>
@@ -2334,15 +2338,26 @@ window.cetakSubjekPilihan = () => {
 
         activeStudents.forEach((s, idx) => {
             const markah = dapatkanMarkah(s, subjekFieldID);
-            const gredKey = subjekFieldID + '_gred';
-            const gred = (s[gredKey] || s[gredKey.toUpperCase()] || '-');
+            
+            // --- PROSES KIRA GRED SECARA REAL-TIME ---
+            let gredPapar = '-';
+            if (markah !== '-' && markah !== '' && !isNaN(markah)) {
+                // Panggil fungsi getGrade sedia ada di dalam template anda
+                if (typeof getGrade === 'function') {
+                    const hasilGred = getGrade(Number(markah));
+                    gredPapar = hasilGred ? hasilGred.gred : '-';
+                } else if (typeof window.getGrade === 'function') {
+                    const hasilGred = window.getGrade(Number(markah));
+                    gredPapar = hasilGred ? hasilGred.gred : '-';
+                }
+            }
             
             html += `
                 <tr>
                     <td style="border: 1px solid black; padding:6px; text-align:center;">${idx + 1}</td>
                     <td style="border: 1px solid black; padding:6px; text-align:left; font-weight:bold; text-transform:uppercase;">${s.nama}</td>
                     <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; font-size:14px;">${markah}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; color:#b91c1c;">${gred}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; color:#b91c1c;">${gredPapar}</td>
                 </tr>
             `;
         });
