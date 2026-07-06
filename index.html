@@ -2024,7 +2024,111 @@ window.janaAnalisisDLP = (students) => {
 };
 
 // ==========================================================
-// FUNGSI CETAK KEPUTUSAN KELAS (PINTAR: IKUT MODUL AKTIF)
+// KOD CETAKAN PINTAR (AUTO-DETEKSI MODUL & FORMAT DATA)
+// ==========================================================
+
+// --- UTALITI 1: Mengesan secara automatik jika Modul PBD aktif di skrin ---
+function cekPbdAktif() {
+    // Semak senarai ID elemen kontena PBD yang biasa digunakan
+    const pbdIDs = ['pbdSection', 'pbdBox', 'pbdContainer', 'pbdSubBox', 'modulPBD', 'pbd-section'];
+    for (let id of pbdIDs) {
+        const el = document.getElementById(id);
+        if (el && !el.classList.contains('hidden') && el.style.display !== 'none') {
+            return true;
+        }
+    }
+    // Semak jika ada butang/tab aktif yang mengandungi perkataan "PBD"
+    const elemenAktif = document.querySelectorAll('.bg-blue-600, .bg-indigo-600, .text-white, button, a');
+    for (let el of elemenAktif) {
+        if (el.offsetWidth > 0 && el.offsetHeight > 0 && el.textContent.toUpperCase().includes('PBD')) {
+            if (el.classList.contains('bg-blue-600') || el.classList.contains('bg-indigo-600') || el.classList.contains('active')) {
+                return true;
+            }
+        }
+    }
+    return false; // Default kepada Modul Penilaian jika tiada petunjuk PBD aktif
+}
+
+// --- UTALITI 2: Mencari subjek PBD yang aktif dipapar di skrin ---
+function ambilSubjekPBDAktif() {
+    const dropdowns = ['currentActiveSubject', 'selSubjek', 'selSubjekPBD', 'pbdSubject', 'selSubject', 'ddlSubjek'];
+    for (let id of dropdowns) {
+        const el = document.getElementById(id);
+        if (el && el.value) return el.value.toLowerCase();
+    }
+    return '';
+}
+
+// --- UTALITI 3: Mengekstrak markah secara fleksibel (Sokong Huruf Besar/Kecil) ---
+function dapatkanMarkah(s, subId) {
+    if (!s) return '-';
+    const low = subId.toLowerCase();
+    const up = subId.toUpperCase();
+    
+    // Cuba imbas variasi key yang mungkin wujud dalam objek murid
+    const variasi = [low, up, 'markah_' + low, 'markah_' + up, low + '_markah', up + '_markah'];
+    for (let k of variasi) {
+        if (s[k] !== undefined && s[k] !== null && s[k] !== '') return s[k];
+    }
+    // Jika disimpan di dalam sub-objek (marks / markah)
+    if (s.marks && typeof s.marks === 'object') {
+        if (s.marks[low] !== undefined) return s.marks[low];
+        if (s.marks[up] !== undefined) return s.marks[up];
+    }
+    if (s.markah && typeof s.markah === 'object') {
+        if (s.markah[low] !== undefined) return s.markah[low];
+        if (s.markah[up] !== undefined) return s.markah[up];
+    }
+    return '-';
+}
+
+// --- UTALITI 4: Mengekstrak Peratus & Keputusan secara fleksibel ---
+function dapatkanPeratus(s) {
+    const keys = ['peratus', 'PERATUS', 'purata', 'PURATA', 'percentage', 'PERCENTAGE'];
+    for (let k of keys) { if (s[k] !== undefined && s[k] !== null && s[k] !== '') return s[k]; }
+    return '-';
+}
+function dapatkanKeputusan(s) {
+    const keys = ['keputusan', 'KEPUTUSAN', 'status', 'STATUS', 'status_lulus', 'STATUS_LULUS'];
+    for (let k of keys) { if (s[k] !== undefined && s[k] !== null && s[k] !== '') return s[k]; }
+    return '-';
+}
+
+// --- UTALITI 5: Mengekstrak Data PBD Murid (TP, Usaha, Intervensi) ---
+function dapatkanDataPBD(s, subId) {
+    const low = subId.toLowerCase();
+    const up = subId.toUpperCase();
+    let tp = '-', usaha = '-', intervensi = '-';
+    
+    const tpKeys = [`pbd_${low}_tp`, `pbd_${up}_tp`, `${low}_tp`, `${up}_tp`, `tp_${low}`, `pbd_${low}`];
+    for (let k of tpKeys) { if (s[k] !== undefined && s[k] !== null && s[k] !== '') { tp = s[k]; break; } }
+    
+    const usahaKeys = [`pbd_${low}_usaha`, `pbd_${up}_usaha`, `${low}_usaha`, `${up}_usaha`, `usaha_${low}`];
+    for (let k of usahaKeys) { if (s[k] !== undefined && s[k] !== null && s[k] !== '') { usaha = s[k]; break; } }
+    
+    const intKeys = [`pbd_${low}_intervensi`, `pbd_${up}_intervensi`, `${low}_intervensi`, `${up}_intervensi`, `intervensi_${low}`, `pbd_${low}_ulasan`];
+    for (let k of intKeys) { if (s[k] !== undefined && s[k] !== null && s[k] !== '') { intervensi = s[k]; break; } }
+    
+    if (s.pbd && typeof s.pbd === 'object') {
+        if (s.pbd[low] && typeof s.pbd[low] === 'object') {
+            if (s.pbd[low].tp !== undefined) tp = s.pbd[low].tp;
+            if (s.pbd[low].usaha !== undefined) usaha = s.pbd[low].usaha;
+            if (s.pbd[low].intervensi !== undefined) intervensi = s.pbd[low].intervensi;
+        } else {
+            for (let k of tpKeys) { if (s.pbd[k] !== undefined) { tp = s.pbd[k]; break; } }
+            for (let k of usahaKeys) { if (s.pbd[k] !== undefined) { usaha = s.pbd[k]; break; } }
+            for (let k of intKeys) { if (s.pbd[k] !== undefined) { intervensi = s.pbd[k]; break; } }
+        }
+    }
+    if (tp !== '-' && !isNaN(tp) && String(tp).trim() !== '' && !String(tp).toUpperCase().includes('TP')) {
+        tp = 'TP ' + tp;
+    }
+    return { tp, usaha, intervensi };
+}
+
+
+// ==========================================================
+// FUNGSI UTAMA 1: CETAK KEPUTUSAN KELAS
 // ==========================================================
 window.cetakKeputusanKelas = () => {
     if (!activeStudents || activeStudents.length === 0) {
@@ -2036,26 +2140,24 @@ window.cetakKeputusanKelas = () => {
     const printArea = document.getElementById('section-sijil');
     
     if (!printArea) return alert("Ralat: Kawasan cetakan (section-sijil) tidak dijumpai.");
-    printArea.innerHTML = ''; // Bersihkan kawasan cetakan lama
+    printArea.innerHTML = ''; 
 
-    // Semak modul mana yang sedang aktif
-    const pbdBox = document.getElementById('pbdSubBox'); 
-    const isPBDAktif = pbdBox && !pbdBox.classList.contains('hidden-section');
-
+    // Panggil fungsi auto-kesan modul aktif
+    const isPBDAktif = cekPbdAktif();
     let html = '';
 
     if (isPBDAktif) {
-        // ==========================================
-        // A. PAPARAN JADUAL MODUL PBD
-        // ==========================================
-        const subId = document.getElementById('currentActiveSubject') ? document.getElementById('currentActiveSubject').value : '';
-        if (!subId) return alert("Sila pilih subjek PBD aktif terlebih dahulu!");
+        // ------------------------------------------
+        // FORMAT JADUAL: MODUL PBD
+        // ------------------------------------------
+        const subId = ambilSubjekPBDAktif();
+        const namaSubjekPapar = subId ? subId.toUpperCase() : 'SEMUA';
 
         html = `
             <div style="text-align:center; margin-bottom:20px; font-family: Arial, sans-serif;">
                 <h2 style="font-size:22px; font-weight:900; text-transform:uppercase; margin-bottom:5px;">LAPORAN PENCAPAIAN PBD KELAS</h2>
                 <h3 style="font-size:14px; font-weight:bold; color:#475569; margin-top:0; text-transform:uppercase;">
-                    KELAS: ${kelas} &nbsp;|&nbsp; SUBJEK: ${subId.toUpperCase()}
+                    KELAS: ${kelas} &nbsp;|&nbsp; SUBJEK: ${namaSubjekPapar}
                 </h3>
             </div>
             <table style="width:100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size:12px;" border="1">
@@ -2072,29 +2174,23 @@ window.cetakKeputusanKelas = () => {
         `;
 
         activeStudents.forEach((s, idx) => {
-            const currentTp = s[`pbd_${subId}_tp`] || 0;
-            const currentUsaha = s[`pbd_${subId}_usaha`] || '-';
-            const currentIntervensi = s[`pbd_${subId}_intervensi`] || '-';
-
+            const dataPbd = dapatkanDataPBD(s, subId);
             html += `
                 <tr>
                     <td style="border: 1px solid black; padding:6px; text-align:center;">${idx + 1}</td>
                     <td style="border: 1px solid black; padding:6px; text-align:left; font-weight:bold; text-transform:uppercase;">${s.nama}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; background-color:#faf5ff;">${currentTp > 0 ? 'TP ' + currentTp : '-'}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:center; text-transform:uppercase;">${currentUsaha}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:left; text-transform:uppercase; font-size:11px;">${currentIntervensi}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; background-color:#faf5ff;">${dataPbd.tp}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:center; text-transform:uppercase;">${dataPbd.usaha}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:left; text-transform:uppercase; font-size:11px;">${dataPbd.intervensi}</td>
                 </tr>
             `;
         });
-
         html += `</tbody></table>`;
 
     } else {
-        // ==========================================
-        // B. PAPARAN JADUAL MODUL PENILAIAN (AKADEMIK)
-        // ==========================================
-        
-        // Mengesan semua subjek akademik yang wujud dalam KPM_SUBJECTS
+        // ------------------------------------------
+        // FORMAT JADUAL: MODUL PENILAIAN (AKADEMIK)
+        // ------------------------------------------
         const senaraiSubjek = (typeof KPM_SUBJECTS !== 'undefined') ? KPM_SUBJECTS : [];
 
         html = `
@@ -2112,12 +2208,10 @@ window.cetakKeputusanKelas = () => {
                         <th style="border: 1px solid black; padding:6px; text-align:left; min-width:180px;">NAMA MURID</th>
         `;
 
-        // Bina lajur subjek secara dinamik mengikut subjek akademik yang wujud
         senaraiSubjek.forEach(sub => {
             html += `<th style="border: 1px solid black; padding:6px; text-align:center; font-size:10px;">${sub.id.toUpperCase()}</th>`;
         });
 
-        // Tambah lajur Rumusan di hujung kanan jadual
         html += `
                         <th style="border: 1px solid black; padding:6px; text-align:center; width:8%;">PERATUS</th>
                         <th style="border: 1px solid black; padding:6px; text-align:center; width:12%;">KEPUTUSAN</th>
@@ -2126,10 +2220,9 @@ window.cetakKeputusanKelas = () => {
                 <tbody>
         `;
 
-        // Masukkan data markah bagi setiap murid
         activeStudents.forEach((s, idx) => {
-            const peratus = s.peratus || s.purata || '-';
-            const keputusan = s.keputusan || s.status_lulus || '-';
+            const peratus = dapatkanPeratus(s);
+            const keputusan = dapatkanKeputusan(s);
 
             html += `
                 <tr>
@@ -2137,53 +2230,43 @@ window.cetakKeputusanKelas = () => {
                     <td style="border: 1px solid black; padding:6px; text-align:left; font-weight:bold; text-transform:uppercase;">${s.nama}</td>
             `;
 
-            // Cetak markah bagi setiap subjek secara sebaris
             senaraiSubjek.forEach(sub => {
-                const markah = (s[sub.id.toLowerCase()] !== undefined && s[sub.id.toLowerCase()] !== '') ? s[sub.id.toLowerCase()] : '-';
+                const markah = dapatkanMarkah(s, sub.id);
                 html += `<td style="border: 1px solid black; padding:6px; text-align:center; font-weight:medium;">${markah}</td>`;
             });
 
             html += `
-                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold;">${peratus}${peratus !== '-' ? '%' : ''}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold;">${peratus}${peratus !== '-' && !String(peratus).includes('%') ? '%' : ''}</td>
                     <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; text-transform:uppercase; font-size:10px;">${keputusan}</td>
                 </tr>
             `;
         });
-
         html += `</tbody></table></div>`;
     }
 
-    // Masukkan keseluruhan template HTML yang dijana ke dalam seksyen cetakan
     printArea.innerHTML = html;
-
-    // Cetak serta-merta selepas render selesai (delay 500ms)
     setTimeout(() => { window.print(); }, 500);
 };
 
-// ==========================================
-// 2. FUNGSI CETAK MATAPELAJARAN PILIHAN (PINTAR)
-// ==========================================
+
+// ==========================================================
+// FUNGSI UTAMA 2: CETAK MATAPELAJARAN PILIHAN
+// ==========================================================
 window.cetakSubjekPilihan = () => {
     if (!activeStudents || activeStudents.length === 0) {
         return alert("Sila cari dan papar kelas terlebih dahulu sebelum mencetak!");
     }
 
-    // Semak modul mana yang sedang aktif
-    const pbdBox = document.getElementById('pbdSubBox'); 
-    const isPBDAktif = pbdBox && !pbdBox.classList.contains('hidden-section');
-
-    // Paparkan mesej kotak prompt mengikut modul yang aktif
+    const isPBDAktif = cekPbdAktif();
     const mesejPrompt = isPBDAktif 
         ? "Sila masukkan KOD SUBJEK PBD yang ingin dicetak.\nContoh: bm, bi, mt, sn, sej, rbt"
         : "Sila masukkan KOD SUBJEK PENILAIAN yang ingin dicetak.\nContoh: bm, bi, mt, sn, sej, rbt";
     
     const inputSubjek = prompt(mesejPrompt);
-    
-    // Jika guru tekan Cancel atau biarkan kosong, batal proses cetak
     if (!inputSubjek) return; 
 
     const subjekFieldID = inputSubjek.trim().toLowerCase(); 
-    const namaSubjekPapar = inputSubjek.trim().toUpperCase(); // Untuk paparan tajuk
+    const namaSubjekPapar = inputSubjek.trim().toUpperCase();
 
     const kelas = document.getElementById('selKelas') ? document.getElementById('selKelas').value : "TIADA KELAS";
     const printArea = document.getElementById('section-sijil');
@@ -2193,9 +2276,7 @@ window.cetakSubjekPilihan = () => {
     let html = '';
 
     if (isPBDAktif) {
-        // ==========================================
-        // KATEGORI A: PAPARAN JADUAL SUBJEK (MODUL PBD)
-        // ==========================================
+        // PBD Single Subject
         html = `
             <div style="text-align:center; margin-bottom:20px; font-family: Arial, sans-serif;">
                 <h2 style="font-size:22px; font-weight:900; text-transform:uppercase; margin-bottom:5px;">LAPORAN PRESTASI PBD MATAPELAJARAN</h2>
@@ -2217,28 +2298,21 @@ window.cetakSubjekPilihan = () => {
         `;
 
         activeStudents.forEach((s, idx) => {
-            // Membaca data spesifik PBD mengikut ID subjek (Contoh: pbd_bm_tp, pbd_bm_usaha)
-            const currentTp = s[`pbd_${subjekFieldID}_tp`] || 0;
-            const currentUsaha = s[`pbd_${subjekFieldID}_usaha`] || '-';
-            const currentIntervensi = s[`pbd_${subjekFieldID}_intervensi`] || '-';
-            
+            const dataPbd = dapatkanDataPBD(s, subjekFieldID);
             html += `
                 <tr>
                     <td style="border: 1px solid black; padding:6px; text-align:center;">${idx + 1}</td>
                     <td style="border: 1px solid black; padding:6px; text-align:left; font-weight:bold; text-transform:uppercase;">${s.nama}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; background-color:#faf5ff;">${currentTp > 0 ? 'TP ' + currentTp : '-'}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:center; text-transform:uppercase;">${currentUsaha}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:left; text-transform:uppercase; font-size:11px;">${currentIntervensi}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; background-color:#faf5ff;">${dataPbd.tp}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:center; text-transform:uppercase;">${dataPbd.usaha}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:left; text-transform:uppercase; font-size:11px;">${dataPbd.intervensi}</td>
                 </tr>
             `;
         });
-
         html += `</tbody></table>`;
 
     } else {
-        // ==========================================
-        // KATEGORI B: PAPARAN JADUAL SUBJEK (MODUL PENILAIAN / AKADEMIK)
-        // ==========================================
+        // Akademik Single Subject
         html = `
             <div style="text-align:center; margin-bottom:20px; font-family: Arial, sans-serif;">
                 <h2 style="font-size:22px; font-weight:900; text-transform:uppercase; margin-bottom:5px;">LAPORAN PRESTASI MATAPELAJARAN (AKADEMIK)</h2>
@@ -2259,8 +2333,9 @@ window.cetakSubjekPilihan = () => {
         `;
 
         activeStudents.forEach((s, idx) => {
-            const markah = (s[subjekFieldID] !== undefined && s[subjekFieldID] !== '') ? s[subjekFieldID] : '-';
-            const gred = (s[subjekFieldID + '_gred'] !== undefined && s[subjekFieldID + '_gred'] !== '') ? s[subjekFieldID + '_gred'] : '-';
+            const markah = dapatkanMarkah(s, subjekFieldID);
+            const gredKey = subjekFieldID + '_gred';
+            const gred = (s[gredKey] || s[gredKey.toUpperCase()] || '-');
             
             html += `
                 <tr>
@@ -2271,13 +2346,10 @@ window.cetakSubjekPilihan = () => {
                 </tr>
             `;
         });
-
         html += `</tbody></table>`;
     }
 
     printArea.innerHTML = html; 
-
-    // Jalankan cetakan dokumen
     setTimeout(() => { window.print(); }, 500);
 };
 </script>
