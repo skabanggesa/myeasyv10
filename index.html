@@ -2161,193 +2161,9 @@ window.cetakKeputusanKelas = () => {
     const isPBDAktif = cekPbdAktif();
     let html = '';
 
-if (isPBDAktif) {
-        // ==========================================
-        // KATEGORI A: JADUAL TERPERINCI MODUL PBD (1 SUBJEK)
-        // ==========================================
-        const subObj = KPM_SUBJECTS.find(x => x.id.toLowerCase() === subjekFieldID);
-        if (!subObj) {
-            return alert(`Maaf, subjek ${namaSubjekPapar} tidak dijumpai dalam senarai PBD KPM.`);
-        }
-
-        // Bina tajuk lajur (header) kemahiran secara dinamik
-        let headerSkillsHtml = '';
-        subObj.skills.forEach(sk => {
-            headerSkillsHtml += `<th style="border: 1px solid black; padding:8px; text-align:center;">${sk.toUpperCase()}</th>`;
-        });
-
-        html = `
-            <div style="text-align:center; margin-bottom:20px; font-family: Arial, sans-serif;">
-                <h2 style="font-size:22px; font-weight:900; text-transform:uppercase; margin-bottom:5px;">LAPORAN PRESTASI PBD MATAPELAJARAN</h2>
-                <h3 style="font-size:14px; font-weight:bold; color:#1e40af; margin-top:0; text-transform:uppercase;">
-                    SUBJEK: ${namaSubjekPapar} &nbsp;|&nbsp; KELAS: ${kelas}
-                </h3>
-            </div>
-            <table style="width:100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size:11px;" border="1">
-                <thead>
-                    <tr style="background-color:#f1f5f9; text-transform:uppercase; font-weight:bold;">
-                        <th style="border: 1px solid black; padding:8px; text-align:center; width:4%;">BIL</th>
-                        <th style="border: 1px solid black; padding:8px; text-align:left; width:20%;">NAMA MURID</th>
-                        ${headerSkillsHtml}
-                        <th style="border: 1px solid black; padding:8px; text-align:center; width:12%;">TP KESELURUHAN</th>
-                        <th style="border: 1px solid black; padding:8px; text-align:center; width:12%;">TAHAP USAHA</th>
-                        <th style="border: 1px solid black; padding:8px; text-align:left; width:25%;">INTERVENSI KPM</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-
-        activeStudents.forEach((s, idx) => {
-            // Dapatkan data kemahiran murid (K1, K2, K3...)
-            let skillsRowHtml = '';
-            subObj.skills.forEach((sk, sIdx) => {
-                const cellVal = s[`pbd_${subjekFieldID}_k${sIdx+1}`] || 0;
-                const textTp = cellVal > 0 ? `TP ${cellVal}` : '-';
-                skillsRowHtml += `<td style="border: 1px solid black; padding:6px; text-align:center;">${textTp}</td>`;
-            });
-
-            // Dapatkan data TP, Usaha, Intervensi
-            const currentTp = s[`pbd_${subjekFieldID}_tp`] || 0;
-            const textTpKeseluruhan = currentTp > 0 ? `TP ${currentTp}` : '-';
-            const currentUsaha = s[`pbd_${subjekFieldID}_usaha`] || '-';
-            const currentIntervensi = s[`pbd_${subjekFieldID}_intervensi`] || '-';
-
-            html += `
-                <tr>
-                    <td style="border: 1px solid black; padding:6px; text-align:center;">${idx + 1}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:left; font-weight:bold; text-transform:uppercase;">${s.nama}</td>
-                    ${skillsRowHtml}
-                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; background-color:#faf5ff;">${textTpKeseluruhan}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:center; text-transform:uppercase;">${currentUsaha}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:left; text-transform:uppercase; font-size:10px;">${currentIntervensi}</td>
-                </tr>
-            `;
-        });
-        html += `</tbody></table>`;
-    } else {
+    if (isPBDAktif) {
         // ------------------------------------------
-        // FORMAT JADUAL: MODUL PENILAIAN (AKADEMIK)
-        // ------------------------------------------
-        const senaraiSubjek = (typeof KPM_SUBJECTS !== 'undefined') ? KPM_SUBJECTS : [];
-
-        html = `
-            <div style="text-align:center; margin-bottom:20px; font-family: Arial, sans-serif;">
-                <h2 style="font-size:22px; font-weight:900; text-transform:uppercase; margin-bottom:5px;">LAPORAN KEPUTUSAN PENILAIAN KELAS</h2>
-                <h3 style="font-size:14px; font-weight:bold; color:#475569; margin-top:0; text-transform:uppercase;">
-                    KELAS: ${kelas} &nbsp;|&nbsp; PENILAIAN: ${penilaian}
-                </h3>
-            </div>
-            <div style="overflow-x:auto;">
-            <table style="width:100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size:11px;" border="1">
-                <thead>
-                    <tr style="background-color:#f1f5f9; text-transform:uppercase; font-weight:bold;">
-                        <th style="border: 1px solid black; padding:6px; text-align:center; width:4%;">BIL</th>
-                        <th style="border: 1px solid black; padding:6px; text-align:left; min-width:180px;">NAMA MURID</th>
-        `;
-
-        senaraiSubjek.forEach(sub => {
-            html += `<th style="border: 1px solid black; padding:6px; text-align:center; font-size:10px;">${sub.id.toUpperCase()}</th>`;
-        });
-
-        html += `
-                        <th style="border: 1px solid black; padding:6px; text-align:center; width:8%;">PERATUS</th>
-                        <th style="border: 1px solid black; padding:6px; text-align:center; width:12%;">KEPUTUSAN</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-
-        activeStudents.forEach((s, idx) => {
-            let totalMarks = 0;
-            let countSubjekDikirakan = 0;
-            let adaGagal = false;
-
-            let barisMarkahHtml = '';
-
-            // Senarai ID Subjek Teras untuk disemak (menyokong 'sejarah' dan kependekan 'sej')
-            const subjekTerasGagal = ['bm', 'bi', 'mt', 'sn', 'sejarah', 'sej'];
-
-            senaraiSubjek.forEach(sub => {
-                const markah = dapatkanMarkah(s, sub.id);
-                barisMarkahHtml += `<td style="border: 1px solid black; padding:6px; text-align:center; font-weight:medium;">${markah}</td>`;
-                
-                if (markah !== '-' && markah !== '' && !isNaN(markah)) {
-                    const markahNombor = Number(markah);
-                    totalMarks += markahNombor;
-                    countSubjekDikirakan++;
-                    
-                    // Semak syarat gagal HANYA untuk subjek teras < 20
-                    const idSubjekCek = sub.id.toLowerCase();
-                    if (subjekTerasGagal.includes(idSubjekCek) && markahNombor < 20) {
-                        adaGagal = true;
-                    }
-                }
-            });
-
-            // 1. Kira Peratus
-            let peratusPapar = '-';
-            if (s.percent !== undefined && s.percent !== null && s.percent !== '') {
-                peratusPapar = parseFloat(s.percent).toFixed(2);
-            } else if (countSubjekDikirakan > 0) {
-                peratusPapar = ((totalMarks / (countSubjekDikirakan * 100)) * 100).toFixed(2);
-            }
-
-            // 2. Dapatkan Keputusan Lulus / Gagal
-            let keputusanPapar = dapatkanKeputusan(s); 
-            if (keputusanPapar === '-') {
-                if (countSubjekDikirakan > 0) {
-                    keputusanPapar = adaGagal ? 'GAGAL' : 'LULUS';
-                } else {
-                    keputusanPapar = 'TIDAK LENGKAP';
-                }
-            }
-
-            html += `
-                <tr>
-                    <td style="border: 1px solid black; padding:6px; text-align:center;">${idx + 1}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:left; font-weight:bold; text-transform:uppercase;">${s.nama}</td>
-                    ${barisMarkahHtml}
-                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold;">${peratusPapar}${peratusPapar !== '-' ? '%' : ''}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; text-transform:uppercase; font-size:10px; color:${keputusanPapar === 'GAGAL' ? '#b91c1c' : (keputusanPapar === 'LULUS' ? '#15803d' : '#000')}">${keputusanPapar}</td>
-                </tr>
-            `;
-        });
-        html += `</tbody></table></div>`;
-    }
-
-    printArea.innerHTML = html;
-    setTimeout(() => { window.print(); }, 500);
-};
-
-// ==========================================================
-// FUNGSI UTAMA 2: CETAK MATAPELAJARAN PILIHAN (GRED DIPERBAIKI)
-// ==========================================================
-window.cetakSubjekPilihan = () => {
-    if (!activeStudents || activeStudents.length === 0) {
-        return alert("Sila cari dan papar kelas terlebih dahulu sebelum mencetak!");
-    }
-
-    const isPBDAktif = cekPbdAktif();
-    const mesejPrompt = isPBDAktif 
-        ? "Sila masukkan KOD SUBJEK PBD yang ingin dicetak.\nContoh: bm, bi, mt, sn, sej, rbt"
-        : "Sila masukkan KOD SUBJEK PENILAIAN yang ingin dicetak.\nContoh: bm, bi, mt, sn, sej, rbt";
-    
-    const inputSubjek = prompt(mesejPrompt);
-    if (!inputSubjek) return; 
-
-    const subjekFieldID = inputSubjek.trim().toLowerCase(); 
-    const namaSubjekPapar = inputSubjek.trim().toUpperCase();
-
-    const kelas = document.getElementById('selKelas') ? document.getElementById('selKelas').value : "TIADA KELAS";
-    const printArea = document.getElementById('section-sijil');
-    if (!printArea) return alert("Ralat: Kawasan cetakan tidak dijumpai.");
-    
-    printArea.innerHTML = ''; 
-    let html = '';
-
-if (isPBDAktif) {
-        // ------------------------------------------
-        // FORMAT JADUAL: MODUL PBD (RUMUSAN TP KESELURUHAN KELAS)
+        // FORMAT JADUAL: MODUL PBD (RUMUSAN TP KESELURUHAN KELAS) -> DI SINI TEMPATNYA!
         // ------------------------------------------
         let headerSubjekHtml = '';
         KPM_SUBJECTS.forEach(sub => {
@@ -2394,6 +2210,184 @@ if (isPBDAktif) {
         html += `</tbody></table></div>`;
 
     } else {
+        // ------------------------------------------
+        // FORMAT JADUAL: MODUL PENILAIAN (AKADEMIK)
+        // ------------------------------------------
+        const senaraiSubjek = (typeof KPM_SUBJECTS !== 'undefined') ? KPM_SUBJECTS : [];
+
+        html = `
+            <div style="text-align:center; margin-bottom:20px; font-family: Arial, sans-serif;">
+                <h2 style="font-size:22px; font-weight:900; text-transform:uppercase; margin-bottom:5px;">LAPORAN KEPUTUSAN PENILAIAN KELAS</h2>
+                <h3 style="font-size:14px; font-weight:bold; color:#475569; margin-top:0; text-transform:uppercase;">
+                    KELAS: ${kelas} &nbsp;|&nbsp; PENILAIAN: ${penilaian}
+                </h3>
+            </div>
+            <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size:11px;" border="1">
+                <thead>
+                    <tr style="background-color:#f1f5f9; text-transform:uppercase; font-weight:bold;">
+                        <th style="border: 1px solid black; padding:6px; text-align:center; width:4%;">BIL</th>
+                        <th style="border: 1px solid black; padding:6px; text-align:left; min-width:180px;">NAMA MURID</th>
+        `;
+
+        senaraiSubjek.forEach(sub => {
+            html += `<th style="border: 1px solid black; padding:6px; text-align:center; font-size:10px;">${sub.id.toUpperCase()}</th>`;
+        });
+
+        html += `
+                        <th style="border: 1px solid black; padding:6px; text-align:center; width:8%;">PERATUS</th>
+                        <th style="border: 1px solid black; padding:6px; text-align:center; width:12%;">KEPUTUSAN</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        activeStudents.forEach((s, idx) => {
+            let totalMarks = 0;
+            let countSubjekDikirakan = 0;
+            let adaGagal = false;
+
+            let barisMarkahHtml = '';
+            const subjekTerasGagal = ['bm', 'bi', 'mt', 'sn', 'sejarah', 'sej'];
+
+            senaraiSubjek.forEach(sub => {
+                const markah = dapatkanMarkah(s, sub.id);
+                barisMarkahHtml += `<td style="border: 1px solid black; padding:6px; text-align:center; font-weight:medium;">${markah}</td>`;
+                
+                if (markah !== '-' && markah !== '' && !isNaN(markah)) {
+                    const markahNombor = Number(markah);
+                    totalMarks += markahNombor;
+                    countSubjekDikirakan++;
+                    
+                    const idSubjekCek = sub.id.toLowerCase();
+                    if (subjekTerasGagal.includes(idSubjekCek) && markahNombor < 20) {
+                        adaGagal = true;
+                    }
+                }
+            });
+
+            let peratusPapar = '-';
+            if (s.percent !== undefined && s.percent !== null && s.percent !== '') {
+                peratusPapar = parseFloat(s.percent).toFixed(2);
+            } else if (countSubjekDikirakan > 0) {
+                peratusPapar = ((totalMarks / (countSubjekDikirakan * 100)) * 100).toFixed(2);
+            }
+
+            let keputusanPapar = dapatkanKeputusan(s); 
+            if (keputusanPapar === '-') {
+                if (countSubjekDikirakan > 0) {
+                    keputusanPapar = adaGagal ? 'GAGAL' : 'LULUS';
+                } else {
+                    keputusanPapar = 'TIDAK LENGKAP';
+                }
+            }
+
+            html += `
+                <tr>
+                    <td style="border: 1px solid black; padding:6px; text-align:center;">${idx + 1}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:left; font-weight:bold; text-transform:uppercase;">${s.nama}</td>
+                    ${barisMarkahHtml}
+                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold;">${peratusPapar}${peratusPapar !== '-' ? '%' : ''}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; text-transform:uppercase; font-size:10px; color:${keputusanPapar === 'GAGAL' ? '#b91c1c' : (keputusanPapar === 'LULUS' ? '#15803d' : '#000')}">${keputusanPapar}</td>
+                </tr>
+            `;
+        });
+        html += `</tbody></table></div>`;
+    }
+
+    printArea.innerHTML = html;
+    setTimeout(() => { window.print(); }, 500);
+};
+
+
+// ==========================================================
+// FUNGSI UTAMA 2: CETAK MATAPELAJARAN PILIHAN (GRED DIPERBAIKI)
+// ==========================================================
+window.cetakSubjekPilihan = () => {
+    if (!activeStudents || activeStudents.length === 0) {
+        return alert("Sila cari dan papar kelas terlebih dahulu sebelum mencetak!");
+    }
+
+    const isPBDAktif = cekPbdAktif();
+    const mesejPrompt = isPBDAktif 
+        ? "Sila masukkan KOD SUBJEK PBD yang ingin dicetak.\nContoh: bm, bi, mt, sn, sej, rbt"
+        : "Sila masukkan KOD SUBJEK PENILAIAN yang ingin dicetak.\nContoh: bm, bi, mt, sn, sej, rbt";
+    
+    const inputSubjek = prompt(mesejPrompt);
+    if (!inputSubjek) return; 
+
+    const subjekFieldID = inputSubjek.trim().toLowerCase(); 
+    const namaSubjekPapar = inputSubjek.trim().toUpperCase();
+
+    const kelas = document.getElementById('selKelas') ? document.getElementById('selKelas').value : "TIADA KELAS";
+    const printArea = document.getElementById('section-sijil');
+    if (!printArea) return alert("Ralat: Kawasan cetakan tidak dijumpai.");
+    
+    printArea.innerHTML = ''; 
+    let html = '';
+
+    if (isPBDAktif) {
+        // ==========================================
+        // KATEGORI A: JADUAL TERPERINCI MODUL PBD (1 SUBJEK) -> DI SINI TEMPATNYA!
+        // ==========================================
+        const subObj = KPM_SUBJECTS.find(x => x.id.toLowerCase() === subjekFieldID);
+        if (!subObj) {
+            return alert(`Maaf, subjek ${namaSubjekPapar} tidak dijumpai dalam senarai PBD KPM.`);
+        }
+
+        let headerSkillsHtml = '';
+        subObj.skills.forEach(sk => {
+            headerSkillsHtml += `<th style="border: 1px solid black; padding:8px; text-align:center;">${sk.toUpperCase()}</th>`;
+        });
+
+        html = `
+            <div style="text-align:center; margin-bottom:20px; font-family: Arial, sans-serif;">
+                <h2 style="font-size:22px; font-weight:900; text-transform:uppercase; margin-bottom:5px;">LAPORAN PRESTASI PBD MATAPELAJARAN</h2>
+                <h3 style="font-size:14px; font-weight:bold; color:#1e40af; margin-top:0; text-transform:uppercase;">
+                    SUBJEK: ${namaSubjekPapar} &nbsp;|&nbsp; KELAS: ${kelas}
+                </h3>
+            </div>
+            <table style="width:100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size:11px;" border="1">
+                <thead>
+                    <tr style="background-color:#f1f5f9; text-transform:uppercase; font-weight:bold;">
+                        <th style="border: 1px solid black; padding:8px; text-align:center; width:4%;">BIL</th>
+                        <th style="border: 1px solid black; padding:8px; text-align:left; width:20%;">NAMA MURID</th>
+                        ${headerSkillsHtml}
+                        <th style="border: 1px solid black; padding:8px; text-align:center; width:12%;">TP KESELURUHAN</th>
+                        <th style="border: 1px solid black; padding:8px; text-align:center; width:12%;">TAHAP USAHA</th>
+                        <th style="border: 1px solid black; padding:8px; text-align:left; width:25%;">INTERVENSI KPM</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        activeStudents.forEach((s, idx) => {
+            let skillsRowHtml = '';
+            subObj.skills.forEach((sk, sIdx) => {
+                const cellVal = s[`pbd_${subjekFieldID}_k${sIdx+1}`] || 0;
+                const textTp = cellVal > 0 ? `TP ${cellVal}` : '-';
+                skillsRowHtml += `<td style="border: 1px solid black; padding:6px; text-align:center;">${textTp}</td>`;
+            });
+
+            const currentTp = s[`pbd_${subjekFieldID}_tp`] || 0;
+            const textTpKeseluruhan = currentTp > 0 ? `TP ${currentTp}` : '-';
+            const currentUsaha = s[`pbd_${subjekFieldID}_usaha`] || '-';
+            const currentIntervensi = s[`pbd_${subjekFieldID}_intervensi`] || '-';
+
+            html += `
+                <tr>
+                    <td style="border: 1px solid black; padding:6px; text-align:center;">${idx + 1}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:left; font-weight:bold; text-transform:uppercase;">${s.nama}</td>
+                    ${skillsRowHtml}
+                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; background-color:#faf5ff;">${textTpKeseluruhan}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:center; text-transform:uppercase;">${currentUsaha}</td>
+                    <td style="border: 1px solid black; padding:6px; text-align:left; text-transform:uppercase; font-size:10px;">${currentIntervensi}</td>
+                </tr>
+            `;
+        });
+        html += `</tbody></table>`;
+        
+    } else {
         // ==========================================
         // KATEGORI B: JADUAL TUNGGAL MODUL PENILAIAN
         // ==========================================
@@ -2419,10 +2413,8 @@ if (isPBDAktif) {
         activeStudents.forEach((s, idx) => {
             const markah = dapatkanMarkah(s, subjekFieldID);
             
-            // --- PROSES KIRA GRED SECARA REAL-TIME ---
             let gredPapar = '-';
             if (markah !== '-' && markah !== '' && !isNaN(markah)) {
-                // Panggil fungsi getGrade sedia ada di dalam template anda
                 if (typeof getGrade === 'function') {
                     const hasilGred = getGrade(Number(markah));
                     gredPapar = hasilGred ? hasilGred.gred : '-';
