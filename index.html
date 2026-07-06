@@ -2128,7 +2128,7 @@ function dapatkanDataPBD(s, subId) {
 
 
 // ==========================================================
-// FUNGSI UTAMA 1: CETAK KEPUTUSAN KELAS (PERATUS & KEPUTUSAN DIPERBAIKI)
+// FUNGSI UTAMA 1: CETAK KEPUTUSAN KELAS (KEMAS KINI SYARAT GAGAL)
 // ==========================================================
 window.cetakKeputusanKelas = () => {
     if (!activeStudents || activeStudents.length === 0) {
@@ -2221,34 +2221,33 @@ window.cetakKeputusanKelas = () => {
         `;
 
         activeStudents.forEach((s, idx) => {
-            // Pembolehubah untuk pengiraan on-the-fly
             let totalMarks = 0;
             let countSubjekDikirakan = 0;
             let adaGagal = false;
 
             let barisMarkahHtml = '';
 
+            // Senarai ID Subjek Teras untuk disemak (menyokong 'sejarah' dan kependekan 'sej')
+            const subjekTerasGagal = ['bm', 'bi', 'mt', 'sn', 'sejarah', 'sej'];
+
             senaraiSubjek.forEach(sub => {
                 const markah = dapatkanMarkah(s, sub.id);
                 barisMarkahHtml += `<td style="border: 1px solid black; padding:6px; text-align:center; font-weight:medium;">${markah}</td>`;
                 
-                // Kumpul data jika markah sah (bukan kosong/sempang)
                 if (markah !== '-' && markah !== '' && !isNaN(markah)) {
-                    totalMarks += Number(markah);
+                    const markahNombor = Number(markah);
+                    totalMarks += markahNombor;
                     countSubjekDikirakan++;
                     
-                    // Semak jika ada subjek yang Gagal (Gred F atau E bergantung pada fungsi getGrade anda)
-                    let gredObj = null;
-                    if (typeof getGrade === 'function') gredObj = getGrade(Number(markah));
-                    else if (typeof window.getGrade === 'function') gredObj = window.getGrade(Number(markah));
-
-                    if (gredObj && (gredObj.gred === 'F' || gredObj.gred === 'E')) {
+                    // Semak syarat gagal HANYA untuk subjek teras < 20
+                    const idSubjekCek = sub.id.toLowerCase();
+                    if (subjekTerasGagal.includes(idSubjekCek) && markahNombor < 20) {
                         adaGagal = true;
                     }
                 }
             });
 
-            // 1. Dapatkan Peratus (Guna s.percent jika ada, jika tiada kita kira on-the-fly)
+            // 1. Kira Peratus
             let peratusPapar = '-';
             if (s.percent !== undefined && s.percent !== null && s.percent !== '') {
                 peratusPapar = parseFloat(s.percent).toFixed(2);
@@ -2257,12 +2256,12 @@ window.cetakKeputusanKelas = () => {
             }
 
             // 2. Dapatkan Keputusan Lulus / Gagal
-            let keputusanPapar = dapatkanKeputusan(s); // Cuba cari 'status' atau 'keputusan'
+            let keputusanPapar = dapatkanKeputusan(s); 
             if (keputusanPapar === '-') {
                 if (countSubjekDikirakan > 0) {
                     keputusanPapar = adaGagal ? 'GAGAL' : 'LULUS';
                 } else {
-                    keputusanPapar = 'TIDAK LENGKAP'; // Tiada sebarang markah diisi
+                    keputusanPapar = 'TIDAK LENGKAP';
                 }
             }
 
