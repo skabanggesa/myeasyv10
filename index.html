@@ -938,11 +938,11 @@ window.renderMarkTable = () => {
                                 </select>
                             </td>`;
                     }).join('')}
-                    <td class="border text-center p-1 bg-purple-50">
-                        <select id="tp_select_${idx}_${subId}" onchange="window.updateLocalPBDField(${idx}, 'pbd_${subId}_tp', this.value)" class="border rounded p-1 w-full text-center font-black bg-purple-100 text-purple-950">
-                            ${[0,1,2,3,4,5,6].map(v => `<option value="${v}" ${currentTp == v ? 'selected' : ''}>${v > 0 ? 'TP ' + v : '-'}</option>`).join('')}
-                        </select>
-                    </td>
+                    <td class="border text-center p-1 bg-gray-100">
+    <select id="tp_select_${idx}_${subId}" onchange="window.updateLocalPBDField(${idx}, 'pbd_${subId}_tp', this.value)" class="border rounded p-1 w-full text-center font-black bg-gray-200 text-gray-500 cursor-not-allowed" disabled>
+        ${[0,1,2,3,4,5,6].map(v => `<option value="${v}" ${currentTp == v ? 'selected' : ''}>${v > 0 ? 'TP ' + v : '-'}</option>`).join('')}
+    </select>
+</td>
                     <td class="border text-center p-1">
                         <select onchange="window.updateLocalPBDField(${idx}, 'pbd_${subId}_usaha', this.value)" class="border rounded p-1 w-full text-center font-bold text-xs bg-white">
                             ${['-', 'SANGAT TINGGI', 'TINGGI', 'SEDERHANA', 'RENDAH'].map(v => `<option value="${v}" ${currentUsaha === v ? 'selected' : ''}>${v}</option>`).join('')}
