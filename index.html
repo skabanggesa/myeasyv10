@@ -2023,6 +2023,21 @@ window.janaAnalisisDLP = (students) => {
     }
 };
 
+	// ==========================================================
+// FUNGSI PENGESAN MODUL PBD (TEPAT MENGGUNAKAN ID DROPDOWN)
+// ==========================================================
+window.cekPbdAktif = () => {
+    const modeDropdown = document.getElementById('systemInputMode');
+    
+    // Jika dropdown dijumpai dan nilainya ialah "PBD", maka ia mengembalikan true
+    if (modeDropdown) {
+        return modeDropdown.value === 'PBD';
+    }
+    
+    // Keselamatan (fallback) jika atas sebab tertentu dropdown tidak dijumpai
+    return false;
+};
+
 // ==========================================================
 // KOD CETAKAN PINTAR (AUTO-DETEKSI MODUL & FORMAT DATA)
 // ==========================================================
