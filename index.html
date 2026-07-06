@@ -1189,7 +1189,7 @@ window.cetakPilihan = (jenis) => {
     // 2. Proses cetakan selepas modal ditutup sepenuhnya (delay 300ms)
     setTimeout(() => {
         if (jenis === 'sijil') {
-            // Panggil fungsi asal cikgu untuk cetak semua sijil
+            // Panggil fungsi asal untuk cetak semua sijil (Ujian / PBD pintar)
             if (typeof window.prepareAndPrint === 'function') {
                 window.prepareAndPrint(); 
             } else if (typeof prepareAndPrint === 'function') {
@@ -1199,14 +1199,12 @@ window.cetakPilihan = (jenis) => {
             }
         } 
         else if (jenis === 'kelas') {
-            // Letakkan fungsi cetak keputusan kelas di sini
-            alert("Fungsi Cetak Keputusan Kelas akan dijalankan di sini.");
-            // Contoh: window.cetakKeputusanKelas();
+            // Memanggil fungsi cetak keputusan kelas yang sebenar
+            window.cetakKeputusanKelas();
         } 
         else if (jenis === 'elektif') {
-            // Letakkan fungsi cetak matapelajaran pilihan di sini
-            alert("Fungsi Cetak Matapelajaran Pilihan akan dijalankan di sini.");
-            // Contoh: window.cetakSubjekPilihan();
+            // Memanggil fungsi cetak matapelajaran pilihan yang sebenar
+            window.cetakSubjekPilihan();
         }
     }, 300);
 };
@@ -2023,6 +2021,132 @@ window.janaAnalisisDLP = (students) => {
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
         });
     }
+};
+
+	// ==========================================
+// 1. FUNGSI CETAK KEPUTUSAN KELAS (BROADSHEET)
+// ==========================================
+window.cetakKeputusanKelas = () => {
+    // Pastikan ada data kelas yang sedang dipaparkan
+    if (!activeStudents || activeStudents.length === 0) {
+        return alert("Sila cari dan papar kelas terlebih dahulu sebelum mencetak!");
+    }
+
+    const kelas = document.getElementById('selKelas') ? document.getElementById('selKelas').value : "TIADA KELAS";
+    const penilaian = document.getElementById('selPenilaian') ? document.getElementById('selPenilaian').value : "";
+
+    // Guna kawasan cetakan sijil sedia ada
+    const printArea = document.getElementById('section-sijil');
+    if (!printArea) return alert("Ralat: Kawasan cetakan (section-sijil) tidak dijumpai.");
+    
+    printArea.innerHTML = ''; // Kosongkan kawasan cetakan lama
+
+    // Bina jadual HTML
+    let html = `
+        <div style="text-align:center; margin-bottom:20px; font-family: sans-serif;">
+            <h2 style="font-size:24px; font-weight:900; text-transform:uppercase; margin-bottom:5px;">LAPORAN KEPUTUSAN KELAS</h2>
+            <h3 style="font-size:16px; font-weight:bold; color:#475569; margin-top:0;">KELAS: ${kelas} &nbsp;|&nbsp; PENILAIAN: ${penilaian}</h3>
+        </div>
+        <table style="width:100%; border-collapse: collapse; font-family: sans-serif; font-size:12px;" border="1">
+            <thead>
+                <tr style="background-color:#f1f5f9; text-transform:uppercase;">
+                    <th style="border: 1px solid black; padding:8px; text-align:center; width:5%;">BIL</th>
+                    <th style="border: 1px solid black; padding:8px; text-align:left;">NAMA MURID</th>
+                    <th style="border: 1px solid black; padding:8px; text-align:center;">JUMLAH MARKAH</th>
+                    <th style="border: 1px solid black; padding:8px; text-align:center;">PERATUS (%)</th>
+                    <th style="border: 1px solid black; padding:8px; text-align:center;">KEPUTUSAN</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    // Masukkan data setiap murid
+    activeStudents.forEach((s, idx) => {
+        // NOTA UNTUK CIKGU: Tukar 's.jumlah_markah', 's.peratus', dll mengikut nama field/pembolehubah sebenar dalam Firebase cikgu.
+        const jumlah = s.jumlah_markah || s.jumlah || '-';
+        const peratus = s.peratus || '-';
+        const keputusan = s.keputusan || s.status_lulus || s.menguasai || '-';
+        
+        html += `
+            <tr>
+                <td style="border: 1px solid black; padding:6px; text-align:center;">${idx + 1}</td>
+                <td style="border: 1px solid black; padding:6px; text-align:left; font-weight:bold; text-transform:uppercase;">${s.nama}</td>
+                <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold;">${jumlah}</td>
+                <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold;">${peratus}</td>
+                <td style="border: 1px solid black; padding:6px; text-align:center;">${keputusan}</td>
+            </tr>
+        `;
+    });
+
+    html += `</tbody></table>`;
+    printArea.innerHTML = html; // Masukkan jadual ke dalam skrin cetak
+
+    // Beri masa sedikit untuk DOM render, kemudian cetak
+    setTimeout(() => { window.print(); }, 500);
+};
+
+
+// ==========================================
+// 2. FUNGSI CETAK MATAPELAJARAN PILIHAN
+// ==========================================
+window.cetakSubjekPilihan = () => {
+    if (!activeStudents || activeStudents.length === 0) {
+        return alert("Sila cari dan papar kelas terlebih dahulu sebelum mencetak!");
+    }
+
+    // Tanya cikgu nak cetak subjek apa menggunakan kotak prompt
+    const inputSubjek = prompt("Sila masukkan KOD SUBJEK yang ingin dicetak.\nContoh: bm, bi, mt, sn, sej, rbt");
+    
+    // Jika cikgu tekan Cancel atau biarkan kosong, batal proses cetak
+    if (!inputSubjek) return; 
+
+    // Tukar ke huruf kecil sebab biasanya field dalam database huruf kecil
+    const subjekFieldID = inputSubjek.trim().toLowerCase(); 
+    const namaSubjekPapar = inputSubjek.trim().toUpperCase(); // Untuk dipaparkan pada tajuk
+
+    const kelas = document.getElementById('selKelas') ? document.getElementById('selKelas').value : "TIADA KELAS";
+    const printArea = document.getElementById('section-sijil');
+    if (!printArea) return alert("Ralat: Kawasan cetakan tidak dijumpai.");
+    
+    printArea.innerHTML = ''; 
+
+    let html = `
+        <div style="text-align:center; margin-bottom:20px; font-family: sans-serif;">
+            <h2 style="font-size:24px; font-weight:900; text-transform:uppercase; margin-bottom:5px;">LAPORAN PRESTASI MATAPELAJARAN</h2>
+            <h3 style="font-size:18px; font-weight:bold; color:#1e40af; margin-top:0;">SUBJEK: ${namaSubjekPapar} &nbsp;|&nbsp; KELAS: ${kelas}</h3>
+        </div>
+        <table style="width:100%; border-collapse: collapse; font-family: sans-serif; font-size:12px;" border="1">
+            <thead>
+                <tr style="background-color:#e0f2fe; text-transform:uppercase;">
+                    <th style="border: 1px solid black; padding:8px; text-align:center; width:5%;">BIL</th>
+                    <th style="border: 1px solid black; padding:8px; text-align:left;">NAMA MURID</th>
+                    <th style="border: 1px solid black; padding:8px; text-align:center; width:20%;">MARKAH</th>
+                    <th style="border: 1px solid black; padding:8px; text-align:center; width:20%;">GRED</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    activeStudents.forEach((s, idx) => {
+        // Ambil markah dari objek s (cth: s.bm, s.mt). Jika tiada data, papar '-'
+        const markah = (s[subjekFieldID] !== undefined && s[subjekFieldID] !== '') ? s[subjekFieldID] : '-';
+        // Ambil gred (cth: s.bm_gred, s.mt_gred). 
+        const gred = (s[subjekFieldID + '_gred'] !== undefined && s[subjekFieldID + '_gred'] !== '') ? s[subjekFieldID + '_gred'] : '-';
+        
+        html += `
+            <tr>
+                <td style="border: 1px solid black; padding:6px; text-align:center;">${idx + 1}</td>
+                <td style="border: 1px solid black; padding:6px; text-align:left; font-weight:bold; text-transform:uppercase;">${s.nama}</td>
+                <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; font-size:14px;">${markah}</td>
+                <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; color:#b91c1c;">${gred}</td>
+            </tr>
+        `;
+    });
+
+    html += `</tbody></table>`;
+    printArea.innerHTML = html; 
+
+    setTimeout(() => { window.print(); }, 500);
 };
 
 </script>
