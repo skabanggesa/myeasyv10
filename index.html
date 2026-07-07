@@ -2434,8 +2434,13 @@ window.cetakPerbandinganTahun = async () => {
         
         snapshot.forEach(docSnap => {
             const data = docSnap.data();
-            // Tapis: Ambil dokumen yang ID nya mengandungi nama penilaian yang dipilih
-            if (docSnap.id.includes(penilaian)) {
+            
+            // PENYELESAIAN: Tukar semua 'space' (jarak) kepada 'underscore' (_)
+            // supaya ia sepadan dengan format ID dokumen Firestore anda
+            const penilaianUnderscore = penilaian.replace(/ /g, '_');
+            
+            // Tapis: Cari ID yang ada versi asal ATAU versi underscore
+            if (docSnap.id.includes(penilaian) || docSnap.id.includes(penilaianUnderscore)) {
                 senaraiSemuaMurid.push(data);
             }
         });
