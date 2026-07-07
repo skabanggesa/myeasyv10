@@ -2450,7 +2450,6 @@ window.cetakPerbandinganTahun = async () => {
             6: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, perluPenambahbaikan: 0, totalMarkah: 0 }
         };
 
-        // KEMASKINI 1: Pengecaman Kelas Yang Lebih Luas
         const dapatkanTahun = (murid) => {
             let kelasStr = murid.kelas || murid.Kelas || murid.KELAS || murid.tahun || murid.darjah;
             if (!kelasStr) return 0;
@@ -2461,17 +2460,19 @@ window.cetakPerbandinganTahun = async () => {
         senaraiSemuaMurid.forEach(s => {
             let tahun = dapatkanTahun(s);
             if (tahun >= 1 && tahun <= 6) {
-                let markah = '-';
-
-                // KEMASKINI 2: Sistem carian markah "Pukat Tunda" 
                 let subLower = subjekFieldID.toLowerCase();
                 let subUpper = subjekFieldID.toUpperCase();
+                let markah = '-';
 
+                // 1. Cuba guna utiliti sedia ada
                 if (typeof dapatkanMarkah === 'function') {
                     markah = dapatkanMarkah(s, subjekFieldID);
                 } else if (typeof window.dapatkanMarkah === 'function') {
                     markah = window.dapatkanMarkah(s, subjekFieldID);
-                } else {
+                }
+
+                // 2. PENYELESAIAN: Jika utiliti gagal jumpa markah (pulangkan '-'), paksa cari sendiri dalam objek Firestore!
+                if (markah === '-' || markah === '' || markah === null || markah === undefined) {
                     if (s.marks && s.marks[subUpper] !== undefined) markah = s.marks[subUpper];
                     else if (s.marks && s.marks[subLower] !== undefined) markah = s.marks[subLower];
                     else if (s[`marks.${subUpper}`] !== undefined) markah = s[`marks.${subUpper}`];
@@ -2480,7 +2481,7 @@ window.cetakPerbandinganTahun = async () => {
                     else if (s[subLower] !== undefined) markah = s[subLower];
                 }
                 
-                // Pastikan markah bukan null dan merupakan nombor sebelum mengira
+                // 3. Masukkan dalam pengiraan jadual
                 if (markah !== '-' && markah !== '' && markah !== null && !isNaN(markah)) {
                     let m = Number(markah);
                     dataTahun[tahun].ambil++;
