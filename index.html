@@ -2405,8 +2405,8 @@ window.cetakSubjekPilihan = () => {
     setTimeout(() => { window.print(); }, 500);
 };
 
-	// ==========================================================
-// FUNGSI UTAMA 3: CETAK PERBANDINGAN TAHUN 1-6 (FIRESTORE)
+// ==========================================================
+// FUNGSI UTAMA 3: CETAK PERBANDINGAN TAHUN 1-6 (FIRESTORE v10 MODULAR)
 // ==========================================================
 window.cetakPerbandinganTahun = async () => {
     // 1. Dapatkan input dari pengguna
@@ -2418,7 +2418,7 @@ window.cetakPerbandinganTahun = async () => {
     const inputSubjek = prompt("ANALISIS TAHUN 1 - 6\nSila masukkan KOD SUBJEK (Contoh: bm, bi, mt, sn):");
     if (!inputSubjek) return; 
 
-    const subjekFieldID = inputSubjek.trim().toUpperCase(); // Dalam firestore anda, ia huruf besar (marks.BI)
+    const subjekFieldID = inputSubjek.trim().toUpperCase(); 
     
     // Tunjuk mesej loading
     const printArea = document.getElementById('section-sijil');
@@ -2426,16 +2426,16 @@ window.cetakPerbandinganTahun = async () => {
     printArea.innerHTML = `<div style="text-align:center; padding:50px; font-weight:bold; color:blue;">Sedang memuat turun data dari pelayan. Sila tunggu...</div>`;
 
     try {
-        // 2. Tarik semua data dari Firestore (koleksi marks_v10)
-        // Anggapan: Anda menggunakan firebase sedia ada. Kita tarik semua dokumen, nanti kita tapis.
-        const snapshot = await db.collection("marks_v10").get(); 
+        // 2. Tarik semua data dari Firestore menggunakan sintaks Firebase v10 (Modular)
+        // PERUBAHAN DI SINI: Menggunakan getDocs() dan collection()
+        const snapshot = await getDocs(collection(db, "marks_v10")); 
+        
         let senaraiSemuaMurid = [];
         
-        snapshot.forEach(doc => {
-            const data = doc.data();
+        snapshot.forEach(docSnap => {
+            const data = docSnap.data();
             // Tapis: Ambil dokumen yang ID nya mengandungi nama penilaian yang dipilih
-            // Contoh ID: 00o0c5g2t1B6RulGcfUw_Ujian_Pertengahan_Sesi_Akademik
-            if (doc.id.includes(penilaian)) {
+            if (docSnap.id.includes(penilaian)) {
                 senaraiSemuaMurid.push(data);
             }
         });
@@ -2466,8 +2466,14 @@ window.cetakPerbandinganTahun = async () => {
         senaraiSemuaMurid.forEach(s => {
             let tahun = dapatkanTahun(s.kelas);
             if (tahun >= 1 && tahun <= 6) {
-                // Berdasarkan struktur anda, markah ada dalam s.marks.BI
-                let markah = (s.marks && s.marks[subjekFieldID] !== undefined) ? s.marks[subjekFieldID] : '-';
+                // Berdasarkan struktur, markah ada dalam s.marks.BI (Sama ada s.marks wujud atau tidak)
+                let markah = '-';
+                if (s.marks && s.marks[subjekFieldID] !== undefined) {
+                    markah = s.marks[subjekFieldID];
+                } else if (s[subjekFieldID] !== undefined) {
+                    // Back-up jika markah di simpan terus dalam punca (root)
+                    markah = s[subjekFieldID];
+                }
                 
                 if (markah !== '-' && markah !== '' && !isNaN(markah)) {
                     let m = Number(markah);
@@ -2522,8 +2528,8 @@ window.cetakPerbandinganTahun = async () => {
             let pPerlu = dt.ambil > 0 ? ((dt.perluPenambahbaikan / dt.ambil) * 100).toFixed(1) : 0;
             let purata = dt.ambil > 0 ? (dt.totalMarkah / dt.ambil).toFixed(1) : 0;
 
-            if (dt.ambil > 0 && markahMula === 0) markahMula = parseFloat(purata); // Catat markah tahun terawal
-            if (dt.ambil > 0) markahAkhir = parseFloat(purata); // Sentiasa update ke tahun terbaru yg ada data
+            if (dt.ambil > 0 && markahMula === 0) markahMula = parseFloat(purata);
+            if (dt.ambil > 0) markahAkhir = parseFloat(purata); 
 
             labelTahun.push(`TAHUN ${thn}`);
             dataPurataGraf.push(purata);
@@ -2596,14 +2602,14 @@ window.cetakPerbandinganTahun = async () => {
                         scales: { y: { beginAtZero: true, max: 100 } }
                     }
                 });
-                setTimeout(() => { window.print(); }, 800); // Tunggu chart siap render
+                setTimeout(() => { window.print(); }, 800);
             }
         }, 300);
 
     } catch (error) {
         console.error("Ralat memuat turun data:", error);
         printArea.innerHTML = '';
-        alert("Gagal memuat turun data dari pelayan. Sila periksa sambungan internet atau rujuk log konsol.");
+        alert("Gagal memuat turun data dari pelayan: " + error.message);
     }
 };
 </script>
