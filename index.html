@@ -2409,7 +2409,10 @@ window.cetakSubjekPilihan = () => {
 // FUNGSI UTAMA 3: CETAK PERBANDINGAN TAHUN 1-6 (FIRESTORE v10 MODULAR)
 // ==========================================================
 window.cetakPerbandinganTahun = async () => {
-    const penilaian = document.getElementById('selPenilaian') ? document.getElementById('selPenilaian').value : "";
+    const selPenilaian = document.getElementById('selPenilaian');
+    const anaPenilaian = document.getElementById('anaPenilaian');
+    const penilaian = (selPenilaian && selPenilaian.value) ? selPenilaian.value : ((anaPenilaian && anaPenilaian.value) ? anaPenilaian.value : "");
+    
     if (!penilaian) {
         return alert("Sila pilih Jenis Penilaian (Sesi) dari dropdown terlebih dahulu.");
     }
@@ -2421,7 +2424,7 @@ window.cetakPerbandinganTahun = async () => {
     
     const printArea = document.getElementById('section-sijil');
     if (!printArea) return alert("Ralat: Kawasan cetakan tidak dijumpai.");
-    printArea.innerHTML = `<div style="text-align:center; padding:50px; font-weight:bold; color:blue;">Sedang memuat turun data dari pelayan. Sila tunggu...</div>`;
+    printArea.innerHTML = `<div style="text-align:center; padding:50px; font-weight:bold; color:blue;">Sedang memuat turun dan mengira data dari pelayan. Sila tunggu sebentar...</div>`;
 
     try {
         const snapshot = await getDocs(collection(db, "marks_v10")); 
@@ -2431,7 +2434,16 @@ window.cetakPerbandinganTahun = async () => {
             const data = docSnap.data();
             const penilaianUnderscore = penilaian.replace(/ /g, '_');
             
-            if (docSnap.id.includes(penilaian) || docSnap.id.includes(penilaianUnderscore)) {
+            if ((data.penilaian && data.penilaian === penilaian) || 
+                docSnap.id.includes(penilaian) || 
+                docSnap.id.includes(penilaianUnderscore)) {
+                
+                Object.keys(data).forEach(key => {
+                    if (key.startsWith('marks.')) {
+                        data[key.split('.')[1].toUpperCase()] = data[key];
+                    }
+                });
+                
                 senaraiSemuaMurid.push(data);
             }
         });
@@ -2441,7 +2453,6 @@ window.cetakPerbandinganTahun = async () => {
             return alert(`Tiada data dijumpai untuk penilaian: ${penilaian}`);
         }
 
-        // KEMAS KINI: 6 Kategori Gred Baharu
         const dataTahun = {
             1: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, sederhana: 0, perluBimbingan: 0, gagal: 0, totalMarkah: 0 },
             2: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, sederhana: 0, perluBimbingan: 0, gagal: 0, totalMarkah: 0 },
@@ -2461,31 +2472,15 @@ window.cetakPerbandinganTahun = async () => {
         senaraiSemuaMurid.forEach(s => {
             let tahun = dapatkanTahun(s);
             if (tahun >= 1 && tahun <= 6) {
-                let subLower = subjekFieldID.toLowerCase();
-                let subUpper = subjekFieldID.toUpperCase();
-                let markah = '-';
-
-                if (typeof dapatkanMarkah === 'function') {
-                    markah = dapatkanMarkah(s, subjekFieldID);
-                } else if (typeof window.dapatkanMarkah === 'function') {
-                    markah = window.dapatkanMarkah(s, subjekFieldID);
-                }
-
-                if (markah === '-' || markah === '' || markah === null || markah === undefined) {
-                    if (s.marks && s.marks[subUpper] !== undefined) markah = s.marks[subUpper];
-                    else if (s.marks && s.marks[subLower] !== undefined) markah = s.marks[subLower];
-                    else if (s[`marks.${subUpper}`] !== undefined) markah = s[`marks.${subUpper}`];
-                    else if (s[`marks.${subLower}`] !== undefined) markah = s[`marks.${subLower}`];
-                    else if (s[subUpper] !== undefined) markah = s[subUpper];
-                    else if (s[subLower] !== undefined) markah = s[subLower];
-                }
                 
-                if (markah !== '-' && markah !== '' && markah !== null && !isNaN(markah)) {
+                let markah = s[subjekFieldID];
+                if (markah === undefined && s.marks) markah = s.marks[subjekFieldID];
+                
+                if (markah !== undefined && markah !== '-' && markah !== '' && markah !== null && !isNaN(markah)) {
                     let m = Number(markah);
                     dataTahun[tahun].ambil++;
                     dataTahun[tahun].totalMarkah += m;
                     
-                    // KEMAS KINI: Logik Range Markah Baharu
                     if (m >= 82) dataTahun[tahun].cemerlang++;
                     else if (m >= 66) dataTahun[tahun].baik++;
                     else if (m >= 50) dataTahun[tahun].memuaskan++;
@@ -2496,7 +2491,6 @@ window.cetakPerbandinganTahun = async () => {
             }
         });
 
-        // KEMAS KINI: HTML Jadual dengan 6 Kolum
         let htmlJadual = `
             <div style="text-align:center; margin-bottom:20px; font-family: Arial, sans-serif;">
                 <h2 style="font-size:20px; font-weight:900; text-transform:uppercase; margin-bottom:5px; color:#0f172a;">
@@ -2512,7 +2506,7 @@ window.cetakPerbandinganTahun = async () => {
                         <th rowspan="2" style="background-color:#0f2147; color:white; padding:8px; border: 1px solid white;">TAHUN</th>
                         <th rowspan="2" style="background-color:#3b82f6; color:white; padding:8px; border: 1px solid white;">BIL MURID</th>
                         <th colspan="6" style="background-color:#1e3a8a; color:white; padding:5px; border: 1px solid white;">PERATUS PENCAPAIAN (%)</th>
-                        <th rowspan="2" style="background-color:#6b21a8; color:white; padding:8px; border: 1px solid white;">PURATA<br>MARKAH (%)</th>
+                        <th rowspan="2" style="background-color:#6b21a8; color:white; padding:8px; border: 1px solid white;">PURATA<br>(%)</th>
                     </tr>
                     <tr>
                         <th style="background-color:#16a34a; color:white; padding:5px; border: 1px solid white;">CEMERLANG<br>(82-100)</th>
@@ -2584,8 +2578,8 @@ window.cetakPerbandinganTahun = async () => {
                     GRAF PERBANDINGAN PURATA MARKAH UJIAN ${subjekFieldID}<br>(TAHUN 1 HINGGA TAHUN 6)
                 </h4>
                 
-                <div style="height: 300px; width: 800px; max-width:100%; margin: 20px auto;">
-                    <canvas id="grafTahunCanvas"></canvas>
+                <div id="bekas-graf" style="text-align:center; margin: 20px auto;">
+                    <canvas id="grafTahunCanvas" width="800" height="300" style="display:inline-block;"></canvas>
                 </div>
                 
                 <div style="background-color:#eff6ff; border: 1px solid #bfdbfe; padding: 15px; border-radius: 6px; font-size:12px; display:flex; align-items:center; gap: 15px;">
@@ -2597,46 +2591,60 @@ window.cetakPerbandinganTahun = async () => {
 
         printArea.innerHTML = htmlJadual;
 
-        // Musnahkan graf lama jika ada (mengelakkan pepijat Chart.js)
-        if (window.grafTahunInstance) {
-            window.grafTahunInstance.destroy();
-        }
+        if (window.grafTahunInstance) window.grafTahunInstance.destroy();
 
-        setTimeout(() => {
-            const ctx = document.getElementById('grafTahunCanvas');
-            if (ctx) {
-                // Pastikan data dipaksa menjadi nombor untuk graf
-                const dataNomborGraf = dataPurataGraf.map(Number);
-                
-                window.grafTahunInstance = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: labelTahun,
-                        datasets: [{
-                            label: 'Purata Markah (%)',
-                            data: dataNomborGraf,
-                            backgroundColor: ['#2563eb', '#14b8a6', '#eab308', '#8b5cf6', '#f97316', '#84cc16']
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        animation: false, // Penting supaya graf lukis serta-merta tanpa animasi
-                        plugins: { legend: { display: false } },
-                        scales: { y: { beginAtZero: true, max: 100 } }
-                    }
-                });
-                
-                // Tambah sedikit masa (1 saat) untuk membenarkan pelayar web (browser) melukis graf sepenuhnya
-                setTimeout(() => { window.print(); }, 1000);
-            } else {
+        // PENYELESAIAN CARTA KOSONG: Kita jadikan kawasan ini "visible" di luar skrin sebentar
+        printArea.style.display = 'block';
+        printArea.style.position = 'absolute';
+        printArea.style.left = '-9999px';
+
+        const ctx = document.getElementById('grafTahunCanvas');
+        if (ctx) {
+            const dataNomborGraf = dataPurataGraf.map(Number);
+            window.grafTahunInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labelTahun,
+                    datasets: [{
+                        label: 'Purata Markah (%)',
+                        data: dataNomborGraf,
+                        backgroundColor: ['#2563eb', '#14b8a6', '#eab308', '#8b5cf6', '#f97316', '#84cc16']
+                    }]
+                },
+                options: {
+                    responsive: false, // Wajib false untuk mematikan auto-resize yang menyebabkan carta kosong
+                    animation: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, max: 100 } }
+                }
+            });
+
+            // Beri masa sekejap untuk browser proses lukisan, tukar jadi gambar, dan cetak!
+            setTimeout(() => {
+                // Tukar canvas menjadi gambar statik (kerana imej sangat stabil untuk cetakan)
+                const imejURL = window.grafTahunInstance.toBase64Image();
+                document.getElementById('bekas-graf').innerHTML = `<img src="${imejURL}" style="max-width:100%; height:auto;" />`;
+
+                // Kembalikan style seperti asal
+                printArea.style.display = '';
+                printArea.style.position = '';
+                printArea.style.left = '';
+
                 window.print();
-            }
-        }, 100);
+            }, 300);
+        } else {
+            printArea.style.display = '';
+            printArea.style.position = '';
+            printArea.style.left = '';
+            window.print();
+        }
 
     } catch (error) {
         console.error("Ralat memuat turun data:", error);
         printArea.innerHTML = '';
+        printArea.style.display = '';
+        printArea.style.position = '';
+        printArea.style.left = '';
         alert("Gagal memuat turun data dari pelayan: " + error.message);
     }
 };
