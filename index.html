@@ -2406,9 +2406,14 @@ window.cetakSubjekPilihan = () => {
 };
 
 // ==========================================================
-// FUNGSI UTAMA 3: CETAK PERBANDINGAN TAHUN 1-6 (FIRESTORE v10 MODULAR)
+// FUNGSI UTAMA 3: CETAK PERBANDINGAN TAHUN 1-6 (HIBRID PENILAIAN & PBD)
 // ==========================================================
 window.cetakPerbandinganTahun = async () => {
+    // 1. Kenal pasti Modul Semasa (Penilaian atau PBD)
+    const modeDropdown = document.getElementById('systemInputMode');
+    const isPBDAktif = modeDropdown ? modeDropdown.value === 'PBD' : false;
+
+    // 2. Kenal pasti Penilaian/Sesi (Untuk filter Firestore)
     const selPenilaian = document.getElementById('selPenilaian');
     const anaPenilaian = document.getElementById('anaPenilaian');
     const penilaian = (selPenilaian && selPenilaian.value) ? selPenilaian.value : ((anaPenilaian && anaPenilaian.value) ? anaPenilaian.value : "");
@@ -2417,7 +2422,11 @@ window.cetakPerbandinganTahun = async () => {
         return alert("Sila pilih Jenis Penilaian (Sesi) dari dropdown terlebih dahulu.");
     }
 
-    const inputSubjek = prompt("ANALISIS TAHUN 1 - 6\nSila masukkan KOD SUBJEK (Contoh: bm, bi, mt, sn):");
+    const mesejPrompt = isPBDAktif 
+        ? "ANALISIS TAHUN 1 - 6 (MODUL PBD)\nSila masukkan KOD SUBJEK (Contoh: bm, bi, mt, sn):"
+        : "ANALISIS TAHUN 1 - 6 (MODUL PENILAIAN)\nSila masukkan KOD SUBJEK (Contoh: bm, bi, mt, sn):";
+
+    const inputSubjek = prompt(mesejPrompt);
     if (!inputSubjek) return; 
 
     const subjekFieldID = inputSubjek.trim().toUpperCase(); 
@@ -2437,6 +2446,13 @@ window.cetakPerbandinganTahun = async () => {
             if ((data.penilaian && data.penilaian === penilaian) || 
                 docSnap.id.includes(penilaian) || 
                 docSnap.id.includes(penilaianUnderscore)) {
+                
+                // Ratakan (flatten) object marks jika ada
+                Object.keys(data).forEach(key => {
+                    if (key.startsWith('marks.')) {
+                        data[key.split('.')[1].toUpperCase()] = data[key];
+                    }
+                });
                 senaraiSemuaMurid.push(data);
             }
         });
@@ -2446,13 +2462,14 @@ window.cetakPerbandinganTahun = async () => {
             return alert(`Tiada data dijumpai untuk penilaian: ${penilaian}`);
         }
 
+        // 3. Sediakan Bekas Data Hibrid (Kumpul untuk dua-dua modul)
         const dataTahun = {
-            1: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, sederhana: 0, perluBimbingan: 0, gagal: 0, totalMarkah: 0 },
-            2: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, sederhana: 0, perluBimbingan: 0, gagal: 0, totalMarkah: 0 },
-            3: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, sederhana: 0, perluBimbingan: 0, gagal: 0, totalMarkah: 0 },
-            4: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, sederhana: 0, perluBimbingan: 0, gagal: 0, totalMarkah: 0 },
-            5: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, sederhana: 0, perluBimbingan: 0, gagal: 0, totalMarkah: 0 },
-            6: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, sederhana: 0, perluBimbingan: 0, gagal: 0, totalMarkah: 0 }
+            1: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, sederhana: 0, perluBimbingan: 0, gagal: 0, totalMarkah: 0, tp1: 0, tp2: 0, tp3: 0, tp4: 0, tp5: 0, tp6: 0, mtm: 0 },
+            2: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, sederhana: 0, perluBimbingan: 0, gagal: 0, totalMarkah: 0, tp1: 0, tp2: 0, tp3: 0, tp4: 0, tp5: 0, tp6: 0, mtm: 0 },
+            3: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, sederhana: 0, perluBimbingan: 0, gagal: 0, totalMarkah: 0, tp1: 0, tp2: 0, tp3: 0, tp4: 0, tp5: 0, tp6: 0, mtm: 0 },
+            4: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, sederhana: 0, perluBimbingan: 0, gagal: 0, totalMarkah: 0, tp1: 0, tp2: 0, tp3: 0, tp4: 0, tp5: 0, tp6: 0, mtm: 0 },
+            5: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, sederhana: 0, perluBimbingan: 0, gagal: 0, totalMarkah: 0, tp1: 0, tp2: 0, tp3: 0, tp4: 0, tp5: 0, tp6: 0, mtm: 0 },
+            6: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, sederhana: 0, perluBimbingan: 0, gagal: 0, totalMarkah: 0, tp1: 0, tp2: 0, tp3: 0, tp4: 0, tp5: 0, tp6: 0, mtm: 0 }
         };
 
         const dapatkanTahun = (murid) => {
@@ -2462,56 +2479,103 @@ window.cetakPerbandinganTahun = async () => {
             return match ? parseInt(match[0]) : 0;
         };
 
+        // 4. Proses Pengiraan
         senaraiSemuaMurid.forEach(s => {
             let tahun = dapatkanTahun(s);
             if (tahun >= 1 && tahun <= 6) {
-                
                 let subLower = subjekFieldID.toLowerCase();
                 let subUpper = subjekFieldID.toUpperCase();
-                let markah = '-';
 
-                if (typeof dapatkanMarkah === 'function') {
-                    markah = dapatkanMarkah(s, subjekFieldID);
-                } else if (typeof window.dapatkanMarkah === 'function') {
-                    markah = window.dapatkanMarkah(s, subjekFieldID);
-                }
+                if (isPBDAktif) {
+                    // --- KIRAAN UNTUK PBD ---
+                    let tpVal = 0;
+                    // Cuba guna utiliti 5 jika wujud
+                    if (typeof dapatkanDataPBD === 'function') {
+                        let dataPBD = dapatkanDataPBD(s, subjekFieldID);
+                        if (dataPBD.tp !== '-' && dataPBD.tp.toString().toUpperCase().includes('TP')) {
+                            tpVal = parseInt(dataPBD.tp.toString().toUpperCase().replace('TP', '').trim());
+                        } else if (!isNaN(dataPBD.tp) && dataPBD.tp !== '-') {
+                            tpVal = parseInt(dataPBD.tp);
+                        }
+                    }
+                    // Pukat Tunda PBD (jika utiliti gagal)
+                    if (!tpVal || isNaN(tpVal)) {
+                        let rawTP = s[`pbd_${subLower}_tp`] || s[`pbd_${subUpper}_tp`] || s[`${subLower}_tp`];
+                        if (rawTP && !isNaN(rawTP)) tpVal = parseInt(rawTP);
+                    }
 
-                if (markah === '-' || markah === '' || markah === null || markah === undefined) {
-                    if (s.marks && s.marks[subUpper] !== undefined) markah = s.marks[subUpper];
-                    else if (s.marks && s.marks[subLower] !== undefined) markah = s.marks[subLower];
-                    else if (s[`marks.${subUpper}`] !== undefined) markah = s[`marks.${subUpper}`];
-                    else if (s[`marks.${subLower}`] !== undefined) markah = s[`marks.${subLower}`];
-                    else if (s[subUpper] !== undefined) markah = s[subUpper];
-                    else if (s[subLower] !== undefined) markah = s[subLower];
-                }
-                
-                if (markah !== undefined && markah !== '-' && markah !== '' && markah !== null && !isNaN(markah)) {
-                    let m = Number(markah);
-                    dataTahun[tahun].ambil++;
-                    dataTahun[tahun].totalMarkah += m;
+                    if (tpVal >= 1 && tpVal <= 6) {
+                        dataTahun[tahun].ambil++;
+                        dataTahun[tahun][`tp${tpVal}`]++;
+                        if (tpVal >= 3) dataTahun[tahun].mtm++; // MTM = TP3 hingga TP6
+                    }
+
+                } else {
+                    // --- KIRAAN UNTUK PENILAIAN (AKADEMIK) ---
+                    let markah = '-';
+                    if (typeof dapatkanMarkah === 'function') markah = dapatkanMarkah(s, subjekFieldID);
+                    else if (typeof window.dapatkanMarkah === 'function') markah = window.dapatkanMarkah(s, subjekFieldID);
+
+                    if (markah === '-' || markah === '' || markah === null || markah === undefined) {
+                        if (s.marks && s.marks[subUpper] !== undefined) markah = s.marks[subUpper];
+                        else if (s.marks && s.marks[subLower] !== undefined) markah = s.marks[subLower];
+                        else if (s[`marks.${subUpper}`] !== undefined) markah = s[`marks.${subUpper}`];
+                        else if (s[`marks.${subLower}`] !== undefined) markah = s[`marks.${subLower}`];
+                        else if (s[subUpper] !== undefined) markah = s[subUpper];
+                        else if (s[subLower] !== undefined) markah = s[subLower];
+                    }
                     
-                    // JULAT MARKAH (PENGEMASKINIAN TEPAT)
-                    if (m >= 82) dataTahun[tahun].cemerlang++;
-                    else if (m >= 66) dataTahun[tahun].baik++;
-                    else if (m >= 50) dataTahun[tahun].memuaskan++;
-                    else if (m >= 35) dataTahun[tahun].sederhana++;
-                    else if (m >= 20) dataTahun[tahun].perluBimbingan++;
-                    else dataTahun[tahun].gagal++;
+                    if (markah !== undefined && markah !== '-' && markah !== '' && markah !== null && !isNaN(markah)) {
+                        let m = Number(markah);
+                        dataTahun[tahun].ambil++;
+                        dataTahun[tahun].totalMarkah += m;
+                        
+                        if (m >= 82) dataTahun[tahun].cemerlang++;
+                        else if (m >= 66) dataTahun[tahun].baik++;
+                        else if (m >= 50) dataTahun[tahun].memuaskan++;
+                        else if (m >= 35) dataTahun[tahun].sederhana++;
+                        else if (m >= 20) dataTahun[tahun].perluBimbingan++;
+                        else dataTahun[tahun].gagal++;
+                    }
                 }
             }
         });
 
+        // 5. Bina HTML Jadual Berdasarkan Modul Aktif
+        let tajukJadual = isPBDAktif ? `PERBANDINGAN PENTAKSIRAN PBD ${subjekFieldID}` : `PERBANDINGAN PENCAPAIAN UJIAN ${subjekFieldID}`;
         let htmlJadual = `
             <div style="text-align:center; margin-bottom:20px; font-family: Arial, sans-serif;">
-                <h2 style="font-size:20px; font-weight:900; text-transform:uppercase; margin-bottom:5px; color:#0f172a;">
-                    PERBANDINGAN PENCAPAIAN UJIAN ${subjekFieldID}
-                </h2>
+                <h2 style="font-size:20px; font-weight:900; text-transform:uppercase; margin-bottom:5px; color:#0f172a;">${tajukJadual}</h2>
                 <h3 style="font-size:14px; font-weight:bold; color:#1e40af; margin-top:0; text-transform:uppercase;">
                     (TAHUN 1 HINGGA TAHUN 6) - ${penilaian.replace(/_/g, ' ')}
                 </h3>
             </div>
             <table style="width:100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size:11px; margin-bottom: 30px; text-align:center;" border="1">
                 <thead>
+        `;
+
+        if (isPBDAktif) {
+            // HEADER PBD
+            htmlJadual += `
+                    <tr>
+                        <th rowspan="2" style="background-color:#0f2147; color:white; padding:8px; border: 1px solid white;">TAHUN</th>
+                        <th rowspan="2" style="background-color:#3b82f6; color:white; padding:8px; border: 1px solid white;">BIL MURID</th>
+                        <th colspan="6" style="background-color:#1e3a8a; color:white; padding:5px; border: 1px solid white;">BILANGAN MURID MENGUKUT TAHAP PENGUASAAN (TP)</th>
+                        <th rowspan="2" style="background-color:#6b21a8; color:white; padding:8px; border: 1px solid white;">PERATUS MTM<br>(TP 3-6)</th>
+                    </tr>
+                    <tr>
+                        <th style="background-color:#ef4444; color:white; padding:5px; border: 1px solid white;">TP 1</th>
+                        <th style="background-color:#f97316; color:white; padding:5px; border: 1px solid white;">TP 2</th>
+                        <th style="background-color:#eab308; color:white; padding:5px; border: 1px solid white;">TP 3</th>
+                        <th style="background-color:#3b82f6; color:white; padding:5px; border: 1px solid white;">TP 4</th>
+                        <th style="background-color:#8b5cf6; color:white; padding:5px; border: 1px solid white;">TP 5</th>
+                        <th style="background-color:#10b981; color:white; padding:5px; border: 1px solid white;">TP 6</th>
+                    </tr>
+                </thead><tbody>
+            `;
+        } else {
+            // HEADER PENILAIAN
+            htmlJadual += `
                     <tr>
                         <th rowspan="2" style="background-color:#0f2147; color:white; padding:8px; border: 1px solid white;">TAHUN</th>
                         <th rowspan="2" style="background-color:#3b82f6; color:white; padding:8px; border: 1px solid white;">BIL MURID</th>
@@ -2526,66 +2590,97 @@ window.cetakPerbandinganTahun = async () => {
                         <th style="background-color:#f97316; color:white; padding:5px; border: 1px solid white;">PERLU BIMBINGAN<br>(20-34)</th>
                         <th style="background-color:#dc2626; color:white; padding:5px; border: 1px solid white;">GAGAL<br>(0-19)</th>
                     </tr>
-                </thead>
-                <tbody>
-        `;
+                </thead><tbody>
+            `;
+        }
 
         let labelTahun = [];
-        let dataPurataGraf = [];
-        let markahMula = 0, markahAkhir = 0;
+        let dataGraf = [];
+        let trendMula = 0, trendAkhir = 0;
 
+        // 6. Loop Untuk Isi Data Dalam Jadual
         [1, 2, 3, 4, 5, 6].forEach(thn => {
             let dt = dataTahun[thn];
-            let pCemerlang = dt.ambil > 0 ? ((dt.cemerlang / dt.ambil) * 100).toFixed(1) : 0;
-            let pBaik = dt.ambil > 0 ? ((dt.baik / dt.ambil) * 100).toFixed(1) : 0;
-            let pMemuaskan = dt.ambil > 0 ? ((dt.memuaskan / dt.ambil) * 100).toFixed(1) : 0;
-            let pSederhana = dt.ambil > 0 ? ((dt.sederhana / dt.ambil) * 100).toFixed(1) : 0;
-            let pPerlu = dt.ambil > 0 ? ((dt.perluBimbingan / dt.ambil) * 100).toFixed(1) : 0;
-            let pGagal = dt.ambil > 0 ? ((dt.gagal / dt.ambil) * 100).toFixed(1) : 0;
-            
-            let purata = dt.ambil > 0 ? (dt.totalMarkah / dt.ambil).toFixed(1) : 0;
-
-            if (dt.ambil > 0 && markahMula === 0) markahMula = parseFloat(purata);
-            if (dt.ambil > 0) markahAkhir = parseFloat(purata); 
-
-            labelTahun.push(`TAHUN ${thn}`);
-            dataPurataGraf.push(purata);
-
             let bgRow = thn % 2 === 0 ? '#f8fafc' : '#ffffff';
 
-            htmlJadual += `
-                <tr style="background-color:${bgRow};">
-                    <td style="font-weight:bold; padding:6px; border: 1px solid #cbd5e1;">TAHUN ${thn}</td>
-                    <td style="padding:6px; border: 1px solid #cbd5e1; font-weight:bold;">${dt.ambil}</td>
-                    <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#dcfce7; color:#166534;">${dt.cemerlang} (${pCemerlang}%)</td>
-                    <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#dbeafe; color:#1e40af;">${dt.baik} (${pBaik}%)</td>
-                    <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#e0f2fe; color:#0369a1;">${dt.memuaskan} (${pMemuaskan}%)</td>
-                    <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#fef9c3; color:#854d0e;">${dt.sederhana} (${pSederhana}%)</td>
-                    <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#ffedd5; color:#c2410c;">${dt.perluBimbingan} (${pPerlu}%)</td>
-                    <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#fee2e2; color:#b91c1c;">${dt.gagal} (${pGagal}%)</td>
-                    <td style="padding:6px; border: 1px solid #cbd5e1; font-weight:bold; background-color:#faf5ff;">${purata}</td>
-                </tr>
-            `;
+            if (isPBDAktif) {
+                // BARIS PBD
+                let peratusMTM = dt.ambil > 0 ? ((dt.mtm / dt.ambil) * 100).toFixed(1) : 0;
+                if (dt.ambil > 0 && trendMula === 0) trendMula = parseFloat(peratusMTM);
+                if (dt.ambil > 0) trendAkhir = parseFloat(peratusMTM);
+                
+                labelTahun.push(`TAHUN ${thn}`);
+                dataGraf.push(peratusMTM);
+
+                htmlJadual += `
+                    <tr style="background-color:${bgRow};">
+                        <td style="font-weight:bold; padding:6px; border: 1px solid #cbd5e1;">TAHUN ${thn}</td>
+                        <td style="padding:6px; border: 1px solid #cbd5e1; font-weight:bold;">${dt.ambil}</td>
+                        <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#fee2e2;">${dt.tp1}</td>
+                        <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#ffedd5;">${dt.tp2}</td>
+                        <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#fef9c3;">${dt.tp3}</td>
+                        <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#dbeafe;">${dt.tp4}</td>
+                        <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#f3e8ff;">${dt.tp5}</td>
+                        <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#dcfce7;">${dt.tp6}</td>
+                        <td style="padding:6px; border: 1px solid #cbd5e1; font-weight:bold; background-color:#faf5ff;">${peratusMTM}%</td>
+                    </tr>
+                `;
+            } else {
+                // BARIS PENILAIAN
+                let pCemerlang = dt.ambil > 0 ? ((dt.cemerlang / dt.ambil) * 100).toFixed(1) : 0;
+                let pBaik = dt.ambil > 0 ? ((dt.baik / dt.ambil) * 100).toFixed(1) : 0;
+                let pMemuaskan = dt.ambil > 0 ? ((dt.memuaskan / dt.ambil) * 100).toFixed(1) : 0;
+                let pSederhana = dt.ambil > 0 ? ((dt.sederhana / dt.ambil) * 100).toFixed(1) : 0;
+                let pPerlu = dt.ambil > 0 ? ((dt.perluBimbingan / dt.ambil) * 100).toFixed(1) : 0;
+                let pGagal = dt.ambil > 0 ? ((dt.gagal / dt.ambil) * 100).toFixed(1) : 0;
+                let purata = dt.ambil > 0 ? (dt.totalMarkah / dt.ambil).toFixed(1) : 0;
+
+                if (dt.ambil > 0 && trendMula === 0) trendMula = parseFloat(purata);
+                if (dt.ambil > 0) trendAkhir = parseFloat(purata); 
+
+                labelTahun.push(`TAHUN ${thn}`);
+                dataGraf.push(purata);
+
+                htmlJadual += `
+                    <tr style="background-color:${bgRow};">
+                        <td style="font-weight:bold; padding:6px; border: 1px solid #cbd5e1;">TAHUN ${thn}</td>
+                        <td style="padding:6px; border: 1px solid #cbd5e1; font-weight:bold;">${dt.ambil}</td>
+                        <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#dcfce7; color:#166534;">${dt.cemerlang} (${pCemerlang}%)</td>
+                        <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#dbeafe; color:#1e40af;">${dt.baik} (${pBaik}%)</td>
+                        <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#e0f2fe; color:#0369a1;">${dt.memuaskan} (${pMemuaskan}%)</td>
+                        <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#fef9c3; color:#854d0e;">${dt.sederhana} (${pSederhana}%)</td>
+                        <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#ffedd5; color:#c2410c;">${dt.perluBimbingan} (${pPerlu}%)</td>
+                        <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#fee2e2; color:#b91c1c;">${dt.gagal} (${pGagal}%)</td>
+                        <td style="padding:6px; border: 1px solid #cbd5e1; font-weight:bold; background-color:#faf5ff;">${purata}</td>
+                    </tr>
+                `;
+            }
         });
 
-        let bezaMarkah = markahAkhir - markahMula;
+        // 7. Teks Rumusan Berbeza
+        let bezaTrend = trendAkhir - trendMula;
         let teksRumusan = "Belum ada rekod penilaian yang mencukupi untuk memaparkan rumusan purata.";
-        if (markahMula > 0) {
-            if (bezaMarkah >= 2) {
-                teksRumusan = `Purata markah ujian ${subjekFieldID} menunjukkan corak <b>peningkatan</b> yang positif dari peringkat bawah hingga ke peringkat atas.`;
-            } else if (bezaMarkah <= -2) {
-                teksRumusan = `Purata markah ujian ${subjekFieldID} menunjukkan sedikit <b>penurunan</b> secara keseluruhan. Intervensi berfokus mungkin diperlukan untuk mengukuhkan penguasaan murid.`;
+        
+        if (trendMula > 0) {
+            if (isPBDAktif) {
+                if (bezaTrend >= 2) teksRumusan = `Pencapaian PBD subjek ${subjekFieldID} menunjukkan corak <b>peningkatan MTM</b> yang positif dari peringkat bawah ke atas.`;
+                else if (bezaTrend <= -2) teksRumusan = `Peratus MTM bagi PBD subjek ${subjekFieldID} menunjukkan sedikit <b>penurunan</b> secara keseluruhan. Peningkatan tahap usaha mungkin diperlukan.`;
+                else teksRumusan = `Tahap pencapaian MTM PBD subjek ${subjekFieldID} dilihat <b>konsisten dan stabil</b> merentasi tahun.`;
             } else {
-                teksRumusan = `Prestasi purata markah ujian ${subjekFieldID} adalah <b>konsisten dan mendatar</b> merentasi tahun.`;
+                if (bezaTrend >= 2) teksRumusan = `Purata markah ujian ${subjekFieldID} menunjukkan corak <b>peningkatan</b> yang positif dari peringkat bawah hingga ke peringkat atas.`;
+                else if (bezaTrend <= -2) teksRumusan = `Purata markah ujian ${subjekFieldID} menunjukkan sedikit <b>penurunan</b> secara keseluruhan. Intervensi berfokus mungkin diperlukan.`;
+                else teksRumusan = `Prestasi purata markah ujian ${subjekFieldID} adalah <b>konsisten dan mendatar</b> merentasi tahun.`;
             }
         }
+
+        let labelGrafTajuk = isPBDAktif ? `PERBANDINGAN PERATUS MTM PBD (${subjekFieldID})` : `PERBANDINGAN PURATA MARKAH UJIAN (${subjekFieldID})`;
 
         htmlJadual += `
                 </tbody>
             </table>
             <div style="border: 2px solid #e2e8f0; border-radius: 8px; padding: 20px; font-family: Arial, sans-serif; page-break-inside: avoid;">
                 <h4 style="text-align:center; color:#1e40af; font-weight:900; text-transform:uppercase; margin-top:0;">
-                    GRAF PERBANDINGAN PURATA MARKAH UJIAN ${subjekFieldID}<br>(TAHUN 1 HINGGA TAHUN 6)
+                    GRAF ${labelGrafTajuk}<br>(TAHUN 1 HINGGA TAHUN 6)
                 </h4>
                 
                 <div id="bekas-gambar-graf" style="text-align:center; margin: 20px auto; min-height:300px;">
@@ -2599,16 +2694,14 @@ window.cetakPerbandinganTahun = async () => {
             </div>
         `;
 
-        // Peringkat 1: Masukkan jadual ke kawasan cetakan
         printArea.innerHTML = htmlJadual;
 
-        // Peringkat 2: Cipta canvas SEMENTARA pada 'body' utama skrin (di luar kawasan printArea)
+        // 8. Trik Lukis Canvas Luar Skrin (Chart.js)
         let oldTemp = document.getElementById('temp-graf-wrapper');
         if (oldTemp) oldTemp.remove();
 
         const tempContainer = document.createElement('div');
         tempContainer.id = 'temp-graf-wrapper';
-        // Letak jauh dari pandangan skrin pengguna, tetapi display kekal aktif!
         tempContainer.style.position = 'absolute';
         tempContainer.style.left = '-9999px';
         tempContainer.style.top = '0';
@@ -2624,9 +2717,10 @@ window.cetakPerbandinganTahun = async () => {
         document.body.appendChild(tempContainer);
 
         const ctx = tempCanvas.getContext('2d');
-        const dataNomborGraf = dataPurataGraf.map(Number);
+        const dataNomborGraf = dataGraf.map(Number);
+        
+        let labelYAxis = isPBDAktif ? 'Peratus MTM (%)' : 'Purata Markah (%)';
 
-        // Peringkat 3: Lukis graf pada canvas SEMENTARA
         if (window.grafTahunInstance) window.grafTahunInstance.destroy();
         
         window.grafTahunInstance = new Chart(ctx, {
@@ -2634,26 +2728,26 @@ window.cetakPerbandinganTahun = async () => {
             data: {
                 labels: labelTahun,
                 datasets: [{
-                    label: 'Purata Markah (%)',
+                    label: labelYAxis,
                     data: dataNomborGraf,
                     backgroundColor: ['#2563eb', '#14b8a6', '#eab308', '#8b5cf6', '#f97316', '#84cc16']
                 }]
             },
             options: {
-                responsive: false, // Kekalkan saiz 800x350 dengan keras
-                animation: false, // Tiada animasi supaya terus siap
+                responsive: false, 
+                animation: false, 
                 plugins: { legend: { display: false } },
                 scales: { 
                     y: { 
                         beginAtZero: true, 
                         max: 100,
-                        title: { display: true, text: 'Purata Markah (%)' }
+                        title: { display: true, text: labelYAxis }
                     } 
                 }
             }
         });
 
-        // Peringkat 4: Ambil gambar dan masukkan ke dalam kawasan cetakan
+        // 9. Tangkap Gambar & Cetak
         setTimeout(() => {
             const imejURL = window.grafTahunInstance.toBase64Image();
             const bekasGambar = document.getElementById('bekas-gambar-graf');
@@ -2662,15 +2756,13 @@ window.cetakPerbandinganTahun = async () => {
                 bekasGambar.innerHTML = `<img src="${imejURL}" style="max-width:100%; height:auto;" />`;
             }
             
-            // Buang bekas sementara di luar skrin
             tempContainer.remove();
 
-            // Panggil arahan cetak selepas gambar selesai disuntik
             setTimeout(() => {
                 window.print();
             }, 300);
 
-        }, 400); // 400ms masa yang cukup selamat untuk graf siap render.
+        }, 400); 
 
     } catch (error) {
         console.error("Ralat memuat turun data:", error);
