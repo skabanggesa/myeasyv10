@@ -2441,13 +2441,14 @@ window.cetakPerbandinganTahun = async () => {
             return alert(`Tiada data dijumpai untuk penilaian: ${penilaian}`);
         }
 
+        // KEMAS KINI: 6 Kategori Gred Baharu
         const dataTahun = {
-            1: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, perluPenambahbaikan: 0, totalMarkah: 0 },
-            2: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, perluPenambahbaikan: 0, totalMarkah: 0 },
-            3: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, perluPenambahbaikan: 0, totalMarkah: 0 },
-            4: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, perluPenambahbaikan: 0, totalMarkah: 0 },
-            5: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, perluPenambahbaikan: 0, totalMarkah: 0 },
-            6: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, perluPenambahbaikan: 0, totalMarkah: 0 }
+            1: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, sederhana: 0, perluBimbingan: 0, gagal: 0, totalMarkah: 0 },
+            2: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, sederhana: 0, perluBimbingan: 0, gagal: 0, totalMarkah: 0 },
+            3: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, sederhana: 0, perluBimbingan: 0, gagal: 0, totalMarkah: 0 },
+            4: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, sederhana: 0, perluBimbingan: 0, gagal: 0, totalMarkah: 0 },
+            5: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, sederhana: 0, perluBimbingan: 0, gagal: 0, totalMarkah: 0 },
+            6: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, sederhana: 0, perluBimbingan: 0, gagal: 0, totalMarkah: 0 }
         };
 
         const dapatkanTahun = (murid) => {
@@ -2464,14 +2465,12 @@ window.cetakPerbandinganTahun = async () => {
                 let subUpper = subjekFieldID.toUpperCase();
                 let markah = '-';
 
-                // 1. Cuba guna utiliti sedia ada
                 if (typeof dapatkanMarkah === 'function') {
                     markah = dapatkanMarkah(s, subjekFieldID);
                 } else if (typeof window.dapatkanMarkah === 'function') {
                     markah = window.dapatkanMarkah(s, subjekFieldID);
                 }
 
-                // 2. PENYELESAIAN: Jika utiliti gagal jumpa markah (pulangkan '-'), paksa cari sendiri dalam objek Firestore!
                 if (markah === '-' || markah === '' || markah === null || markah === undefined) {
                     if (s.marks && s.marks[subUpper] !== undefined) markah = s.marks[subUpper];
                     else if (s.marks && s.marks[subLower] !== undefined) markah = s.marks[subLower];
@@ -2481,20 +2480,23 @@ window.cetakPerbandinganTahun = async () => {
                     else if (s[subLower] !== undefined) markah = s[subLower];
                 }
                 
-                // 3. Masukkan dalam pengiraan jadual
                 if (markah !== '-' && markah !== '' && markah !== null && !isNaN(markah)) {
                     let m = Number(markah);
                     dataTahun[tahun].ambil++;
                     dataTahun[tahun].totalMarkah += m;
                     
-                    if (m >= 80) dataTahun[tahun].cemerlang++;
-                    else if (m >= 60) dataTahun[tahun].baik++;
-                    else if (m >= 40) dataTahun[tahun].memuaskan++;
-                    else dataTahun[tahun].perluPenambahbaikan++;
+                    // KEMAS KINI: Logik Range Markah Baharu
+                    if (m >= 82) dataTahun[tahun].cemerlang++;
+                    else if (m >= 66) dataTahun[tahun].baik++;
+                    else if (m >= 50) dataTahun[tahun].memuaskan++;
+                    else if (m >= 35) dataTahun[tahun].sederhana++;
+                    else if (m >= 20) dataTahun[tahun].perluBimbingan++;
+                    else dataTahun[tahun].gagal++;
                 }
             }
         });
 
+        // KEMAS KINI: HTML Jadual dengan 6 Kolum
         let htmlJadual = `
             <div style="text-align:center; margin-bottom:20px; font-family: Arial, sans-serif;">
                 <h2 style="font-size:20px; font-weight:900; text-transform:uppercase; margin-bottom:5px; color:#0f172a;">
@@ -2504,19 +2506,21 @@ window.cetakPerbandinganTahun = async () => {
                     (TAHUN 1 HINGGA TAHUN 6) - ${penilaian.replace(/_/g, ' ')}
                 </h3>
             </div>
-            <table style="width:100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size:12px; margin-bottom: 30px; text-align:center;" border="1">
+            <table style="width:100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size:11px; margin-bottom: 30px; text-align:center;" border="1">
                 <thead>
                     <tr>
-                        <th rowspan="2" style="background-color:#0f2147; color:white; padding:10px; border: 1px solid white;">TAHUN</th>
-                        <th rowspan="2" style="background-color:#3b82f6; color:white; padding:10px; border: 1px solid white;">BILANGAN MURID</th>
-                        <th colspan="4" style="background-color:#1e3a8a; color:white; padding:5px; border: 1px solid white;">PERATUS PENCAPAIAN (%)</th>
-                        <th rowspan="2" style="background-color:#6b21a8; color:white; padding:10px; border: 1px solid white;">PURATA MARKAH (%)</th>
+                        <th rowspan="2" style="background-color:#0f2147; color:white; padding:8px; border: 1px solid white;">TAHUN</th>
+                        <th rowspan="2" style="background-color:#3b82f6; color:white; padding:8px; border: 1px solid white;">BIL MURID</th>
+                        <th colspan="6" style="background-color:#1e3a8a; color:white; padding:5px; border: 1px solid white;">PERATUS PENCAPAIAN (%)</th>
+                        <th rowspan="2" style="background-color:#6b21a8; color:white; padding:8px; border: 1px solid white;">PURATA<br>MARKAH (%)</th>
                     </tr>
                     <tr>
-                        <th style="background-color:#84cc16; color:white; padding:5px; border: 1px solid white;">CEMERLANG<br>(80% ke atas)</th>
-                        <th style="background-color:#3b82f6; color:white; padding:5px; border: 1px solid white;">BAIK<br>(60% - 79%)</th>
-                        <th style="background-color:#eab308; color:white; padding:5px; border: 1px solid white;">MEMUASKAN<br>(40% - 59%)</th>
-                        <th style="background-color:#ef4444; color:white; padding:5px; border: 1px solid white;">PERLU<br>PENAMBAHBAIKAN<br>(< 40%)</th>
+                        <th style="background-color:#16a34a; color:white; padding:5px; border: 1px solid white;">CEMERLANG<br>(82-100)</th>
+                        <th style="background-color:#2563eb; color:white; padding:5px; border: 1px solid white;">BAIK<br>(66-81)</th>
+                        <th style="background-color:#0ea5e9; color:white; padding:5px; border: 1px solid white;">MEMUASKAN<br>(50-65)</th>
+                        <th style="background-color:#eab308; color:white; padding:5px; border: 1px solid white;">SEDERHANA<br>(35-49)</th>
+                        <th style="background-color:#f97316; color:white; padding:5px; border: 1px solid white;">PERLU BIMBINGAN<br>(20-34)</th>
+                        <th style="background-color:#dc2626; color:white; padding:5px; border: 1px solid white;">GAGAL<br>(0-19)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -2531,7 +2535,10 @@ window.cetakPerbandinganTahun = async () => {
             let pCemerlang = dt.ambil > 0 ? ((dt.cemerlang / dt.ambil) * 100).toFixed(1) : 0;
             let pBaik = dt.ambil > 0 ? ((dt.baik / dt.ambil) * 100).toFixed(1) : 0;
             let pMemuaskan = dt.ambil > 0 ? ((dt.memuaskan / dt.ambil) * 100).toFixed(1) : 0;
-            let pPerlu = dt.ambil > 0 ? ((dt.perluPenambahbaikan / dt.ambil) * 100).toFixed(1) : 0;
+            let pSederhana = dt.ambil > 0 ? ((dt.sederhana / dt.ambil) * 100).toFixed(1) : 0;
+            let pPerlu = dt.ambil > 0 ? ((dt.perluBimbingan / dt.ambil) * 100).toFixed(1) : 0;
+            let pGagal = dt.ambil > 0 ? ((dt.gagal / dt.ambil) * 100).toFixed(1) : 0;
+            
             let purata = dt.ambil > 0 ? (dt.totalMarkah / dt.ambil).toFixed(1) : 0;
 
             if (dt.ambil > 0 && markahMula === 0) markahMula = parseFloat(purata);
@@ -2544,13 +2551,15 @@ window.cetakPerbandinganTahun = async () => {
 
             htmlJadual += `
                 <tr style="background-color:${bgRow};">
-                    <td style="font-weight:bold; padding:8px; border: 1px solid #cbd5e1;">TAHUN ${thn}</td>
-                    <td style="padding:8px; border: 1px solid #cbd5e1; font-weight:bold;">${dt.ambil}</td>
-                    <td style="padding:8px; border: 1px solid #cbd5e1; background-color:#ecfccb;">${dt.cemerlang} (${pCemerlang}%)</td>
-                    <td style="padding:8px; border: 1px solid #cbd5e1; background-color:#eff6ff;">${dt.baik} (${pBaik}%)</td>
-                    <td style="padding:8px; border: 1px solid #cbd5e1; background-color:#fef9c3;">${dt.memuaskan} (${pMemuaskan}%)</td>
-                    <td style="padding:8px; border: 1px solid #cbd5e1; background-color:#fee2e2;">${dt.perluPenambahbaikan} (${pPerlu}%)</td>
-                    <td style="padding:8px; border: 1px solid #cbd5e1; font-weight:bold; background-color:#faf5ff;">${purata}</td>
+                    <td style="font-weight:bold; padding:6px; border: 1px solid #cbd5e1;">TAHUN ${thn}</td>
+                    <td style="padding:6px; border: 1px solid #cbd5e1; font-weight:bold;">${dt.ambil}</td>
+                    <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#dcfce7; color:#166534;">${dt.cemerlang} (${pCemerlang}%)</td>
+                    <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#dbeafe; color:#1e40af;">${dt.baik} (${pBaik}%)</td>
+                    <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#e0f2fe; color:#0369a1;">${dt.memuaskan} (${pMemuaskan}%)</td>
+                    <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#fef9c3; color:#854d0e;">${dt.sederhana} (${pSederhana}%)</td>
+                    <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#ffedd5; color:#c2410c;">${dt.perluBimbingan} (${pPerlu}%)</td>
+                    <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#fee2e2; color:#b91c1c;">${dt.gagal} (${pGagal}%)</td>
+                    <td style="padding:6px; border: 1px solid #cbd5e1; font-weight:bold; background-color:#faf5ff;">${purata}</td>
                 </tr>
             `;
         });
@@ -2574,9 +2583,11 @@ window.cetakPerbandinganTahun = async () => {
                 <h4 style="text-align:center; color:#1e40af; font-weight:900; text-transform:uppercase; margin-top:0;">
                     GRAF PERBANDINGAN PURATA MARKAH UJIAN ${subjekFieldID}<br>(TAHUN 1 HINGGA TAHUN 6)
                 </h4>
-                <div style="height: 300px; width: 100%; margin: 20px 0;">
+                
+                <div style="height: 300px; width: 800px; max-width:100%; margin: 20px auto;">
                     <canvas id="grafTahunCanvas"></canvas>
                 </div>
+                
                 <div style="background-color:#eff6ff; border: 1px solid #bfdbfe; padding: 15px; border-radius: 6px; font-size:12px; display:flex; align-items:center; gap: 15px;">
                     <div style="font-size:24px;">📈</div>
                     <div><b>RUMUSAN PINTAR:</b> ${teksRumusan}</div>
@@ -2586,30 +2597,42 @@ window.cetakPerbandinganTahun = async () => {
 
         printArea.innerHTML = htmlJadual;
 
+        // Musnahkan graf lama jika ada (mengelakkan pepijat Chart.js)
+        if (window.grafTahunInstance) {
+            window.grafTahunInstance.destroy();
+        }
+
         setTimeout(() => {
             const ctx = document.getElementById('grafTahunCanvas');
             if (ctx) {
-                new Chart(ctx, {
+                // Pastikan data dipaksa menjadi nombor untuk graf
+                const dataNomborGraf = dataPurataGraf.map(Number);
+                
+                window.grafTahunInstance = new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels: labelTahun,
                         datasets: [{
                             label: 'Purata Markah (%)',
-                            data: dataPurataGraf,
+                            data: dataNomborGraf,
                             backgroundColor: ['#2563eb', '#14b8a6', '#eab308', '#8b5cf6', '#f97316', '#84cc16']
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        animation: false,
+                        animation: false, // Penting supaya graf lukis serta-merta tanpa animasi
                         plugins: { legend: { display: false } },
                         scales: { y: { beginAtZero: true, max: 100 } }
                     }
                 });
-                setTimeout(() => { window.print(); }, 800);
+                
+                // Tambah sedikit masa (1 saat) untuk membenarkan pelayar web (browser) melukis graf sepenuhnya
+                setTimeout(() => { window.print(); }, 1000);
+            } else {
+                window.print();
             }
-        }, 300);
+        }, 100);
 
     } catch (error) {
         console.error("Ralat memuat turun data:", error);
