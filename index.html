@@ -2409,7 +2409,6 @@ window.cetakSubjekPilihan = () => {
 // FUNGSI UTAMA 3: CETAK PERBANDINGAN TAHUN 1-6 (FIRESTORE v10 MODULAR)
 // ==========================================================
 window.cetakPerbandinganTahun = async () => {
-    // 1. Dapatkan input dari pengguna
     const penilaian = document.getElementById('selPenilaian') ? document.getElementById('selPenilaian').value : "";
     if (!penilaian) {
         return alert("Sila pilih Jenis Penilaian (Sesi) dari dropdown terlebih dahulu.");
@@ -2420,26 +2419,18 @@ window.cetakPerbandinganTahun = async () => {
 
     const subjekFieldID = inputSubjek.trim().toUpperCase(); 
     
-    // Tunjuk mesej loading
     const printArea = document.getElementById('section-sijil');
     if (!printArea) return alert("Ralat: Kawasan cetakan tidak dijumpai.");
     printArea.innerHTML = `<div style="text-align:center; padding:50px; font-weight:bold; color:blue;">Sedang memuat turun data dari pelayan. Sila tunggu...</div>`;
 
     try {
-        // 2. Tarik semua data dari Firestore menggunakan sintaks Firebase v10 (Modular)
-        // PERUBAHAN DI SINI: Menggunakan getDocs() dan collection()
         const snapshot = await getDocs(collection(db, "marks_v10")); 
-        
         let senaraiSemuaMurid = [];
         
         snapshot.forEach(docSnap => {
             const data = docSnap.data();
-            
-            // PENYELESAIAN: Tukar semua 'space' (jarak) kepada 'underscore' (_)
-            // supaya ia sepadan dengan format ID dokumen Firestore anda
             const penilaianUnderscore = penilaian.replace(/ /g, '_');
             
-            // Tapis: Cari ID yang ada versi asal ATAU versi underscore
             if (docSnap.id.includes(penilaian) || docSnap.id.includes(penilaianUnderscore)) {
                 senaraiSemuaMurid.push(data);
             }
@@ -2450,7 +2441,6 @@ window.cetakPerbandinganTahun = async () => {
             return alert(`Tiada data dijumpai untuk penilaian: ${penilaian}`);
         }
 
-        // 3. Sediakan bekas untuk kiraan
         const dataTahun = {
             1: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, perluPenambahbaikan: 0, totalMarkah: 0 },
             2: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, perluPenambahbaikan: 0, totalMarkah: 0 },
@@ -2460,27 +2450,38 @@ window.cetakPerbandinganTahun = async () => {
             6: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, perluPenambahbaikan: 0, totalMarkah: 0 }
         };
 
-        // Fungsi ekstrak tahun dari string "4 GEMILANG"
-        const dapatkanTahun = (kelasStr) => {
+        // KEMASKINI 1: Pengecaman Kelas Yang Lebih Luas
+        const dapatkanTahun = (murid) => {
+            let kelasStr = murid.kelas || murid.Kelas || murid.KELAS || murid.tahun || murid.darjah;
             if (!kelasStr) return 0;
             const match = String(kelasStr).match(/\d+/);
             return match ? parseInt(match[0]) : 0;
         };
 
-        // 4. Proses Pengiraan
         senaraiSemuaMurid.forEach(s => {
-            let tahun = dapatkanTahun(s.kelas);
+            let tahun = dapatkanTahun(s);
             if (tahun >= 1 && tahun <= 6) {
-                // Berdasarkan struktur, markah ada dalam s.marks.BI (Sama ada s.marks wujud atau tidak)
                 let markah = '-';
-                if (s.marks && s.marks[subjekFieldID] !== undefined) {
-                    markah = s.marks[subjekFieldID];
-                } else if (s[subjekFieldID] !== undefined) {
-                    // Back-up jika markah di simpan terus dalam punca (root)
-                    markah = s[subjekFieldID];
+
+                // KEMASKINI 2: Sistem carian markah "Pukat Tunda" 
+                let subLower = subjekFieldID.toLowerCase();
+                let subUpper = subjekFieldID.toUpperCase();
+
+                if (typeof dapatkanMarkah === 'function') {
+                    markah = dapatkanMarkah(s, subjekFieldID);
+                } else if (typeof window.dapatkanMarkah === 'function') {
+                    markah = window.dapatkanMarkah(s, subjekFieldID);
+                } else {
+                    if (s.marks && s.marks[subUpper] !== undefined) markah = s.marks[subUpper];
+                    else if (s.marks && s.marks[subLower] !== undefined) markah = s.marks[subLower];
+                    else if (s[`marks.${subUpper}`] !== undefined) markah = s[`marks.${subUpper}`];
+                    else if (s[`marks.${subLower}`] !== undefined) markah = s[`marks.${subLower}`];
+                    else if (s[subUpper] !== undefined) markah = s[subUpper];
+                    else if (s[subLower] !== undefined) markah = s[subLower];
                 }
                 
-                if (markah !== '-' && markah !== '' && !isNaN(markah)) {
+                // Pastikan markah bukan null dan merupakan nombor sebelum mengira
+                if (markah !== '-' && markah !== '' && markah !== null && !isNaN(markah)) {
                     let m = Number(markah);
                     dataTahun[tahun].ambil++;
                     dataTahun[tahun].totalMarkah += m;
@@ -2493,7 +2494,6 @@ window.cetakPerbandinganTahun = async () => {
             }
         });
 
-        // 5. Bina HTML (Jadual)
         let htmlJadual = `
             <div style="text-align:center; margin-bottom:20px; font-family: Arial, sans-serif;">
                 <h2 style="font-size:20px; font-weight:900; text-transform:uppercase; margin-bottom:5px; color:#0f172a;">
@@ -2544,7 +2544,7 @@ window.cetakPerbandinganTahun = async () => {
             htmlJadual += `
                 <tr style="background-color:${bgRow};">
                     <td style="font-weight:bold; padding:8px; border: 1px solid #cbd5e1;">TAHUN ${thn}</td>
-                    <td style="padding:8px; border: 1px solid #cbd5e1;">${dt.ambil}</td>
+                    <td style="padding:8px; border: 1px solid #cbd5e1; font-weight:bold;">${dt.ambil}</td>
                     <td style="padding:8px; border: 1px solid #cbd5e1; background-color:#ecfccb;">${dt.cemerlang} (${pCemerlang}%)</td>
                     <td style="padding:8px; border: 1px solid #cbd5e1; background-color:#eff6ff;">${dt.baik} (${pBaik}%)</td>
                     <td style="padding:8px; border: 1px solid #cbd5e1; background-color:#fef9c3;">${dt.memuaskan} (${pMemuaskan}%)</td>
@@ -2555,7 +2555,7 @@ window.cetakPerbandinganTahun = async () => {
         });
 
         let bezaMarkah = markahAkhir - markahMula;
-        let teksRumusan = "Data tidak mencukupi untuk membuat rumusan keseluruhan.";
+        let teksRumusan = "Belum ada rekod penilaian yang mencukupi untuk memaparkan rumusan purata.";
         if (markahMula > 0) {
             if (bezaMarkah >= 2) {
                 teksRumusan = `Purata markah ujian ${subjekFieldID} menunjukkan corak <b>peningkatan</b> yang positif dari peringkat bawah hingga ke peringkat atas.`;
@@ -2585,7 +2585,6 @@ window.cetakPerbandinganTahun = async () => {
 
         printArea.innerHTML = htmlJadual;
 
-        // 6. Jana Graf Bar Chart.js
         setTimeout(() => {
             const ctx = document.getElementById('grafTahunCanvas');
             if (ctx) {
@@ -2602,7 +2601,7 @@ window.cetakPerbandinganTahun = async () => {
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        animation: false, // Penting untuk cetakan
+                        animation: false,
                         plugins: { legend: { display: false } },
                         scales: { y: { beginAtZero: true, max: 100 } }
                     }
