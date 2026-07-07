@@ -2437,13 +2437,6 @@ window.cetakPerbandinganTahun = async () => {
             if ((data.penilaian && data.penilaian === penilaian) || 
                 docSnap.id.includes(penilaian) || 
                 docSnap.id.includes(penilaianUnderscore)) {
-                
-                Object.keys(data).forEach(key => {
-                    if (key.startsWith('marks.')) {
-                        data[key.split('.')[1].toUpperCase()] = data[key];
-                    }
-                });
-                
                 senaraiSemuaMurid.push(data);
             }
         });
@@ -2473,14 +2466,31 @@ window.cetakPerbandinganTahun = async () => {
             let tahun = dapatkanTahun(s);
             if (tahun >= 1 && tahun <= 6) {
                 
-                let markah = s[subjekFieldID];
-                if (markah === undefined && s.marks) markah = s.marks[subjekFieldID];
+                let subLower = subjekFieldID.toLowerCase();
+                let subUpper = subjekFieldID.toUpperCase();
+                let markah = '-';
+
+                if (typeof dapatkanMarkah === 'function') {
+                    markah = dapatkanMarkah(s, subjekFieldID);
+                } else if (typeof window.dapatkanMarkah === 'function') {
+                    markah = window.dapatkanMarkah(s, subjekFieldID);
+                }
+
+                if (markah === '-' || markah === '' || markah === null || markah === undefined) {
+                    if (s.marks && s.marks[subUpper] !== undefined) markah = s.marks[subUpper];
+                    else if (s.marks && s.marks[subLower] !== undefined) markah = s.marks[subLower];
+                    else if (s[`marks.${subUpper}`] !== undefined) markah = s[`marks.${subUpper}`];
+                    else if (s[`marks.${subLower}`] !== undefined) markah = s[`marks.${subLower}`];
+                    else if (s[subUpper] !== undefined) markah = s[subUpper];
+                    else if (s[subLower] !== undefined) markah = s[subLower];
+                }
                 
                 if (markah !== undefined && markah !== '-' && markah !== '' && markah !== null && !isNaN(markah)) {
                     let m = Number(markah);
                     dataTahun[tahun].ambil++;
                     dataTahun[tahun].totalMarkah += m;
                     
+                    // JULAT MARKAH (PENGEMASKINIAN TEPAT)
                     if (m >= 82) dataTahun[tahun].cemerlang++;
                     else if (m >= 66) dataTahun[tahun].baik++;
                     else if (m >= 50) dataTahun[tahun].memuaskan++;
@@ -2578,8 +2588,8 @@ window.cetakPerbandinganTahun = async () => {
                     GRAF PERBANDINGAN PURATA MARKAH UJIAN ${subjekFieldID}<br>(TAHUN 1 HINGGA TAHUN 6)
                 </h4>
                 
-                <div id="bekas-graf" style="text-align:center; margin: 20px auto;">
-                    <canvas id="grafTahunCanvas" width="800" height="300" style="display:inline-block;"></canvas>
+                <div id="bekas-gambar-graf" style="text-align:center; margin: 20px auto; min-height:300px;">
+                    <div style="color:gray; font-style:italic;">Memproses graf...</div>
                 </div>
                 
                 <div style="background-color:#eff6ff; border: 1px solid #bfdbfe; padding: 15px; border-radius: 6px; font-size:12px; display:flex; align-items:center; gap: 15px;">
@@ -2589,62 +2599,82 @@ window.cetakPerbandinganTahun = async () => {
             </div>
         `;
 
+        // Peringkat 1: Masukkan jadual ke kawasan cetakan
         printArea.innerHTML = htmlJadual;
 
+        // Peringkat 2: Cipta canvas SEMENTARA pada 'body' utama skrin (di luar kawasan printArea)
+        let oldTemp = document.getElementById('temp-graf-wrapper');
+        if (oldTemp) oldTemp.remove();
+
+        const tempContainer = document.createElement('div');
+        tempContainer.id = 'temp-graf-wrapper';
+        // Letak jauh dari pandangan skrin pengguna, tetapi display kekal aktif!
+        tempContainer.style.position = 'absolute';
+        tempContainer.style.left = '-9999px';
+        tempContainer.style.top = '0';
+        tempContainer.style.width = '800px'; 
+        tempContainer.style.height = '350px';
+        tempContainer.style.display = 'block';
+
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.id = 'tempGrafCanvas';
+        tempCanvas.width = 800;
+        tempCanvas.height = 350;
+        tempContainer.appendChild(tempCanvas);
+        document.body.appendChild(tempContainer);
+
+        const ctx = tempCanvas.getContext('2d');
+        const dataNomborGraf = dataPurataGraf.map(Number);
+
+        // Peringkat 3: Lukis graf pada canvas SEMENTARA
         if (window.grafTahunInstance) window.grafTahunInstance.destroy();
-
-        // PENYELESAIAN CARTA KOSONG: Kita jadikan kawasan ini "visible" di luar skrin sebentar
-        printArea.style.display = 'block';
-        printArea.style.position = 'absolute';
-        printArea.style.left = '-9999px';
-
-        const ctx = document.getElementById('grafTahunCanvas');
-        if (ctx) {
-            const dataNomborGraf = dataPurataGraf.map(Number);
-            window.grafTahunInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labelTahun,
-                    datasets: [{
-                        label: 'Purata Markah (%)',
-                        data: dataNomborGraf,
-                        backgroundColor: ['#2563eb', '#14b8a6', '#eab308', '#8b5cf6', '#f97316', '#84cc16']
-                    }]
-                },
-                options: {
-                    responsive: false, // Wajib false untuk mematikan auto-resize yang menyebabkan carta kosong
-                    animation: false,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, max: 100 } }
+        
+        window.grafTahunInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labelTahun,
+                datasets: [{
+                    label: 'Purata Markah (%)',
+                    data: dataNomborGraf,
+                    backgroundColor: ['#2563eb', '#14b8a6', '#eab308', '#8b5cf6', '#f97316', '#84cc16']
+                }]
+            },
+            options: {
+                responsive: false, // Kekalkan saiz 800x350 dengan keras
+                animation: false, // Tiada animasi supaya terus siap
+                plugins: { legend: { display: false } },
+                scales: { 
+                    y: { 
+                        beginAtZero: true, 
+                        max: 100,
+                        title: { display: true, text: 'Purata Markah (%)' }
+                    } 
                 }
-            });
+            }
+        });
 
-            // Beri masa sekejap untuk browser proses lukisan, tukar jadi gambar, dan cetak!
+        // Peringkat 4: Ambil gambar dan masukkan ke dalam kawasan cetakan
+        setTimeout(() => {
+            const imejURL = window.grafTahunInstance.toBase64Image();
+            const bekasGambar = document.getElementById('bekas-gambar-graf');
+            
+            if (bekasGambar) {
+                bekasGambar.innerHTML = `<img src="${imejURL}" style="max-width:100%; height:auto;" />`;
+            }
+            
+            // Buang bekas sementara di luar skrin
+            tempContainer.remove();
+
+            // Panggil arahan cetak selepas gambar selesai disuntik
             setTimeout(() => {
-                // Tukar canvas menjadi gambar statik (kerana imej sangat stabil untuk cetakan)
-                const imejURL = window.grafTahunInstance.toBase64Image();
-                document.getElementById('bekas-graf').innerHTML = `<img src="${imejURL}" style="max-width:100%; height:auto;" />`;
-
-                // Kembalikan style seperti asal
-                printArea.style.display = '';
-                printArea.style.position = '';
-                printArea.style.left = '';
-
                 window.print();
             }, 300);
-        } else {
-            printArea.style.display = '';
-            printArea.style.position = '';
-            printArea.style.left = '';
-            window.print();
-        }
+
+        }, 400); // 400ms masa yang cukup selamat untuk graf siap render.
 
     } catch (error) {
         console.error("Ralat memuat turun data:", error);
         printArea.innerHTML = '';
-        printArea.style.display = '';
-        printArea.style.position = '';
-        printArea.style.left = '';
         alert("Gagal memuat turun data dari pelayan: " + error.message);
     }
 };
