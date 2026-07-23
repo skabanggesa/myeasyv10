@@ -2407,6 +2407,7 @@ window.cetakSubjekPilihan = () => {
 
 // ==========================================================
 // FUNGSI UTAMA 3: CETAK PERBANDINGAN TAHUN 1-6 (HIBRID PENILAIAN & PBD)
+// * Versi Tanpa Rumusan Pintar
 // ==========================================================
 window.cetakPerbandinganTahun = async () => {
     // 1. Kenal pasti Modul Semasa (Penilaian atau PBD)
@@ -2489,7 +2490,6 @@ window.cetakPerbandinganTahun = async () => {
                 if (isPBDAktif) {
                     // --- KIRAAN UNTUK PBD ---
                     let tpVal = 0;
-                    // Cuba guna utiliti 5 jika wujud
                     if (typeof dapatkanDataPBD === 'function') {
                         let dataPBD = dapatkanDataPBD(s, subjekFieldID);
                         if (dataPBD.tp !== '-' && dataPBD.tp.toString().toUpperCase().includes('TP')) {
@@ -2498,7 +2498,6 @@ window.cetakPerbandinganTahun = async () => {
                             tpVal = parseInt(dataPBD.tp);
                         }
                     }
-                    // Pukat Tunda PBD (jika utiliti gagal)
                     if (!tpVal || isNaN(tpVal)) {
                         let rawTP = s[`pbd_${subLower}_tp`] || s[`pbd_${subUpper}_tp`] || s[`${subLower}_tp`];
                         if (rawTP && !isNaN(rawTP)) tpVal = parseInt(rawTP);
@@ -2596,7 +2595,6 @@ window.cetakPerbandinganTahun = async () => {
 
         let labelTahun = [];
         let dataGraf = [];
-        let trendMula = 0, trendAkhir = 0;
 
         // 6. Loop Untuk Isi Data Dalam Jadual
         [1, 2, 3, 4, 5, 6].forEach(thn => {
@@ -2606,8 +2604,6 @@ window.cetakPerbandinganTahun = async () => {
             if (isPBDAktif) {
                 // BARIS PBD
                 let peratusMTM = dt.ambil > 0 ? ((dt.mtm / dt.ambil) * 100).toFixed(1) : 0;
-                if (dt.ambil > 0 && trendMula === 0) trendMula = parseFloat(peratusMTM);
-                if (dt.ambil > 0) trendAkhir = parseFloat(peratusMTM);
                 
                 labelTahun.push(`TAHUN ${thn}`);
                 dataGraf.push(peratusMTM);
@@ -2635,9 +2631,6 @@ window.cetakPerbandinganTahun = async () => {
                 let pGagal = dt.ambil > 0 ? ((dt.gagal / dt.ambil) * 100).toFixed(1) : 0;
                 let purata = dt.ambil > 0 ? (dt.totalMarkah / dt.ambil).toFixed(1) : 0;
 
-                if (dt.ambil > 0 && trendMula === 0) trendMula = parseFloat(purata);
-                if (dt.ambil > 0) trendAkhir = parseFloat(purata); 
-
                 labelTahun.push(`TAHUN ${thn}`);
                 dataGraf.push(purata);
 
@@ -2657,22 +2650,6 @@ window.cetakPerbandinganTahun = async () => {
             }
         });
 
-        // 7. Teks Rumusan Berbeza
-        let bezaTrend = trendAkhir - trendMula;
-        let teksRumusan = "Belum ada rekod penilaian yang mencukupi untuk memaparkan rumusan purata.";
-        
-        if (trendMula > 0) {
-            if (isPBDAktif) {
-                if (bezaTrend >= 2) teksRumusan = `Pencapaian PBD subjek ${subjekFieldID} menunjukkan corak <b>peningkatan MTM</b> yang positif dari peringkat bawah ke atas.`;
-                else if (bezaTrend <= -2) teksRumusan = `Peratus MTM bagi PBD subjek ${subjekFieldID} menunjukkan sedikit <b>penurunan</b> secara keseluruhan. Peningkatan tahap usaha mungkin diperlukan.`;
-                else teksRumusan = `Tahap pencapaian MTM PBD subjek ${subjekFieldID} dilihat <b>konsisten dan stabil</b> merentasi tahun.`;
-            } else {
-                if (bezaTrend >= 2) teksRumusan = `Purata markah ujian ${subjekFieldID} menunjukkan corak <b>peningkatan</b> yang positif dari peringkat bawah hingga ke peringkat atas.`;
-                else if (bezaTrend <= -2) teksRumusan = `Purata markah ujian ${subjekFieldID} menunjukkan sedikit <b>penurunan</b> secara keseluruhan. Intervensi berfokus mungkin diperlukan.`;
-                else teksRumusan = `Prestasi purata markah ujian ${subjekFieldID} adalah <b>konsisten dan mendatar</b> merentasi tahun.`;
-            }
-        }
-
         let labelGrafTajuk = isPBDAktif ? `PERBANDINGAN PERATUS MTM PBD (${subjekFieldID})` : `PERBANDINGAN PURATA MARKAH UJIAN (${subjekFieldID})`;
 
         htmlJadual += `
@@ -2686,17 +2663,12 @@ window.cetakPerbandinganTahun = async () => {
                 <div id="bekas-gambar-graf" style="text-align:center; margin: 20px auto; min-height:300px;">
                     <div style="color:gray; font-style:italic;">Memproses graf...</div>
                 </div>
-                
-                <div style="background-color:#eff6ff; border: 1px solid #bfdbfe; padding: 15px; border-radius: 6px; font-size:12px; display:flex; align-items:center; gap: 15px;">
-                    <div style="font-size:24px;">📈</div>
-                    <div><b>RUMUSAN PINTAR:</b> ${teksRumusan}</div>
-                </div>
             </div>
         `;
 
         printArea.innerHTML = htmlJadual;
 
-        // 8. Trik Lukis Canvas Luar Skrin (Chart.js)
+        // 7. Trik Lukis Canvas Luar Skrin (Chart.js)
         let oldTemp = document.getElementById('temp-graf-wrapper');
         if (oldTemp) oldTemp.remove();
 
@@ -2747,7 +2719,7 @@ window.cetakPerbandinganTahun = async () => {
             }
         });
 
-        // 9. Tangkap Gambar & Cetak
+        // 8. Tangkap Gambar & Cetak
         setTimeout(() => {
             const imejURL = window.grafTahunInstance.toBase64Image();
             const bekasGambar = document.getElementById('bekas-gambar-graf');
