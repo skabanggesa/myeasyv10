@@ -384,7 +384,7 @@
             </button>
 
             <button onclick="window.cetakPerbandinganTahun()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-between transition-colors">
-                <span>Cetak Perbandingan Tahun (1-6)</span>
+                <span>Cetak Analisis Pencapaian Tahun (1-6)</span>
                 <span class="text-xl">📈</span>
             </button>
         </div>
@@ -2541,7 +2541,7 @@ window.cetakPerbandinganTahun = async () => {
         });
 
         // 5. Bina HTML Jadual Berdasarkan Modul Aktif
-        let tajukJadual = isPBDAktif ? `PERBANDINGAN PENTAKSIRAN PBD ${subjekFieldID}` : `PERBANDINGAN PENCAPAIAN UJIAN ${subjekFieldID}`;
+        let tajukJadual = isPBDAktif ? `PERBANDINGAN PENTAKSIRAN PBD ${subjekFieldID}` : `ANALISIS PENCAPAIAN UJIAN ${subjekFieldID}`;
         let htmlJadual = `
             <div style="text-align:center; margin-bottom:20px; font-family: Arial, sans-serif;">
                 <h2 style="font-size:20px; font-weight:900; text-transform:uppercase; margin-bottom:5px; color:#0f172a;">${tajukJadual}</h2>
@@ -2650,7 +2650,7 @@ window.cetakPerbandinganTahun = async () => {
             }
         });
 
-        let labelGrafTajuk = isPBDAktif ? `PERBANDINGAN PERATUS MTM PBD (${subjekFieldID})` : `PERBANDINGAN PURATA MARKAH UJIAN (${subjekFieldID})`;
+        let labelGrafTajuk = isPBDAktif ? `PERBANDINGAN PERATUS MTM PBD (${subjekFieldID})` : `ANALISIS PENCAPAIAN UJIAN (${subjekFieldID})`;
 
         htmlJadual += `
                 </tbody>
