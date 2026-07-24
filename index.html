@@ -2409,6 +2409,9 @@ window.cetakSubjekPilihan = () => {
 // FUNGSI UTAMA 3: CETAK PERBANDINGAN TAHUN 1-6 (HIBRID PENILAIAN & PBD)
 // * Versi Tanpa Rumusan Pintar
 // ==========================================================
+// ==========================================================
+// FUNGSI UTAMA: CETAK ANALISIS TAHUN 1-6 (HIBRID PENILAIAN & PBD)
+// ==========================================================
 window.cetakPerbandinganTahun = async () => {
     // 1. Kenal pasti Modul Semasa (Penilaian atau PBD)
     const modeDropdown = document.getElementById('systemInputMode');
@@ -2448,7 +2451,6 @@ window.cetakPerbandinganTahun = async () => {
                 docSnap.id.includes(penilaian) || 
                 docSnap.id.includes(penilaianUnderscore)) {
                 
-                // Ratakan (flatten) object marks jika ada
                 Object.keys(data).forEach(key => {
                     if (key.startsWith('marks.')) {
                         data[key.split('.')[1].toUpperCase()] = data[key];
@@ -2463,7 +2465,7 @@ window.cetakPerbandinganTahun = async () => {
             return alert(`Tiada data dijumpai untuk penilaian: ${penilaian}`);
         }
 
-        // 3. Sediakan Bekas Data Hibrid (Kumpul untuk dua-dua modul)
+        // 3. Sediakan Bekas Data
         const dataTahun = {
             1: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, sederhana: 0, perluBimbingan: 0, gagal: 0, totalMarkah: 0, tp1: 0, tp2: 0, tp3: 0, tp4: 0, tp5: 0, tp6: 0, mtm: 0 },
             2: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, sederhana: 0, perluBimbingan: 0, gagal: 0, totalMarkah: 0, tp1: 0, tp2: 0, tp3: 0, tp4: 0, tp5: 0, tp6: 0, mtm: 0 },
@@ -2506,7 +2508,7 @@ window.cetakPerbandinganTahun = async () => {
                     if (tpVal >= 1 && tpVal <= 6) {
                         dataTahun[tahun].ambil++;
                         dataTahun[tahun][`tp${tpVal}`]++;
-                        if (tpVal >= 3) dataTahun[tahun].mtm++; // MTM = TP3 hingga TP6
+                        if (tpVal >= 3) dataTahun[tahun].mtm++;
                     }
 
                 } else {
@@ -2541,7 +2543,7 @@ window.cetakPerbandinganTahun = async () => {
         });
 
         // 5. Bina HTML Jadual Berdasarkan Modul Aktif
-        let tajukJadual = isPBDAktif ? `PERBANDINGAN PENTAKSIRAN PBD ${subjekFieldID}` : `ANALISIS PENCAPAIAN UJIAN ${subjekFieldID}`;
+        let tajukJadual = isPBDAktif ? `ANALISIS PENTAKSIRAN PBD ${subjekFieldID}` : `ANALISIS PENCAPAIAN UJIAN ${subjekFieldID}`;
         let htmlJadual = `
             <div style="text-align:center; margin-bottom:20px; font-family: Arial, sans-serif;">
                 <h2 style="font-size:20px; font-weight:900; text-transform:uppercase; margin-bottom:5px; color:#0f172a;">${tajukJadual}</h2>
@@ -2559,7 +2561,7 @@ window.cetakPerbandinganTahun = async () => {
                     <tr>
                         <th rowspan="2" style="background-color:#0f2147; color:white; padding:8px; border: 1px solid white;">TAHUN</th>
                         <th rowspan="2" style="background-color:#3b82f6; color:white; padding:8px; border: 1px solid white;">BIL MURID</th>
-                        <th colspan="6" style="background-color:#1e3a8a; color:white; padding:5px; border: 1px solid white;">BILANGAN MURID MENGUKUT TAHAP PENGUASAAN (TP)</th>
+                        <th colspan="6" style="background-color:#1e3a8a; color:white; padding:5px; border: 1px solid white;">BILANGAN MURID MENGIKUT TAHAP PENGUASAAN (TP)</th>
                         <th rowspan="2" style="background-color:#6b21a8; color:white; padding:8px; border: 1px solid white;">PERATUS MTM<br>(TP 3-6)</th>
                     </tr>
                     <tr>
@@ -2573,13 +2575,13 @@ window.cetakPerbandinganTahun = async () => {
                 </thead><tbody>
             `;
         } else {
-            // HEADER PENILAIAN
+            // HEADER PENILAIAN (LULUS)
             htmlJadual += `
                     <tr>
                         <th rowspan="2" style="background-color:#0f2147; color:white; padding:8px; border: 1px solid white;">TAHUN</th>
                         <th rowspan="2" style="background-color:#3b82f6; color:white; padding:8px; border: 1px solid white;">BIL MURID</th>
                         <th colspan="6" style="background-color:#1e3a8a; color:white; padding:5px; border: 1px solid white;">PERATUS PENCAPAIAN (%)</th>
-                        <th rowspan="2" style="background-color:#6b21a8; color:white; padding:8px; border: 1px solid white;">PURATA<br>(%)</th>
+                        <th rowspan="2" style="background-color:#6b21a8; color:white; padding:8px; border: 1px solid white;">LULUS (%)</th>
                     </tr>
                     <tr>
                         <th style="background-color:#16a34a; color:white; padding:5px; border: 1px solid white;">CEMERLANG<br>(82-100)</th>
@@ -2595,8 +2597,9 @@ window.cetakPerbandinganTahun = async () => {
 
         let labelTahun = [];
         let dataGraf = [];
+        let labelAtasGraf = [];
 
-        // 6. Loop Untuk Isi Data Dalam Jadual
+        // 6. Loop Untuk Isi Data Dalam Jadual & Graf
         [1, 2, 3, 4, 5, 6].forEach(thn => {
             let dt = dataTahun[thn];
             let bgRow = thn % 2 === 0 ? '#f8fafc' : '#ffffff';
@@ -2606,7 +2609,8 @@ window.cetakPerbandinganTahun = async () => {
                 let peratusMTM = dt.ambil > 0 ? ((dt.mtm / dt.ambil) * 100).toFixed(1) : 0;
                 
                 labelTahun.push(`TAHUN ${thn}`);
-                dataGraf.push(peratusMTM);
+                dataGraf.push(Number(peratusMTM));
+                labelAtasGraf.push(`${dt.mtm} (${peratusMTM}%)`);
 
                 htmlJadual += `
                     <tr style="background-color:${bgRow};">
@@ -2618,7 +2622,7 @@ window.cetakPerbandinganTahun = async () => {
                         <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#dbeafe;">${dt.tp4}</td>
                         <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#f3e8ff;">${dt.tp5}</td>
                         <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#dcfce7;">${dt.tp6}</td>
-                        <td style="padding:6px; border: 1px solid #cbd5e1; font-weight:bold; background-color:#faf5ff;">${peratusMTM}%</td>
+                        <td style="padding:6px; border: 1px solid #cbd5e1; font-weight:bold; background-color:#faf5ff;">${dt.mtm} (${peratusMTM}%)</td>
                     </tr>
                 `;
             } else {
@@ -2629,10 +2633,14 @@ window.cetakPerbandinganTahun = async () => {
                 let pSederhana = dt.ambil > 0 ? ((dt.sederhana / dt.ambil) * 100).toFixed(1) : 0;
                 let pPerlu = dt.ambil > 0 ? ((dt.perluBimbingan / dt.ambil) * 100).toFixed(1) : 0;
                 let pGagal = dt.ambil > 0 ? ((dt.gagal / dt.ambil) * 100).toFixed(1) : 0;
-                let purata = dt.ambil > 0 ? (dt.totalMarkah / dt.ambil).toFixed(1) : 0;
+
+                // FORMULA LULUS: Markah >= 20 (Cemerlang + Baik + Memuaskan + Sederhana + Perlu Bimbingan)
+                let bilLulus = dt.cemerlang + dt.baik + dt.memuaskan + dt.sederhana + dt.perluBimbingan;
+                let peratusLulus = dt.ambil > 0 ? ((bilLulus / dt.ambil) * 100).toFixed(1) : 0;
 
                 labelTahun.push(`TAHUN ${thn}`);
-                dataGraf.push(purata);
+                dataGraf.push(Number(peratusLulus));
+                labelAtasGraf.push(`${bilLulus} (${peratusLulus}%)`);
 
                 htmlJadual += `
                     <tr style="background-color:${bgRow};">
@@ -2644,13 +2652,13 @@ window.cetakPerbandinganTahun = async () => {
                         <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#fef9c3; color:#854d0e;">${dt.sederhana} (${pSederhana}%)</td>
                         <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#ffedd5; color:#c2410c;">${dt.perluBimbingan} (${pPerlu}%)</td>
                         <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#fee2e2; color:#b91c1c;">${dt.gagal} (${pGagal}%)</td>
-                        <td style="padding:6px; border: 1px solid #cbd5e1; font-weight:bold; background-color:#faf5ff;">${purata}</td>
+                        <td style="padding:6px; border: 1px solid #cbd5e1; font-weight:bold; background-color:#faf5ff;">${bilLulus} (${peratusLulus}%)</td>
                     </tr>
                 `;
             }
         });
 
-        let labelGrafTajuk = isPBDAktif ? `PERBANDINGAN PERATUS MTM PBD (${subjekFieldID})` : `ANALISIS PENCAPAIAN UJIAN (${subjekFieldID})`;
+        let labelGrafTajuk = isPBDAktif ? `ANALISIS PERATUS MTM PBD (${subjekFieldID})` : `ANALISIS PENCAPAIAN MARKAH UJIAN (${subjekFieldID})`;
 
         htmlJadual += `
                 </tbody>
@@ -2678,33 +2686,56 @@ window.cetakPerbandinganTahun = async () => {
         tempContainer.style.left = '-9999px';
         tempContainer.style.top = '0';
         tempContainer.style.width = '800px'; 
-        tempContainer.style.height = '350px';
+        tempContainer.style.height = '370px';
         tempContainer.style.display = 'block';
 
         const tempCanvas = document.createElement('canvas');
         tempCanvas.id = 'tempGrafCanvas';
         tempCanvas.width = 800;
-        tempCanvas.height = 350;
+        tempCanvas.height = 370;
         tempContainer.appendChild(tempCanvas);
         document.body.appendChild(tempContainer);
 
         const ctx = tempCanvas.getContext('2d');
-        const dataNomborGraf = dataGraf.map(Number);
-        
-        let labelYAxis = isPBDAktif ? 'Peratus MTM (%)' : 'Purata Markah (%)';
+        let labelYAxis = isPBDAktif ? 'Peratus MTM (%)' : 'Peratus Lulus (%)';
 
         if (window.grafTahunInstance) window.grafTahunInstance.destroy();
-        
+
+        // Custom Plugin untuk Melukis Teks Label (Contoh: "33 (82.5%)") di Atas Setiap Bar Graf
+        const customDataLabelsPlugin = {
+            id: 'customDataLabels',
+            afterDatasetsDraw(chart) {
+                const { ctx } = chart;
+                chart.data.datasets.forEach((dataset, i) => {
+                    const meta = chart.getDatasetMeta(i);
+                    meta.data.forEach((bar, index) => {
+                        const teksLabel = dataset.customDataLabels ? dataset.customDataLabels[index] : '';
+                        if (teksLabel) {
+                            ctx.save();
+                            ctx.font = 'bold 11px Arial';
+                            ctx.fillStyle = '#0f172a';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'bottom';
+                            ctx.fillText(teksLabel, bar.x, bar.y - 6);
+                            ctx.restore();
+                        }
+                    });
+                });
+            }
+        };
+
         window.grafTahunInstance = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: labelTahun,
                 datasets: [{
                     label: labelYAxis,
-                    data: dataNomborGraf,
+                    data: dataGraf,
+                    customDataLabels: labelAtasGraf, // Memasukkan tatasusunan teks contoh: "33 (82.5%)"
                     backgroundColor: ['#2563eb', '#14b8a6', '#eab308', '#8b5cf6', '#f97316', '#84cc16']
                 }]
             },
+            plugins: [customDataLabelsPlugin],
             options: {
                 responsive: false, 
                 animation: false, 
@@ -2712,7 +2743,7 @@ window.cetakPerbandinganTahun = async () => {
                 scales: { 
                     y: { 
                         beginAtZero: true, 
-                        max: 100,
+                        max: 115, // Ditetapkan 115 supaya teks label tidak terpotong pada bar 100%
                         title: { display: true, text: labelYAxis }
                     } 
                 }
