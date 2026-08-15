@@ -212,20 +212,20 @@
             <button onclick="window.deleteClass()" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded font-black shadow transition">PADAM KELAS</button>
         </div>
         
-<div class="bg-white p-6 rounded-xl shadow border border-red-200 bg-red-50/30">
-    <h2 class="font-black text-red-900 mb-4 uppercase border-b pb-2">Padam Satu Murid</h2>
-    <p class="text-[11px] text-slate-600 mb-3 font-bold">Mula taip nama untuk melihat cadangan.</p>
-    <div class="space-y-3">
-        <input type="text" id="deleteSingleName" list="studentNamesList" placeholder="Nama Murid" class="w-full p-2 border rounded text-xs uppercase">
-        
-        <datalist id="studentNamesList"></datalist>
+        <div class="bg-white p-6 rounded-xl shadow border border-red-200 bg-red-50/30">
+            <h2 class="font-black text-red-900 mb-4 uppercase border-b pb-2">Padam Satu Murid</h2>
+            <p class="text-[11px] text-slate-600 mb-3 font-bold">Mula taip nama untuk melihat cadangan.</p>
+            <div class="space-y-3">
+                <input type="text" id="deleteSingleName" list="studentNamesList" placeholder="Nama Murid" class="w-full p-2 border rounded text-xs uppercase">
+                
+                <datalist id="studentNamesList"></datalist>
 
-        <input type="text" id="deleteSingleClass" placeholder="Kelas Murid" class="w-full p-2 border rounded text-xs uppercase">
-        <button onclick="window.deleteSingleStudent()" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded font-black shadow transition">PADAM MURID</button>
+                <input type="text" id="deleteSingleClass" placeholder="Kelas Murid" class="w-full p-2 border rounded text-xs uppercase">
+                <button onclick="window.deleteSingleStudent()" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded font-black shadow transition">PADAM MURID</button>
+            </div>
+        </div>
     </div>
 </div>
-    </div>
-    </div>
 
 <div class="flex gap-2 mb-4">
     <button onclick="toggleAnalisis()" class="bg-purple-600 text-white px-6 py-2 rounded-lg font-black shadow hover:bg-purple-700 transition">
@@ -252,10 +252,10 @@
         </div>
         <div>
             <label class="block text-[10px] font-black text-purple-900 uppercase">Kelas</label>
-<select id="anaKelas" class="w-full border p-2 rounded">
-    <option value="">-- Pilih Kelas --</option>
-    <option value="SEMUA">🌐 SEMUA KELAS (MAKRO)</option>
-    </select>
+            <select id="anaKelas" class="w-full border p-2 rounded">
+                <option value="">-- Pilih Kelas --</option>
+                <option value="SEMUA">🌐 SEMUA KELAS (MAKRO)</option>
+            </select>
         </div>
         <div class="flex items-end gap-2">
             <button onclick="janaAnalisis()" class="w-full bg-purple-700 text-white py-2 rounded font-black hover:bg-purple-800 shadow-md transition">JANA ANALISIS</button>
@@ -263,7 +263,7 @@
         </div>
     </div>
 
-<div id="kawasan-tab-analisis" class="hidden-section flex gap-1 border-b border-purple-200 mt-6 pt-2">
+    <div id="kawasan-tab-analisis" class="hidden-section flex gap-1 border-b border-purple-200 mt-6 pt-2">
         <button id="btn-tab-akademik" onclick="window.tukarTabAnalisis('AKADEMIK')" class="px-6 py-3 font-black text-xs md:text-sm bg-purple-700 text-white rounded-t-xl transition shadow-[0_-2px_5px_rgba(0,0,0,0.1)]">📝 ANALISIS PENILAIAN</button>
         <button id="btn-tab-pbd" onclick="window.tukarTabAnalisis('PBD')" class="px-6 py-3 font-black text-xs md:text-sm bg-slate-200 text-slate-500 hover:bg-slate-300 rounded-t-xl transition">🎯 ANALISIS PBD</button>
         <button id="btn-tab-dlp" onclick="window.tukarTabAnalisis('DLP')" class="px-6 py-3 font-black text-xs md:text-sm bg-slate-200 text-slate-500 hover:bg-slate-300 rounded-t-xl transition">🧬 ANALISIS DLP</button>
@@ -271,7 +271,7 @@
 
     <div id="analisis-result" class="hidden-section space-y-8 mt-6"></div>
 
-<div id="analisis-pbd-result" class="hidden-section space-y-8 mt-6">
+    <div id="analisis-pbd-result" class="hidden-section space-y-8 mt-6">
         <div id="pbd-makro-matrix" class="overflow-x-auto bg-slate-50 p-4 border rounded-xl shadow-sm"></div>
         
         <div class="bg-blue-50 p-4 rounded-xl border border-blue-200 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -347,7 +347,7 @@
                 </div>
             </div>
 
-<div id="kawasan-checkbox-subjek" class="flex justify-between items-center mb-4">
+            <div id="kawasan-checkbox-subjek" class="flex justify-between items-center mb-4">
                 <h2 class="font-black text-blue-900 uppercase" id="tableTitleDisplay">Kemasukan Data Murid</h2>
                 <div id="subject-selectors" class="flex gap-2 flex-wrap max-w-xl justify-end items-center"></div>
             </div>
@@ -367,7 +367,7 @@
 
 <div id="section-sijil"></div>
 
-	<div id="printModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center hidden">
+<div id="printModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center hidden">
     <div class="bg-white rounded-xl shadow-2xl p-6 w-11/12 max-w-md transform transition-all">
         
         <div class="text-center mb-6">
@@ -375,7 +375,7 @@
             <p class="text-sm text-slate-500 font-medium mt-1">Sila pilih jenis dokumen yang ingin dicetak</p>
         </div>
 
-<div class="space-y-4">
+        <div class="space-y-4">
             <button onclick="window.cetakPilihan('sijil')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-between transition-colors">
                 <span>Cetak Sijil (Penuh)</span>
                 <span class="text-xl">🎓</span>
@@ -536,7 +536,7 @@ window.updateSelectedSubjects = () => {
 };
 
 window.handleLogin = async () => {
-    const btn = event.target;
+    const btn = window.event.target;
     const originalText = btn.innerText;
     const email = document.getElementById('loginEmail').value.trim().toLowerCase();
     const errorMsg = document.getElementById('loginError');
@@ -557,7 +557,7 @@ window.handleLogin = async () => {
             }
             return;
         }
-        querySnapshot.forEach((doc) => showDashboard(doc.data()));
+        querySnapshot.forEach((docSnap) => showDashboard(docSnap.data()));
     } catch (e) { 
         alert("Ralat sambungan: " + e.message);
     } finally {
@@ -642,7 +642,7 @@ window.upgradeDataLama = async () => {
 
 window.uploadStudentCSV = async () => {
     const fileInput = document.getElementById('csvStudentInput');
-    const btn = event.target;
+    const btn = window.event.target;
     const file = fileInput.files[0];
     if (!file) return alert("Sila pilih fail CSV terlebih dahulu!");
 
@@ -682,7 +682,7 @@ window.uploadStudentCSV = async () => {
     reader.readAsText(file);
 };
 
-	window.addSingleStudent = async () => {
+window.addSingleStudent = async () => {
     const nama = document.getElementById('newStudentName').value.trim().toUpperCase();
     const kelas = document.getElementById('newStudentClass').value.trim().toUpperCase();
     const tahun = document.getElementById('newStudentYear').value.trim();
@@ -701,8 +701,8 @@ window.uploadStudentCSV = async () => {
             tahun: tahun
         });
         alert(`Murid ${nama} berjaya ditambah ke kelas ${kelas}!`);
-        document.getElementById('newStudentName').value = ""; // Kosongkan kotak nama
-        window.loadClassesForDropdown(); // Muat semula senarai kelas
+        document.getElementById('newStudentName').value = ""; 
+        window.loadClassesForDropdown(); 
     } catch (e) {
         alert("Ralat menambah murid: " + e.message);
     } finally {
@@ -748,11 +748,11 @@ window.loadClassesForDropdown = async () => {
     const snapshot = await getDocs(q);
     
     const classes = new Set();
-    const studentNames = new Set(); // Set baharu untuk kumpul nama murid
+    const studentNames = new Set(); 
 
-    snapshot.forEach(doc => {
-        classes.add(doc.data().kelas);
-        studentNames.add(doc.data().nama); // Masukkan nama murid ke dalam Set
+    snapshot.forEach(docSnap => {
+        classes.add(docSnap.data().kelas);
+        studentNames.add(docSnap.data().nama); 
     });
     
     // 1. Uruskan Dropdown Kelas
@@ -761,7 +761,7 @@ window.loadClassesForDropdown = async () => {
     const delSel = document.getElementById('deleteClassSelect'); 
 
     if (sel) sel.innerHTML = '<option value="">Pilih Kelas</option>';
-    if (anaSel) anaSel.innerHTML = '<option value="">Pilih Kelas</option>'; 
+    if (anaSel) anaSel.innerHTML = '<option value="">Pilih Kelas</option><option value="SEMUA">🌐 SEMUA KELAS (MAKRO)</option>'; 
     if (delSel) delSel.innerHTML = '<option value="">-- Pilih Kelas Untuk Dipadam --</option>'; 
     
     Array.from(classes).sort().forEach(c => {
@@ -773,9 +773,8 @@ window.loadClassesForDropdown = async () => {
     // 2. Uruskan Datalist Cadangan Nama Murid
     const dataList = document.getElementById('studentNamesList');
     if (dataList) {
-        dataList.innerHTML = ''; // Kosongkan senarai lama
+        dataList.innerHTML = ''; 
         Array.from(studentNames).sort().forEach(nama => {
-            // Masukkan setiap nama sebagai <option> dalam datalist
             dataList.innerHTML += `<option value="${nama}">`;
         });
     }
@@ -801,16 +800,15 @@ window.fetchStudentList = async () => {
         const qStudents = query(collection(db, "students"), where("tahun", "==", tahun), where("kelas", "==", kelas));
         const studentSnap = await getDocs(qStudents);
         let tempStudents = [];
-        studentSnap.forEach(doc => tempStudents.push({ id: doc.id, ...doc.data() }));
+        studentSnap.forEach(docSnap => tempStudents.push({ id: docSnap.id, ...docSnap.data() }));
 
         const qMarks = query(collection(db, "marks_v10"), where("tahun", "==", tahun), where("kelas", "==", kelas), where("penilaian", "==", penilaian));
         const marksSnap = await getDocs(qMarks);
         
         let savedMarksMap = {};
-        marksSnap.forEach(doc => {
-            let data = doc.data();
+        marksSnap.forEach(docSnap => {
+            let data = docSnap.data();
             
-            // KUNCI PENYELESAIAN: Kita terjemah/pecahkan semula 'marks.BM' kepada 'BM' supaya jadual boleh baca
             Object.keys(data).forEach(key => {
                 if (key.startsWith('marks.')) {
                     data[key.split('.')[1]] = data[key];
@@ -840,7 +838,7 @@ window.fetchStudentList = async () => {
     }
 };
 
-	// FUNGSI UNTUK PADAM SATU MURID
+// FUNGSI UNTUK PADAM SATU MURID
 window.deleteSingleStudent = async () => {
     const nama = document.getElementById('deleteSingleName').value.trim().toUpperCase();
     const kelas = document.getElementById('deleteSingleClass').value.trim().toUpperCase();
@@ -855,7 +853,6 @@ window.deleteSingleStudent = async () => {
     btn.innerText = "MEMADAM...";
 
     try {
-        // Cari murid berdasarkan nama dan kelas yang sepadan
         const q = query(collection(db, "students"), where("nama", "==", nama), where("kelas", "==", kelas));
         const snapshot = await getDocs(q);
         
@@ -871,9 +868,9 @@ window.deleteSingleStudent = async () => {
         }
         
         alert(`Berjaya! Rekod murid ${nama} telah dipadam.`);
-        document.getElementById('deleteSingleName').value = ""; // Kosongkan kotak
-        document.getElementById('deleteSingleClass').value = ""; // Kosongkan kotak
-        
+        document.getElementById('deleteSingleName').value = ""; 
+        document.getElementById('deleteSingleClass').value = ""; 
+        window.loadClassesForDropdown();
     } catch (e) {
         alert("Gagal memadam murid: " + e.message);
     } finally {
@@ -883,7 +880,6 @@ window.deleteSingleStudent = async () => {
 };
 
 window.updateLocalMark = (idx, sub, val) => {
-    // Memastikan penyimpanan data akademik kekal berstruktur sub-objek asli (marks.BM / s[sub])
     activeStudents[idx][sub] = parseFloat(val) || 0;
     if(!activeStudents[idx].marks) activeStudents[idx].marks = {};
     activeStudents[idx].marks[sub] = parseFloat(val) || 0;
@@ -921,15 +917,14 @@ window.renderMarkTable = () => {
     const header = document.getElementById('tableHeader');
     const body = document.getElementById('tableBody');
     const pbdSubBox = document.getElementById('pbd-sub-filter-box');
-    const tableTitle = document.getElementById('tableTitleDisplay'); // Ditambah semula supaya sistem tidak crash
-    const kawasanCheckbox = document.getElementById('kawasan-checkbox-subjek'); // Dipanggil untuk fungsi sembunyi/papar
+    const tableTitle = document.getElementById('tableTitleDisplay'); 
+    const kawasanCheckbox = document.getElementById('kawasan-checkbox-subjek'); 
 
     if(mode === "MARKAH") {
         pbdSubBox.classList.add('hidden-section');
-        if(kawasanCheckbox) kawasanCheckbox.classList.remove('hidden-section'); // PAPAR checkbox dalam mod MARKAH
+        if(kawasanCheckbox) kawasanCheckbox.classList.remove('hidden-section'); 
         tableTitle.innerText = "Kemasukan Markah Akademik (0-100)";
         
-        // Lajur dipulihkan asal (Tiada lajur Gred yang menyengetkan jadual)
         let hHtml = `<th class="border p-2 text-left">NAMA MURID</th>`;
         selectedSubjects.forEach(s => hHtml += `<th class="border bg-blue-700 text-white w-16 text-center">${s}</th>`);
         header.innerHTML = hHtml;
@@ -950,7 +945,7 @@ window.renderMarkTable = () => {
 
     } else {
         pbdSubBox.classList.remove('hidden-section');
-        if(kawasanCheckbox) kawasanCheckbox.classList.add('hidden-section'); // SEMBUNYI checkbox dalam mod PBD
+        if(kawasanCheckbox) kawasanCheckbox.classList.add('hidden-section'); 
         
         const subId = document.getElementById('currentActiveSubject').value;
         tableTitle.innerText = `Kemasukan Pentaksiran Bilik Darjah (PBD) - ${subId}`;
@@ -985,10 +980,10 @@ window.renderMarkTable = () => {
                             </td>`;
                     }).join('')}
                     <td class="border text-center p-1 bg-gray-100">
-    <select id="tp_select_${idx}_${subId}" onchange="window.updateLocalPBDField(${idx}, 'pbd_${subId}_tp', this.value)" class="border rounded p-1 w-full text-center font-black bg-gray-200 text-gray-500 cursor-not-allowed" disabled>
-        ${[0,1,2,3,4,5,6].map(v => `<option value="${v}" ${currentTp == v ? 'selected' : ''}>${v > 0 ? 'TP ' + v : '-'}</option>`).join('')}
-    </select>
-</td>
+                        <select id="tp_select_${idx}_${subId}" onchange="window.updateLocalPBDField(${idx}, 'pbd_${subId}_tp', this.value)" class="border rounded p-1 w-full text-center font-black bg-gray-200 text-gray-500 cursor-not-allowed" disabled>
+                            ${[0,1,2,3,4,5,6].map(v => `<option value="${v}" ${currentTp == v ? 'selected' : ''}>${v > 0 ? 'TP ' + v : '-'}</option>`).join('')}
+                        </select>
+                    </td>
                     <td class="border text-center p-1">
                         <select onchange="window.updateLocalPBDField(${idx}, 'pbd_${subId}_usaha', this.value)" class="border rounded p-1 w-full text-center font-bold text-xs bg-white">
                             ${['-', 'SANGAT TINGGI', 'TINGGI', 'SEDERHANA', 'RENDAH'].map(v => `<option value="${v}" ${currentUsaha === v ? 'selected' : ''}>${v}</option>`).join('')}
@@ -1050,7 +1045,6 @@ window.calculateAndSaveToCloud = async () => {
 
             const resRef = doc(db, "marks_v10", `${s.id}_${penilaian.replace(/\s+/g, '_')}`);
 
-            // Menggabungkan Objek Penyimpanan Asli (Akademik & Metadata)
             const saveData = {
                 studentId: s.id,
                 nama: s.nama,
@@ -1063,7 +1057,6 @@ window.calculateAndSaveToCloud = async () => {
                 lastUpdated: new Date() 
             };
 
-            // Simpan format `marks.SUB` mengikut kod asal
             masterSubjectList.forEach(sub => {
                 let markVal = parseFloat(s[sub]);
                 if (isNaN(markVal) && s.marks && s.marks[sub] !== undefined) {
@@ -1074,7 +1067,6 @@ window.calculateAndSaveToCloud = async () => {
                 }
             });
 
-            // Serta simpan nilai data PBD murid secara serentak
             Object.keys(s).forEach(key => {
                 if (key.startsWith('pbd_')) {
                     saveData[key] = s[key];
@@ -1100,21 +1092,16 @@ window.generateSijilCloud = () => {
     const penilaianElement = document.getElementById('selPenilaian');
     const jenisPenilaian = penilaianElement ? penilaianElement.value.toUpperCase() : '';
 
-// Susunan Kedudukan Akademik Baharu (Peratus -> Jumlah -> GPM -> Nama)
     activeStudents.sort((a, b) => {
-        // 1. Baca Peratus (Tertinggi ke Terendah)
         let pctDiff = parseFloat(b.percent) - parseFloat(a.percent);
         if (pctDiff !== 0) return pctDiff;
 
-        // 2. Baca Jumlah Markah (Tertinggi ke Terendah)
         let totalDiff = parseFloat(b.totalMarks) - parseFloat(a.totalMarks);
         if (totalDiff !== 0) return totalDiff;
 
-        // 3. Baca GPM (Terendah ke Tertinggi)
         let gpmDiff = parseFloat(a.gpm) - parseFloat(b.gpm);
         if (gpmDiff !== 0) return gpmDiff;
         
-        // 4. Susun ikut Abjad Nama
         return a.nama.localeCompare(b.nama);
     }).forEach((s, idx) => {
         const rank = idx + 1;
@@ -1126,7 +1113,6 @@ window.generateSijilCloud = () => {
             let mVal = s[subId] !== undefined ? s[subId] : (s.marks && s.marks[subId] !== undefined ? s.marks[subId] : 0);
             const info = getGrade(mVal);
 
-            // Elemen PBD KPM tambahan dalam Slip Cetakan
             const tpVal = s[`pbd_${subId}_tp`] || 0;
             const usahaVal = s[`pbd_${subId}_usaha`] || '-';
             let tpDisplay = tpVal > 0 ? `TP ${tpVal}` : '-';
@@ -1179,44 +1165,98 @@ window.generateSijilCloud = () => {
     document.getElementById('section-sijil').innerHTML = html;
 };
 
-	// --- FUNGSI KAWALAN MODAL CETAKAN ---
+window.generateSijilPBDCloud = () => {
+    let html = '';
+    const penilaianElement = document.getElementById('selPenilaian');
+    const jenisPenilaian = penilaianElement ? penilaianElement.value.toUpperCase() : '';
+    const subId = document.getElementById('currentActiveSubject') ? document.getElementById('currentActiveSubject').value : 'BM';
+    const subObj = KPM_SUBJECTS.find(x => x.id === subId) || KPM_SUBJECTS[0];
+
+    activeStudents.forEach((s) => {
+        const tpVal = s[`pbd_${subId}_tp`] || 0;
+        const usahaVal = s[`pbd_${subId}_usaha`] || '-';
+        const intervensiVal = s[`pbd_${subId}_intervensi`] || '-';
+
+        let skillRows = subObj.skills.map((sk, idx) => {
+            const skTp = s[`pbd_${subId}_k${idx+1}`] || 0;
+            return `
+                <tr>
+                    <td class="border border-slate-300 px-3 py-2 font-medium text-xs text-left">${sk.toUpperCase()}</td>
+                    <td class="border border-slate-300 px-3 py-2 text-center font-bold text-xs">${skTp > 0 ? 'TP ' + skTp : '-'}</td>
+                </tr>`;
+        }).join('');
+
+        html += `
+            <div class="page-break">
+                <div class="certificate-border">
+                    <div class="text-center mb-6">
+                        <h2 class="text-2xl font-black text-blue-900 uppercase">SK ABANG GESA</h2>
+                        <h1 class="text-3xl font-serif font-bold text-slate-800 underline mt-2">SIJIL PENTAKSIRAN BILIK DARJAH (PBD)</h1>
+                        <p class="text-base font-bold text-purple-700 uppercase tracking-wide mt-1">${subObj.name.toUpperCase()} • ${jenisPenilaian}</p>
+                        <h2 class="text-xl font-black my-3 uppercase text-blue-900">${s.nama}</h2>
+                        <p class="text-sm font-bold">KELAS: ${s.kelas}</p>
+                    </div>
+
+                    <div class="flex flex-col items-center flex-grow w-full">
+                        <table class="w-11/12 border-collapse border-2 border-slate-800 text-xs mb-6">
+                            <thead class="bg-purple-900 text-white">
+                                <tr>
+                                    <th class="py-2 px-3 text-left">KEMAHIRAN / ASPEK PENTAKSIRAN</th>
+                                    <th class="w-24 text-center">TAHAP PENGUASAAN</th>
+                                </tr>
+                            </thead>
+                            <tbody>${skillRows}</tbody>
+                        </table>
+
+                        <div class="w-11/12 grid grid-cols-2 gap-4 text-xs font-bold mb-6">
+                            <div class="bg-purple-50 p-4 border rounded-xl border-purple-200 text-center">
+                                <span class="text-slate-500 block text-[10px] uppercase">Tahap Penguasaan Keseluruhan</span>
+                                <span class="text-2xl font-black text-purple-900">${tpVal > 0 ? 'TP ' + tpVal : '-'}</span>
+                            </div>
+                            <div class="bg-blue-50 p-4 border rounded-xl border-blue-200 text-center">
+                                <span class="text-slate-500 block text-[10px] uppercase">Tahap Usaha</span>
+                                <span class="text-lg font-black text-blue-900">${usahaVal}</span>
+                            </div>
+                        </div>
+
+                        <div class="w-11/12 bg-amber-50 p-4 border rounded-xl border-amber-200 text-xs">
+                            <span class="font-black text-amber-900 block uppercase mb-1">Intervensi KPM:</span>
+                            <p class="text-slate-700 font-semibold">${intervensiVal}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+    });
+    document.getElementById('section-sijil').innerHTML = html;
+};
+
+// --- FUNGSI KAWALAN MODAL CETAKAN ---
 
 window.bukaModalCetak = () => {
     const modal = document.getElementById('printModal');
-    if (modal) {
-        modal.classList.remove('hidden');
-    }
+    if (modal) modal.classList.remove('hidden');
 };
 
 window.tutupModalCetak = () => {
     const modal = document.getElementById('printModal');
-    if (modal) {
-        modal.classList.add('hidden');
-    }
+    if (modal) modal.classList.add('hidden');
 };
 
 window.cetakPilihan = (jenis) => {
-    // 1. Tutup modal menu
     window.tutupModalCetak();
 
-    // 2. Proses cetakan selepas modal ditutup sepenuhnya (delay 300ms)
     setTimeout(() => {
         if (jenis === 'sijil') {
-            // Panggil fungsi asal untuk cetak semua sijil (Ujian / PBD pintar)
             if (typeof window.prepareAndPrint === 'function') {
                 window.prepareAndPrint(); 
-            } else if (typeof prepareAndPrint === 'function') {
-                prepareAndPrint();
             } else {
                 alert("Ralat: Fungsi prepareAndPrint tidak dijumpai.");
             }
         } 
         else if (jenis === 'kelas') {
-            // Memanggil fungsi cetak keputusan kelas yang sebenar
             window.cetakKeputusanKelas();
         } 
         else if (jenis === 'elektif') {
-            // Memanggil fungsi cetak matapelajaran pilihan yang sebenar
             window.cetakSubjekPilihan();
         }
     }, 300);
@@ -1228,61 +1268,220 @@ window.prepareAndPrint = () => {
     const oldArea = document.getElementById('analisis-print-area');
     if(oldArea) oldArea.remove();
 
-    // 1. Semak sama ada guru sedang berada di Modul PBD
-    // (Berdasarkan pbdSubBox yang aktif atau tidak disembunyikan)
-    const pbdBox = document.getElementById('pbdSubBox'); 
-    const isPBDAktif = pbdBox && !pbdBox.classList.contains('hidden-section');
+    const mode = document.getElementById('systemInputMode') ? document.getElementById('systemInputMode').value : 'MARKAH';
 
-    // 2. Halakan ke fungsi penjanaan sijil yang betul
-    if (isPBDAktif) {
-        // Jika sedang buka PBD, panggil fungsi sijil PBD
-        // NOTA: Sila pastikan 'generateSijilPBDCloud' adalah nama sebenar fungsi sijil PBD anda.
-        if (typeof window.generateSijilPBDCloud === 'function') {
-            window.generateSijilPBDCloud();
-        } else {
-            alert("Ralat: Fungsi sijil PBD (generateSijilPBDCloud) belum wujud atau namanya berbeza.");
-            return; // Hentikan dari mencetak jika tiada fungsi
-        }
+    if (mode === 'PBD') {
+        window.generateSijilPBDCloud();
     } else {
-        // Jika tidak, panggil fungsi sijil Ujian Akademik seperti biasa
         window.generateSijilCloud();
     }
 
-    // 3. Cetak selepas sijil siap dijana
     setTimeout(() => { window.print(); }, 500);
 };
 
-// Fungsi untuk memuatkan senarai kelas secara dinamik berdasarkan Tahun/Tingkatan yang dipilih
+window.cetakKeputusanKelas = () => {
+    if (activeStudents.length === 0) return alert("Sila muat turun / isi data murid terlebih dahulu!");
+    
+    const sijilArea = document.getElementById('section-sijil');
+    if (sijilArea) sijilArea.innerHTML = '';
+    const oldArea = document.getElementById('analisis-print-area');
+    if (oldArea) oldArea.remove();
+
+    const penilaianElement = document.getElementById('selPenilaian');
+    const kelasElement = document.getElementById('selKelas');
+    const jenisPenilaian = penilaianElement ? penilaianElement.value.toUpperCase() : '';
+    const namaKelas = kelasElement ? kelasElement.value.toUpperCase() : '';
+
+    let rows = activeStudents.map((s, idx) => {
+        let subCols = selectedSubjects.map(sub => {
+            let mVal = meDapatkanMarkah(s, sub);
+            return `<td class="text-center font-bold border p-2">${mVal}</td>`;
+        }).join('');
+
+        return `
+            <tr class="hover:bg-slate-50">
+                <td class="text-center border p-2 font-bold">${idx + 1}</td>
+                <td class="font-bold uppercase border p-2">${s.nama}</td>
+                ${subCols}
+                <td class="text-center font-bold border p-2 bg-slate-50">${s.totalMarks || 0}</td>
+                <td class="text-center font-bold border p-2 bg-slate-50">${s.percent || '0.00'}%</td>
+                <td class="text-center font-black border p-2 bg-blue-50 text-blue-900">${s.gpm || '0.00'}</td>
+            </tr>`;
+    }).join('');
+
+    let subHeaders = selectedSubjects.map(s => `<th class="w-12 text-center border p-2">${s}</th>`).join('');
+
+    const printArea = document.createElement('div');
+    printArea.id = 'analisis-print-area';
+    printArea.innerHTML = `
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-black uppercase">SK ABANG GESA</h1>
+            <h2 class="text-lg font-bold uppercase text-blue-900">KEPUTUSAN KESELURUHAN KELAS: ${namaKelas}</h2>
+            <p class="text-xs font-bold text-slate-600 uppercase">${jenisPenilaian}</p>
+        </div>
+        <table class="w-full text-xs border-collapse">
+            <thead>
+                <tr class="bg-blue-900 text-white">
+                    <th class="w-8 border p-2">NO</th>
+                    <th class="text-left border p-2">NAMA MURID</th>
+                    ${subHeaders}
+                    <th class="w-16 border p-2">JUMLAH</th>
+                    <th class="w-16 border p-2">PERATUS</th>
+                    <th class="w-12 border p-2">GPM</th>
+                </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+        </table>`;
+    document.body.appendChild(printArea);
+    setTimeout(() => { window.print(); }, 400);
+};
+
+window.cetakSubjekPilihan = () => {
+    if (activeStudents.length === 0) return alert("Sila pilih kelas & muat turun data murid terlebih dahulu!");
+
+    const sijilArea = document.getElementById('section-sijil');
+    if (sijilArea) sijilArea.innerHTML = '';
+    const oldArea = document.getElementById('analisis-print-area');
+    if (oldArea) oldArea.remove();
+
+    const subId = document.getElementById('currentActiveSubject') ? document.getElementById('currentActiveSubject').value : selectedSubjects[0];
+    const subObj = KPM_SUBJECTS.find(x => x.id === subId) || { name: subId };
+    const kelasElement = document.getElementById('selKelas');
+    const namaKelas = kelasElement ? kelasElement.value.toUpperCase() : '';
+
+    let rows = activeStudents.map((s, idx) => {
+        let mVal = meDapatkanMarkah(s, subId);
+        let gInfo = getGrade(parseFloat(mVal) || 0);
+        let pbdData = dapatkanDataPBD(s, subId);
+
+        return `
+            <tr>
+                <td class="text-center border p-2 font-bold">${idx + 1}</td>
+                <td class="font-bold uppercase border p-2">${s.nama}</td>
+                <td class="text-center font-bold border p-2">${mVal}</td>
+                <td class="text-center font-black border p-2">${gInfo.gred}</td>
+                <td class="text-center font-bold text-purple-900 border p-2 bg-purple-50">${pbdData.tp > 0 ? 'TP ' + pbdData.tp : '-'}</td>
+                <td class="text-center border p-2">${pbdData.usaha}</td>
+                <td class="text-left text-[10px] border p-2">${pbdData.intervensi}</td>
+            </tr>`;
+    }).join('');
+
+    const printArea = document.createElement('div');
+    printArea.id = 'analisis-print-area';
+    printArea.innerHTML = `
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-black uppercase">SK ABANG GESA</h1>
+            <h2 class="text-lg font-bold uppercase text-teal-800">LAPORAN PRESTASI MATAPELAJARAN: ${subObj.name.toUpperCase()}</h2>
+            <p class="text-xs font-bold text-slate-600 uppercase">KELAS: ${namaKelas}</p>
+        </div>
+        <table class="w-full text-xs border-collapse">
+            <thead>
+                <tr class="bg-teal-900 text-white">
+                    <th class="w-8 border p-2">NO</th>
+                    <th class="text-left border p-2">NAMA MURID</th>
+                    <th class="w-16 border p-2">MARKAH</th>
+                    <th class="w-12 border p-2">GRED</th>
+                    <th class="w-16 border p-2">PBD (TP)</th>
+                    <th class="w-24 border p-2">USAHA</th>
+                    <th class="text-left border p-2">INTERVENSI KPM</th>
+                </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+        </table>`;
+    document.body.appendChild(printArea);
+    setTimeout(() => { window.print(); }, 400);
+};
+
+window.cetakPerbandinganTahun = async () => {
+    window.tutupModalCetak();
+    const tahun = document.getElementById('anaTahun') ? document.getElementById('anaTahun').value : document.getElementById('selTahun').value;
+    const penilaian = document.getElementById('anaPenilaian') ? document.getElementById('anaPenilaian').value : document.getElementById('selPenilaian').value;
+
+    const sijilArea = document.getElementById('section-sijil');
+    if (sijilArea) sijilArea.innerHTML = '';
+    const oldArea = document.getElementById('analisis-print-area');
+    if (oldArea) oldArea.remove();
+
+    try {
+        const q = query(collection(db, "marks_v10"), where("tahun", "==", tahun), where("penilaian", "==", penilaian));
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) return alert("Tiada data ditemui untuk analisis perbandingan tahun!");
+
+        let classData = {};
+        snapshot.forEach(docSnap => {
+            const data = docSnap.data();
+            const k = data.kelas || 'LAIN-LAIN';
+            if (!classData[k]) classData[k] = { totalPelajar: 0, totalGPM: 0, totalPeratus: 0 };
+            classData[k].totalPelajar++;
+            classData[k].totalGPM += parseFloat(data.gpm) || 0;
+            classData[k].totalPeratus += parseFloat(data.percent) || 0;
+        });
+
+        let rows = Object.keys(classData).sort().map(k => {
+            const count = classData[k].totalPelajar;
+            const avgGpm = (classData[k].totalGPM / count).toFixed(2);
+            const avgPct = (classData[k].totalPeratus / count).toFixed(2);
+            return `
+                <tr>
+                    <td class="font-bold uppercase text-left border p-2">${k}</td>
+                    <td class="text-center border p-2">${count}</td>
+                    <td class="text-center font-black text-blue-900 border p-2">${avgGpm}</td>
+                    <td class="text-center font-bold text-emerald-700 border p-2">${avgPct}%</td>
+                </tr>`;
+        }).join('');
+
+        const printArea = document.createElement('div');
+        printArea.id = 'analisis-print-area';
+        printArea.innerHTML = `
+            <div class="text-center mb-6">
+                <h1 class="text-2xl font-black uppercase">SK ABANG GESA</h1>
+                <h2 class="text-lg font-bold uppercase text-purple-900">ANALISIS PENCAPAIAN KESELURUHAN MENGIKUT KELAS / TAHUN</h2>
+                <p class="text-xs font-bold text-slate-600 uppercase">TAHUN: ${tahun} • PENILAIAN: ${penilaian}</p>
+            </div>
+            <table class="w-full text-xs border-collapse">
+                <thead>
+                    <tr class="bg-purple-900 text-white">
+                        <th class="text-left border p-2">NAMA KELAS</th>
+                        <th class="w-24 text-center border p-2">BIL. MURID</th>
+                        <th class="w-24 text-center border p-2">PURATA GPM</th>
+                        <th class="w-28 text-center border p-2">PURATA PERATUS</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>`;
+        document.body.appendChild(printArea);
+        setTimeout(() => { window.print(); }, 500);
+    } catch (e) {
+        alert("Ralat menjana cetakan perbandingan tahun: " + e.message);
+    }
+};
+
 window.kemaskiniDropdownKelas = async () => {
-    const tahunSekarang = document.getElementById('anaTahun').value; // Sila pastikan ID ini betul mengikut kod cikgu
+    const tahunSekarang = document.getElementById('anaTahun').value; 
     const selectKelas = document.getElementById('anaKelas');
     
     if (!tahunSekarang) return;
 
     try {
-        // 1. Ambil semua dokumen murid bagi tahun tersebut dari Firestore
         const q = query(collection(db, "marks_v10"), where("tahun", "==", tahunSekarang));
         const snapshot = await getDocs(q);
         
-        // 2. Tapis untuk dapatkan nama kelas yang unik (tiada duplikasi)
         const senaraiKelasUnik = new Set();
-        snapshot.forEach(doc => {
-            const data = doc.data();
+        snapshot.forEach(docSnap => {
+            const data = docSnap.data();
             if (data.kelas) {
                 senaraiKelasUnik.add(data.kelas);
             }
         });
 
-        // 3. Susun nama kelas mengikut abjad (A-Z)
         const kelasDisusun = Array.from(senaraiKelasUnik).sort();
 
-        // 4. Set semula dropdown kelas (kekalkan pilihan default & SEMUA)
         selectKelas.innerHTML = `
             <option value="">-- Pilih Kelas --</option>
             <option value="SEMUA">🌐 SEMUA KELAS (MAKRO)</option>
         `;
 
-        // 5. Masukkan kelas-kelas yang ditemui dari Firestore ke dalam dropdown
         kelasDisusun.forEach(namaKelas => {
             const option = document.createElement('option');
             option.value = namaKelas;
@@ -1295,7 +1494,6 @@ window.kemaskiniDropdownKelas = async () => {
     }
 };
 
-// Pautkan fungsi ini ke elemen dropdown Tahun supaya ia berjalan secara automatik apabila Tahun ditukar
 document.getElementById('anaTahun').addEventListener('change', window.kemaskiniDropdownKelas);
 
 window.janaAnalisis = async () => {
@@ -1311,10 +1509,8 @@ window.janaAnalisis = async () => {
 try {
         let q;
         if (kelas === "SEMUA") {
-            // Jika pilih semua, tarik keseluruhan murid dalam tahun/penilaian tersebut
             q = query(collection(db, "marks_v10"), where("tahun", "==", tahun), where("penilaian", "==", penilaian));
         } else {
-            // Jika kelas spesifik dipilih
             q = query(collection(db, "marks_v10"), where("tahun", "==", tahun), where("penilaian", "==", penilaian), where("kelas", "==", kelas));
         }
         const snapshot = await getDocs(q);
@@ -1326,11 +1522,10 @@ try {
         }
 
         let students = [];
-        snapshot.forEach(doc => {
-            const rawData = doc.data();
+        snapshot.forEach(docSnap => {
+            const rawData = docSnap.data();
             let cleanedStudent = { ...rawData };
             
-            // Format penyelarasan data marks.SUB lama
             Object.keys(rawData).forEach(key => {
                 if (key.startsWith('marks.')) {
                     const subName = key.split('.')[1];
@@ -1340,7 +1535,6 @@ try {
             students.push(cleanedStudent);
         });
 
-// KEMAS KINI LOGIK KEDUDUKAN 3 TERBAIK
         students.sort((a, b) => {
             let pctDiff = parseFloat(b.percent) - parseFloat(a.percent);
             if (pctDiff !== 0) return pctDiff;
@@ -1378,7 +1572,6 @@ try {
                 if (gradesCount[gradeInfo.gred] !== undefined) gradesCount[gradeInfo.gred]++;
                 if (mark >= 20) lulus++; else gagal++;
 
-                // Kiraan data PBD
                 let tp = parseInt(s[`pbd_${sub}_tp`]) || 0;
                 tpCounts[tp]++;
             });
@@ -1530,8 +1723,8 @@ try {
                     scales: { y: { beginAtZero: true, max: 100, title: { display: true, text: 'Peratus (%)', font: { weight: 'bold' } } } }
                 }
             });
-		window.janaAnalisisPbdMakro(students);
-		window.janaAnalisisDLP(students);
+            window.janaAnalisisPbdMakro(students);
+            window.janaAnalisisDLP(students);
         }, 150);
 
     } catch (error) {
@@ -1542,11 +1735,9 @@ try {
 };
     
 window.printAnalisis = async () => {
-    // 1. Tentukan tab mana yang sedang aktif
     const tabAkademikAktif = !document.getElementById('analisis-result').classList.contains('hidden-section');
     const tabPbdAktif = !document.getElementById('analisis-pbd-result').classList.contains('hidden-section');
     
-    // --- KOD BAHARU: Semak tab DLP ---
     const elDlp = document.getElementById('analisis-dlp-result');
     const tabDlpAktif = elDlp && (!elDlp.classList.contains('hidden-section')); 
 
@@ -1561,7 +1752,6 @@ window.printAnalisis = async () => {
         jenisLaporan = "LAPORAN KESELURUHAN PBD KELAS";
         if (resultToPrint.innerHTML.trim() === '') return alert("Sila jana analisis dahulu!");
     } else if (tabDlpAktif || (elDlp && elDlp.innerHTML.includes('table'))) { 
-        // --- KOD BAHARU: Jika DLP aktif ---
         resultToPrint = document.getElementById('analisis-dlp-result');
         jenisLaporan = "LAPORAN PRESTASI PROGRAM DWIBAHASA (DLP)";
         if (resultToPrint.innerHTML.trim() === '') return alert("Sila jana analisis dahulu!");
@@ -1569,7 +1759,6 @@ window.printAnalisis = async () => {
         return alert("Sila jana analisis dahulu!");
     }
 
-    // 2. Buang kawasan cetakan lama (jika ada)
     const sijilArea = document.getElementById('section-sijil');
     if (sijilArea) sijilArea.innerHTML = '';
     const oldArea = document.getElementById('analisis-print-area');
@@ -1579,7 +1768,6 @@ window.printAnalisis = async () => {
     printArea.id = 'analisis-print-area';
     const klonResult = resultToPrint.cloneNode(true);
 
-    // --- KOD BAHARU: Salin lukisan Carta Donat (Dengan Sistem Keselamatan) ---
     try {
         const originalCanvases = resultToPrint.getElementsByTagName('canvas');
         const clonedCanvases = klonResult.getElementsByTagName('canvas');
@@ -1595,9 +1783,6 @@ window.printAnalisis = async () => {
         console.warn("Makluman: Gagal menyalin carta ke paparan cetakan.", error);
     }
 
-    // ==========================================
-    // (A) JIKA TAB AKADEMIK AKTIF
-    // ==========================================
     if (tabAkademikAktif && window.myAnalysisChart) {
         const canvasAka = klonResult.querySelector('#analisisChart');
         if (canvasAka) {
@@ -1609,11 +1794,7 @@ window.printAnalisis = async () => {
         SelesaiRenderDanCetak();
     }
 
-    // ==========================================
-    // (B) JIKA TAB PBD AKTIF (Cetak Semua Subjek)
-    // ==========================================
     if (tabPbdAktif) {
-        // ... (kod gelung subjek PBD asal cikgu dikekalkan di sini) ...
         const canvasContainers = klonResult.querySelectorAll('canvas');
         canvasContainers.forEach(c => {
             if(c.parentNode) c.parentNode.innerHTML = ''; 
@@ -1696,18 +1877,11 @@ window.printAnalisis = async () => {
         SelesaiRenderDanCetak();
     }
 
-    // ==========================================
-    // (C) JIKA TAB DLP AKTIF (KOD BAHARU)
-    // ==========================================
     if (tabDlpAktif) {
-        // Jika DLP aktif, kita terus panggil cetakan 
-        // kerana lukisan canvas donat DLP sudah disalin (try-catch block di atas)
         SelesaiRenderDanCetak();
     }
     
-    // Fungsi akhir untuk mengeluarkan popup Print
     function SelesaiRenderDanCetak() {
-        // Ambil nilai kelas dari dropdown (tambah semakan sekiranya nilai kosong)
         const anaKelas = document.getElementById('anaKelas') ? document.getElementById('anaKelas').value : "";
         const anaPenilaian = document.getElementById('anaPenilaian') ? document.getElementById('anaPenilaian').value : "";
         
@@ -1729,25 +1903,8 @@ window.toggleAnalisis = () => {
     const analisisSection = document.getElementById('analisis-section-main');
     const guruArea = document.getElementById('guru-area');
     
-    // Buka/Tutup Papan Pemuka Analisis
     analisisSection.classList.toggle('hidden-section');
     
-    // Jika analisis DIBUKA, sembunyikan kawasan jadual guru. Jika ditutup, paparkan semula.
-    if (!analisisSection.classList.contains('hidden-section')) {
-        guruArea.classList.add('hidden-section');
-    } else {
-        guruArea.classList.remove('hidden-section');
-    }
-};
-
-window.toggleAnalisis = () => {
-    const analisisSection = document.getElementById('analisis-section-main');
-    const guruArea = document.getElementById('guru-area');
-    
-    // Buka/Tutup Papan Pemuka Analisis
-    analisisSection.classList.toggle('hidden-section');
-    
-    // Jika analisis DIBUKA, sembunyikan kawasan jadual guru. Jika ditutup, paparkan semula.
     if (!analisisSection.classList.contains('hidden-section')) {
         guruArea.classList.add('hidden-section');
     } else {
@@ -1770,17 +1927,14 @@ window.tukarTabAnalisis = (tabName) => {
     const activeClass = "px-6 py-3 font-black text-xs md:text-sm bg-purple-700 text-white rounded-t-xl transition shadow-[0_-2px_5px_rgba(0,0,0,0.1)]";
     const inactiveClass = "px-6 py-3 font-black text-xs md:text-sm bg-slate-200 text-slate-500 hover:bg-slate-300 rounded-t-xl transition";
 
-    // 1. Reset semua butang menjadi tidak aktif
     if (tabAkaBtn) tabAkaBtn.className = inactiveClass;
     if (tabPbdBtn) tabPbdBtn.className = inactiveClass;
     if (tabDlpBtn) tabDlpBtn.className = inactiveClass;
 
-    // 2. Sembunyikan semua kontena data terlebih dahulu
     if (akaResult) akaResult.classList.add('hidden-section');
     if (pbdResult) pbdResult.classList.add('hidden-section');
     if (dlpResult) dlpResult.classList.add('hidden-section');
 
-    // 3. Aktifkan butang & tunjukkan kontena yang dipilih sahaja
     if (tabName === 'AKADEMIK') {
         if (tabAkaBtn) tabAkaBtn.className = activeClass;
         if (akaResult) akaResult.classList.remove('hidden-section');
@@ -1796,7 +1950,7 @@ window.tukarTabAnalisis = (tabName) => {
 // ==========================================
 // 2. FUNGSI JANA JADUAL MAKRO & CARTA PBD
 // ==========================================
-window.globalPbdData = []; // Menyimpan memori sementara untuk carta
+window.globalPbdData = []; 
 window.myPbdBarChart = null;
 window.myPbdDoughnutChart = null;
 
@@ -1815,12 +1969,11 @@ window.janaAnalisisPbdMakro = (students) => {
         <tbody>`;
     
     const ddlSubjek = document.getElementById('pbdChartSubject');
-    ddlSubjek.innerHTML = ''; // Kosongkan dropdown lama
+    ddlSubjek.innerHTML = ''; 
     
     KPM_SUBJECTS.forEach(sub => {
         let tp1_2 = 0; let tp3_6 = 0; let totalAmbil = 0;
         
-        // Kira bilangan murid ikut TP
         students.forEach(s => {
             const val = parseInt(s[`pbd_${sub.id}_tp`]) || 0;
             if (val > 0) {
@@ -1830,7 +1983,6 @@ window.janaAnalisisPbdMakro = (students) => {
             }
         });
         
-        // Jika ada data untuk subjek ini, masukkan dalam jadual & dropdown
         if (totalAmbil > 0) {
             const opt = document.createElement('option');
             opt.value = sub.id; opt.innerText = sub.name;
@@ -1850,13 +2002,12 @@ window.janaAnalisisPbdMakro = (students) => {
     });
     tblMakro += `</tbody></table>`;
     
-    // Paparkan keputusan
     if(ddlSubjek.options.length === 0) {
         document.getElementById('pbd-makro-matrix').innerHTML = '<p class="text-center text-red-500 font-bold p-4">Tiada rekod data PBD yang sah dimasukkan bagi kelas ini setakat ini.</p>';
     } else {
         document.getElementById('pbd-makro-matrix').innerHTML = tblMakro;
         document.getElementById('kawasan-tab-analisis').classList.remove('hidden-section');
-        window.lukisCartaPbdDinamik(); // Terus lukis carta subjek pertama
+        window.lukisCartaPbdDinamik(); 
     }
 };
 
@@ -1873,7 +2024,6 @@ window.lukisCartaPbdDinamik = () => {
     let barData = [cTP[1], cTP[2], cTP[3], cTP[4], cTP[5], cTP[6]];
     let doughnutData = [ (cTP[1] + cTP[2]), (cTP[3] + cTP[4] + cTP[5] + cTP[6]) ];
     
-    // Lukis Carta Bar
     const ctxBar = document.getElementById('pbdBarCanvas').getContext('2d');
     if(window.myPbdBarChart) window.myPbdBarChart.destroy();
     window.myPbdBarChart = new Chart(ctxBar, {
@@ -1889,7 +2039,6 @@ window.lukisCartaPbdDinamik = () => {
         options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
     });
     
-    // Lukis Carta Donat
     const ctxPie = document.getElementById('pbdDoughnutCanvas').getContext('2d');
     if(window.myPbdDoughnutChart) window.myPbdDoughnutChart.destroy();
     window.myPbdDoughnutChart = new Chart(ctxPie, {
@@ -1911,7 +2060,6 @@ window.janaAnalisisDLP = (students) => {
 
     const subjekDLP = [ { id: 'MT', nama: 'MATEMATIK' }, { id: 'SN', nama: 'SAINS' } ];
     
-    // Pembolehubah untuk kumpul data carta
     let totalAkaLulus = 0, totalAkaGagal = 0;
     let totalPbdMenguasai = 0, totalPbdBelum = 0;
 
@@ -1925,16 +2073,12 @@ window.janaAnalisisDLP = (students) => {
             if (!isNaN(m)) {
                 ambil++; adaDataAkademik = true;
                 
-                // KEMASKINI LOGIK: Gred E (markah bawah 40) kini dikira LULUS.
-                // Jika sistem sekolah cikgu tiada gred Gagal langsung (E paling bawah), letakkan >= 0.
-                // Jika ada Gred F/G (cth: bawah 20 markah baru gagal), tukar angka 0 kepada 20.
                 if (m >= 20) { 
                     lulus++; totalAkaLulus++; 
                 } else { 
                     gagal++; totalAkaGagal++; 
                 }
                 
-                // Gred untuk GPMP (E tetap bernilai 5)
                 let g = m >= 80 ? 1 : m >= 65 ? 2 : m >= 50 ? 3 : m >= 40 ? 4 : 5;
                 jumlahGPMP += g;
             }
@@ -1983,7 +2127,6 @@ window.janaAnalisisDLP = (students) => {
             </tr>`;
     });
 
-    // Rangka HTML untuk paparan jadual & CARTA DONAT
     let cartaHTML = `
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             ${adaDataAkademik ? `
@@ -1999,7 +2142,6 @@ window.janaAnalisisDLP = (students) => {
             </div>` : ''}
         </div>`;
 
-    // KEMASKINI PAPARAN: Label ditukar kepada LULUS (A-E) dan GAGAL (F)
     if (adaDataAkademik) htmlAka = `<div class="bg-white p-6 rounded-xl border shadow-sm mb-6 border-purple-200"><h3 class="font-black text-purple-900 uppercase border-b-2 border-purple-100 pb-2 mb-4">📝 PRESTASI AKADEMIK (UJIAN)</h3><div class="overflow-x-auto"><table class="w-full text-sm border-collapse text-center"><thead><tr class="bg-purple-100 text-purple-900 font-bold"><th class="border border-purple-200 p-3">SUBJEK</th><th class="border border-purple-200 p-3">AMBIL</th><th class="border border-purple-200 p-3">LULUS (A-E)</th><th class="border border-purple-200 p-3">GAGAL (F)</th><th class="border border-purple-200 p-3">% LULUS</th><th class="border border-purple-200 p-3">GPMP</th></tr></thead><tbody>${barisAka}</tbody></table></div></div>`;
     else htmlAka = `<div class="bg-white p-4 rounded border text-center text-red-500 font-bold mb-4">Data markah belum dimasukkan.</div>`;
 
@@ -2008,7 +2150,6 @@ window.janaAnalisisDLP = (students) => {
 
     dlpResult.innerHTML = cartaHTML + htmlAka + htmlPBD;
 
-    // --- LUKIS CARTA SELEPAS HTML DIMASUKKAN ---
     if (adaDataAkademik) {
         if (window.dlpChartAkaInstance) window.dlpChartAkaInstance.destroy();
         const ctxA = document.getElementById('dlpAkaChart').getContext('2d');
@@ -2037,78 +2178,28 @@ window.janaAnalisisDLP = (students) => {
 };
 
 // ==========================================================
-// KOD CETAKAN PINTAR (AUTO-DETEKSI MODUL & FORMAT DATA)
+// KOD CETAKAN PINTAR & UTILITI EKSTRAKSI DATA
 // ==========================================================
 
-// --- UTALITI 1: Mengesan secara automatik jika Modul PBD aktif di skrin ---
-function cekPbdAktif() {
-    // Semak senarai ID elemen kontena PBD yang biasa digunakan
-    const pbdIDs = ['pbdSection', 'pbdBox', 'pbdContainer', 'pbdSubBox', 'modulPBD', 'pbd-section'];
-    for (let id of pbdIDs) {
-        const el = document.getElementById(id);
-        if (el && !el.classList.contains('hidden') && el.style.display !== 'none') {
-            return true;
-        }
-    }
-    // Semak jika ada butang/tab aktif yang mengandungi perkataan "PBD"
-    const elemenAktif = document.querySelectorAll('.bg-blue-600, .bg-indigo-600, .text-white, button, a');
-    for (let el of elemenAktif) {
-        if (el.offsetWidth > 0 && el.offsetHeight > 0 && el.textContent.toUpperCase().includes('PBD')) {
-            if (el.classList.contains('bg-blue-600') || el.classList.contains('bg-indigo-600') || el.classList.contains('active')) {
-                return true;
-            }
-        }
-    }
-    return false; // Default kepada Modul Penilaian jika tiada petunjuk PBD aktif
-}
-
-// --- UTALITI 2: Mencari subjek PBD yang aktif dipapar di skrin ---
-function ambilSubjekPBDAktif() {
-    const dropdowns = ['currentActiveSubject', 'selSubjek', 'selSubjekPBD', 'pbdSubject', 'selSubject', 'ddlSubjek'];
-    for (let id of dropdowns) {
-        const el = document.getElementById(id);
-        if (el && el.value) return el.value.toLowerCase();
-    }
-    return '';
-}
-
-// --- UTALITI 3: Mengekstrak markah secara fleksibel (Sokong Huruf Besar/Kecil) ---
-function dapatkanMarkah(s, subId) {
+function meDapatkanMarkah(s, subId) {
     if (!s) return '-';
     const low = subId.toLowerCase();
     const up = subId.toUpperCase();
     
-    // Cuba imbas variasi key yang mungkin wujud dalam objek murid
-    const variasi = [low, up, 'markah_' + low, 'markah_' + up, low + '_markah', up + '_markah'];
+    const variasi = [low, up, subId];
     for (let k of variasi) {
         if (s[k] !== undefined && s[k] !== null && s[k] !== '') return s[k];
     }
-    // Jika disimpan di dalam sub-objek (marks / markah)
     if (s.marks && typeof s.marks === 'object') {
         if (s.marks[low] !== undefined) return s.marks[low];
         if (s.marks[up] !== undefined) return s.marks[up];
-    }
-    if (s.markah && typeof s.markah === 'object') {
-        if (s.markah[low] !== undefined) return s.markah[low];
-        if (s.markah[up] !== undefined) return s.markah[up];
+        if (s.marks[subId] !== undefined) return s.marks[subId];
     }
     return '-';
 }
 
-// --- UTALITI 4: Mengekstrak Peratus & Keputusan secara fleksibel ---
-function dapatkanPeratus(s) {
-    const keys = ['peratus', 'PERATUS', 'purata', 'PURATA', 'percentage', 'PERCENTAGE'];
-    for (let k of keys) { if (s[k] !== undefined && s[k] !== null && s[k] !== '') return s[k]; }
-    return '-';
-}
-function dapatkanKeputusan(s) {
-    const keys = ['keputusan', 'KEPUTUSAN', 'status', 'STATUS', 'status_lulus', 'STATUS_LULUS'];
-    for (let k of keys) { if (s[k] !== undefined && s[k] !== null && s[k] !== '') return s[k]; }
-    return '-';
-}
-
-// --- UTALITI 5: Mengekstrak Data PBD Murid (TP, Usaha, Intervensi) ---
 function dapatkanDataPBD(s, subId) {
+    if (!s) return { tp: '-', usaha: '-', intervensi: '-' };
     const low = subId.toLowerCase();
     const up = subId.toUpperCase();
     let tp = '-', usaha = '-', intervensi = '-';
@@ -2124,663 +2215,17 @@ function dapatkanDataPBD(s, subId) {
     
     if (s.pbd && typeof s.pbd === 'object') {
         if (s.pbd[low] && typeof s.pbd[low] === 'object') {
-            if (s.pbd[low].tp !== undefined) tp = s.pbd[low].tp;
-            if (s.pbd[low].usaha !== undefined) usaha = s.pbd[low].usaha;
-            if (s.pbd[low].intervensi !== undefined) intervensi = s.pbd[low].intervensi;
-        } else {
-            for (let k of tpKeys) { if (s.pbd[k] !== undefined) { tp = s.pbd[k]; break; } }
-            for (let k of usahaKeys) { if (s.pbd[k] !== undefined) { usaha = s.pbd[k]; break; } }
-            for (let k of intKeys) { if (s.pbd[k] !== undefined) { intervensi = s.pbd[k]; break; } }
+            if (s.pbd[low].tp) tp = s.pbd[low].tp;
+            if (s.pbd[low].usaha) usaha = s.pbd[low].usaha;
+            if (s.pbd[low].intervensi) intervensi = s.pbd[low].intervensi;
+        } else if (s.pbd[up] && typeof s.pbd[up] === 'object') {
+            if (s.pbd[up].tp) tp = s.pbd[up].tp;
+            if (s.pbd[up].usaha) usaha = s.pbd[up].usaha;
+            if (s.pbd[up].intervensi) intervensi = s.pbd[up].intervensi;
         }
-    }
-    if (tp !== '-' && !isNaN(tp) && String(tp).trim() !== '' && !String(tp).toUpperCase().includes('TP')) {
-        tp = 'TP ' + tp;
     }
     return { tp, usaha, intervensi };
 }
-
-// ==========================================================
-// FUNGSI UTAMA 1: CETAK KEPUTUSAN KELAS
-// ==========================================================
-window.cetakKeputusanKelas = () => {
-    if (!activeStudents || activeStudents.length === 0) {
-        return alert("Sila cari dan papar kelas terlebih dahulu sebelum mencetak!");
-    }
-
-    const kelas = document.getElementById('selKelas') ? document.getElementById('selKelas').value : "TIADA KELAS";
-    const penilaian = document.getElementById('selPenilaian') ? document.getElementById('selPenilaian').value : "";
-    const printArea = document.getElementById('section-sijil');
-    
-    if (!printArea) return alert("Ralat: Kawasan cetakan (section-sijil) tidak dijumpai.");
-    printArea.innerHTML = ''; 
-
-    const modeDropdown = document.getElementById('systemInputMode');
-    const isPBDAktif = modeDropdown ? modeDropdown.value === 'PBD' : false;
-    
-    let html = '';
-
-    if (isPBDAktif) {
-        // ------------------------------------------
-        // FORMAT JADUAL: MODUL PBD
-        // ------------------------------------------
-        let headerSubjekHtml = '';
-        KPM_SUBJECTS.forEach(sub => {
-            headerSubjekHtml += `<th style="border: 1px solid black; padding:6px; text-align:center; font-size:10px;">${sub.id.toUpperCase()}</th>`;
-        });
-
-        html = `
-            <div style="text-align:center; margin-bottom:20px; font-family: Arial, sans-serif;">
-                <h2 style="font-size:22px; font-weight:900; text-transform:uppercase; margin-bottom:5px;">RUMUSAN TP PBD KELAS (KESELURUHAN)</h2>
-                <h3 style="font-size:14px; font-weight:bold; color:#475569; margin-top:0; text-transform:uppercase;">
-                    KELAS: ${kelas}
-                </h3>
-            </div>
-            <div style="overflow-x:auto;">
-            <table style="width:100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size:11px;" border="1">
-                <thead>
-                    <tr style="background-color:#f1f5f9; text-transform:uppercase; font-weight:bold;">
-                        <th style="border: 1px solid black; padding:6px; text-align:center; width:4%;">BIL</th>
-                        <th style="border: 1px solid black; padding:6px; text-align:left; min-width:180px;">NAMA MURID</th>
-                        ${headerSubjekHtml}
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-
-        activeStudents.forEach((s, idx) => {
-            let rowSubjekHtml = '';
-            KPM_SUBJECTS.forEach(sub => {
-                // GUNAKAN UTILITI 5 ANDA UNTUK PENGESANAN DATA FLEKSIBEL
-                const dataPBD = typeof dapatkanDataPBD === 'function' ? dapatkanDataPBD(s, sub.id) : { tp: '-' };
-                rowSubjekHtml += `<td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold;">${dataPBD.tp}</td>`;
-            });
-
-            html += `
-                <tr>
-                    <td style="border: 1px solid black; padding:6px; text-align:center;">${idx + 1}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:left; font-weight:bold; text-transform:uppercase;">${s.nama}</td>
-                    ${rowSubjekHtml}
-                </tr>
-            `;
-        });
-        html += `</tbody></table></div>`;
-
-    } else {
-        // ------------------------------------------
-        // FORMAT JADUAL: MODUL PENILAIAN (AKADEMIK)
-        // ------------------------------------------
-        const senaraiSubjek = (typeof KPM_SUBJECTS !== 'undefined') ? KPM_SUBJECTS : [];
-
-        html = `
-            <div style="text-align:center; margin-bottom:20px; font-family: Arial, sans-serif;">
-                <h2 style="font-size:22px; font-weight:900; text-transform:uppercase; margin-bottom:5px;">LAPORAN KEPUTUSAN PENILAIAN KELAS</h2>
-                <h3 style="font-size:14px; font-weight:bold; color:#475569; margin-top:0; text-transform:uppercase;">
-                    KELAS: ${kelas} &nbsp;|&nbsp; PENILAIAN: ${penilaian}
-                </h3>
-            </div>
-            <div style="overflow-x:auto;">
-            <table style="width:100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size:11px;" border="1">
-                <thead>
-                    <tr style="background-color:#f1f5f9; text-transform:uppercase; font-weight:bold;">
-                        <th style="border: 1px solid black; padding:6px; text-align:center; width:4%;">BIL</th>
-                        <th style="border: 1px solid black; padding:6px; text-align:left; min-width:180px;">NAMA MURID</th>
-        `;
-
-        senaraiSubjek.forEach(sub => {
-            html += `<th style="border: 1px solid black; padding:6px; text-align:center; font-size:10px;">${sub.id.toUpperCase()}</th>`;
-        });
-
-        html += `
-                        <th style="border: 1px solid black; padding:6px; text-align:center; width:8%;">PERATUS</th>
-                        <th style="border: 1px solid black; padding:6px; text-align:center; width:12%;">KEPUTUSAN</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-
-        activeStudents.forEach((s, idx) => {
-            let totalMarks = 0;
-            let countSubjekDikirakan = 0;
-            let adaGagal = false;
-
-            let barisMarkahHtml = '';
-            const subjekTerasGagal = ['bm', 'bi', 'mt', 'sn', 'sejarah', 'sej'];
-
-            senaraiSubjek.forEach(sub => {
-                // GUNAKAN UTILITI 3 ANDA
-                const markah = typeof dapatkanMarkah === 'function' ? dapatkanMarkah(s, sub.id) : '-';
-                barisMarkahHtml += `<td style="border: 1px solid black; padding:6px; text-align:center; font-weight:medium;">${markah}</td>`;
-                
-                if (markah !== '-' && markah !== '' && !isNaN(markah)) {
-                    const markahNombor = Number(markah);
-                    totalMarks += markahNombor;
-                    countSubjekDikirakan++;
-                    if (subjekTerasGagal.includes(sub.id.toLowerCase()) && markahNombor < 20) adaGagal = true;
-                }
-            });
-
-            // GUNAKAN UTILITI 4 ANDA
-            let peratusRaw = typeof dapatkanPeratus === 'function' ? dapatkanPeratus(s) : '-';
-            let peratusPapar = peratusRaw !== '-' ? parseFloat(peratusRaw).toFixed(2) : (countSubjekDikirakan > 0 ? ((totalMarks / (countSubjekDikirakan * 100)) * 100).toFixed(2) : '-');
-
-            let keputusanPapar = typeof dapatkanKeputusan === 'function' ? dapatkanKeputusan(s) : '-';
-            if (keputusanPapar === '-') {
-                keputusanPapar = countSubjekDikirakan > 0 ? (adaGagal ? 'GAGAL' : 'LULUS') : 'TIDAK LENGKAP';
-            }
-
-            html += `
-                <tr>
-                    <td style="border: 1px solid black; padding:6px; text-align:center;">${idx + 1}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:left; font-weight:bold; text-transform:uppercase;">${s.nama}</td>
-                    ${barisMarkahHtml}
-                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold;">${peratusPapar}${peratusPapar !== '-' ? '%' : ''}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; text-transform:uppercase; font-size:10px; color:${keputusanPapar.toUpperCase().includes('GAGAL') ? '#b91c1c' : '#15803d'}">${keputusanPapar}</td>
-                </tr>
-            `;
-        });
-        html += `</tbody></table></div>`;
-    }
-
-    printArea.innerHTML = html;
-    setTimeout(() => { window.print(); }, 500);
-};
-
-
-// ==========================================================
-// FUNGSI UTAMA 2: CETAK MATAPELAJARAN PILIHAN
-// ==========================================================
-window.cetakSubjekPilihan = () => {
-    if (!activeStudents || activeStudents.length === 0) {
-        return alert("Sila cari dan papar kelas terlebih dahulu sebelum mencetak!");
-    }
-
-    const modeDropdown = document.getElementById('systemInputMode');
-    const isPBDAktif = modeDropdown ? modeDropdown.value === 'PBD' : false;
-
-    const mesejPrompt = isPBDAktif 
-        ? "Sila masukkan KOD SUBJEK PBD yang ingin dicetak.\nContoh: bm, bi, mt, sn, sej, rbt"
-        : "Sila masukkan KOD SUBJEK PENILAIAN yang ingin dicetak.\nContoh: bm, bi, mt, sn, sej, rbt";
-    
-    const inputSubjek = prompt(mesejPrompt);
-    if (!inputSubjek) return; 
-
-    const subjekFieldID = inputSubjek.trim().toLowerCase(); 
-    const namaSubjekPapar = inputSubjek.trim().toUpperCase();
-
-    const kelas = document.getElementById('selKelas') ? document.getElementById('selKelas').value : "TIADA KELAS";
-    const printArea = document.getElementById('section-sijil');
-    if (!printArea) return alert("Ralat: Kawasan cetakan tidak dijumpai.");
-    
-    printArea.innerHTML = ''; 
-    let html = '';
-
-    if (isPBDAktif) {
-        const subObj = KPM_SUBJECTS.find(x => x.id.toLowerCase() === subjekFieldID);
-        if (!subObj) return alert(`Maaf, subjek ${namaSubjekPapar} tidak dijumpai dalam senarai PBD KPM.`);
-
-        let headerSkillsHtml = '';
-        subObj.skills.forEach(sk => { headerSkillsHtml += `<th style="border: 1px solid black; padding:8px; text-align:center;">${sk.toUpperCase()}</th>`; });
-
-        html = `
-            <div style="text-align:center; margin-bottom:20px; font-family: Arial, sans-serif;">
-                <h2 style="font-size:22px; font-weight:900; text-transform:uppercase; margin-bottom:5px;">LAPORAN PRESTASI PBD MATAPELAJARAN</h2>
-                <h3 style="font-size:14px; font-weight:bold; color:#1e40af; margin-top:0; text-transform:uppercase;">
-                    SUBJEK: ${namaSubjekPapar} &nbsp;|&nbsp; KELAS: ${kelas}
-                </h3>
-            </div>
-            <table style="width:100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size:11px;" border="1">
-                <thead>
-                    <tr style="background-color:#f1f5f9; text-transform:uppercase; font-weight:bold;">
-                        <th style="border: 1px solid black; padding:8px; text-align:center; width:4%;">BIL</th>
-                        <th style="border: 1px solid black; padding:8px; text-align:left; width:20%;">NAMA MURID</th>
-                        ${headerSkillsHtml}
-                        <th style="border: 1px solid black; padding:8px; text-align:center; width:12%;">TP KESELURUHAN</th>
-                        <th style="border: 1px solid black; padding:8px; text-align:center; width:12%;">TAHAP USAHA</th>
-                        <th style="border: 1px solid black; padding:8px; text-align:left; width:25%;">INTERVENSI KPM</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-
-        activeStudents.forEach((s, idx) => {
-            let skillsRowHtml = '';
-            subObj.skills.forEach((sk, sIdx) => {
-                // PENGESANAN KEMAHIRAN (SKILLS) FLEKSIBEL
-                let valK = s[`pbd_${subjekFieldID}_k${sIdx+1}`] || s[`${subjekFieldID}_k${sIdx+1}`] || (s.pbd && s.pbd[subjekFieldID] ? s.pbd[subjekFieldID][`k${sIdx+1}`] : null);
-                let textTpSk = valK ? `TP ${valK}` : '-';
-                skillsRowHtml += `<td style="border: 1px solid black; padding:6px; text-align:center;">${textTpSk}</td>`;
-            });
-
-            // GUNAKAN UTILITI 5 ANDA UNTUK PENGESANAN DATA FLEKSIBEL
-            const dataPBD = typeof dapatkanDataPBD === 'function' ? dapatkanDataPBD(s, subjekFieldID) : { tp: '-', usaha: '-', intervensi: '-' };
-
-            html += `
-                <tr>
-                    <td style="border: 1px solid black; padding:6px; text-align:center;">${idx + 1}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:left; font-weight:bold; text-transform:uppercase;">${s.nama}</td>
-                    ${skillsRowHtml}
-                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; background-color:#faf5ff;">${dataPBD.tp}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:center; text-transform:uppercase;">${dataPBD.usaha}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:left; text-transform:uppercase; font-size:10px;">${dataPBD.intervensi}</td>
-                </tr>
-            `;
-        });
-        html += `</tbody></table>`;
-        
-    } else {
-        html = `
-            <div style="text-align:center; margin-bottom:20px; font-family: Arial, sans-serif;">
-                <h2 style="font-size:22px; font-weight:900; text-transform:uppercase; margin-bottom:5px;">LAPORAN PRESTASI MATAPELAJARAN (AKADEMIK)</h2>
-                <h3 style="font-size:14px; font-weight:bold; color:#1e40af; margin-top:0; text-transform:uppercase;">
-                    SUBJEK: ${namaSubjekPapar} &nbsp;|&nbsp; KELAS: ${kelas}
-                </h3>
-            </div>
-            <table style="width:100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size:12px;" border="1">
-                <thead>
-                    <tr style="background-color:#e0f2fe; text-transform:uppercase; font-weight:bold;">
-                        <th style="border: 1px solid black; padding:8px; text-align:center; width:5%;">BIL</th>
-                        <th style="border: 1px solid black; padding:8px; text-align:left;">NAMA MURID</th>
-                        <th style="border: 1px solid black; padding:8px; text-align:center; width:20%;">MARKAH</th>
-                        <th style="border: 1px solid black; padding:8px; text-align:center; width:20%;">GRED</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-
-        activeStudents.forEach((s, idx) => {
-            // GUNAKAN UTILITI 3 ANDA
-            const markah = typeof dapatkanMarkah === 'function' ? dapatkanMarkah(s, subjekFieldID) : '-';
-            
-            let gredPapar = '-';
-            if (markah !== '-' && markah !== '' && !isNaN(markah)) {
-                if (typeof getGrade === 'function') gredPapar = getGrade(Number(markah))?.gred || '-';
-                else if (typeof window.getGrade === 'function') gredPapar = window.getGrade(Number(markah))?.gred || '-';
-            }
-            
-            html += `
-                <tr>
-                    <td style="border: 1px solid black; padding:6px; text-align:center;">${idx + 1}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:left; font-weight:bold; text-transform:uppercase;">${s.nama}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; font-size:14px;">${markah}</td>
-                    <td style="border: 1px solid black; padding:6px; text-align:center; font-weight:bold; color:#b91c1c;">${gredPapar}</td>
-                </tr>
-            `;
-        });
-        html += `</tbody></table>`;
-    }
-
-    printArea.innerHTML = html; 
-    setTimeout(() => { window.print(); }, 500);
-};
-
-// ==========================================================
-// FUNGSI UTAMA 3: CETAK PERBANDINGAN TAHUN 1-6 (HIBRID PENILAIAN & PBD)
-// * Versi Tanpa Rumusan Pintar
-// ==========================================================
-// ==========================================================
-// FUNGSI UTAMA: CETAK ANALISIS TAHUN 1-6 (HIBRID PENILAIAN & PBD)
-// ==========================================================
-window.cetakPerbandinganTahun = async () => {
-    // 1. Kenal pasti Modul Semasa (Penilaian atau PBD)
-    const modeDropdown = document.getElementById('systemInputMode');
-    const isPBDAktif = modeDropdown ? modeDropdown.value === 'PBD' : false;
-
-    // 2. Kenal pasti Penilaian/Sesi (Untuk filter Firestore)
-    const selPenilaian = document.getElementById('selPenilaian');
-    const anaPenilaian = document.getElementById('anaPenilaian');
-    const penilaian = (selPenilaian && selPenilaian.value) ? selPenilaian.value : ((anaPenilaian && anaPenilaian.value) ? anaPenilaian.value : "");
-    
-    if (!penilaian) {
-        return alert("Sila pilih Jenis Penilaian (Sesi) dari dropdown terlebih dahulu.");
-    }
-
-    const mesejPrompt = isPBDAktif 
-        ? "ANALISIS TAHUN 1 - 6 (MODUL PBD)\nSila masukkan KOD SUBJEK (Contoh: bm, bi, mt, sn):"
-        : "ANALISIS TAHUN 1 - 6 (MODUL PENILAIAN)\nSila masukkan KOD SUBJEK (Contoh: bm, bi, mt, sn):";
-
-    const inputSubjek = prompt(mesejPrompt);
-    if (!inputSubjek) return; 
-
-    const subjekFieldID = inputSubjek.trim().toUpperCase(); 
-    
-    const printArea = document.getElementById('section-sijil');
-    if (!printArea) return alert("Ralat: Kawasan cetakan tidak dijumpai.");
-    printArea.innerHTML = `<div style="text-align:center; padding:50px; font-weight:bold; color:blue;">Sedang memuat turun dan mengira data dari pelayan. Sila tunggu sebentar...</div>`;
-
-    try {
-        const snapshot = await getDocs(collection(db, "marks_v10")); 
-        let senaraiSemuaMurid = [];
-        
-        snapshot.forEach(docSnap => {
-            const data = docSnap.data();
-            const penilaianUnderscore = penilaian.replace(/ /g, '_');
-            
-            if ((data.penilaian && data.penilaian === penilaian) || 
-                docSnap.id.includes(penilaian) || 
-                docSnap.id.includes(penilaianUnderscore)) {
-                
-                Object.keys(data).forEach(key => {
-                    if (key.startsWith('marks.')) {
-                        data[key.split('.')[1].toUpperCase()] = data[key];
-                    }
-                });
-                senaraiSemuaMurid.push(data);
-            }
-        });
-
-        if (senaraiSemuaMurid.length === 0) {
-            printArea.innerHTML = '';
-            return alert(`Tiada data dijumpai untuk penilaian: ${penilaian}`);
-        }
-
-        // 3. Sediakan Bekas Data
-        const dataTahun = {
-            1: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, sederhana: 0, perluBimbingan: 0, gagal: 0, totalMarkah: 0, tp1: 0, tp2: 0, tp3: 0, tp4: 0, tp5: 0, tp6: 0, mtm: 0 },
-            2: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, sederhana: 0, perluBimbingan: 0, gagal: 0, totalMarkah: 0, tp1: 0, tp2: 0, tp3: 0, tp4: 0, tp5: 0, tp6: 0, mtm: 0 },
-            3: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, sederhana: 0, perluBimbingan: 0, gagal: 0, totalMarkah: 0, tp1: 0, tp2: 0, tp3: 0, tp4: 0, tp5: 0, tp6: 0, mtm: 0 },
-            4: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, sederhana: 0, perluBimbingan: 0, gagal: 0, totalMarkah: 0, tp1: 0, tp2: 0, tp3: 0, tp4: 0, tp5: 0, tp6: 0, mtm: 0 },
-            5: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, sederhana: 0, perluBimbingan: 0, gagal: 0, totalMarkah: 0, tp1: 0, tp2: 0, tp3: 0, tp4: 0, tp5: 0, tp6: 0, mtm: 0 },
-            6: { ambil: 0, cemerlang: 0, baik: 0, memuaskan: 0, sederhana: 0, perluBimbingan: 0, gagal: 0, totalMarkah: 0, tp1: 0, tp2: 0, tp3: 0, tp4: 0, tp5: 0, tp6: 0, mtm: 0 }
-        };
-
-        const dapatkanTahun = (murid) => {
-            let kelasStr = murid.kelas || murid.Kelas || murid.KELAS || murid.tahun || murid.darjah;
-            if (!kelasStr) return 0;
-            const match = String(kelasStr).match(/\d+/);
-            return match ? parseInt(match[0]) : 0;
-        };
-
-        // 4. Proses Pengiraan
-        senaraiSemuaMurid.forEach(s => {
-            let tahun = dapatkanTahun(s);
-            if (tahun >= 1 && tahun <= 6) {
-                let subLower = subjekFieldID.toLowerCase();
-                let subUpper = subjekFieldID.toUpperCase();
-
-                if (isPBDAktif) {
-                    // --- KIRAAN UNTUK PBD ---
-                    let tpVal = 0;
-                    if (typeof dapatkanDataPBD === 'function') {
-                        let dataPBD = dapatkanDataPBD(s, subjekFieldID);
-                        if (dataPBD.tp !== '-' && dataPBD.tp.toString().toUpperCase().includes('TP')) {
-                            tpVal = parseInt(dataPBD.tp.toString().toUpperCase().replace('TP', '').trim());
-                        } else if (!isNaN(dataPBD.tp) && dataPBD.tp !== '-') {
-                            tpVal = parseInt(dataPBD.tp);
-                        }
-                    }
-                    if (!tpVal || isNaN(tpVal)) {
-                        let rawTP = s[`pbd_${subLower}_tp`] || s[`pbd_${subUpper}_tp`] || s[`${subLower}_tp`];
-                        if (rawTP && !isNaN(rawTP)) tpVal = parseInt(rawTP);
-                    }
-
-                    if (tpVal >= 1 && tpVal <= 6) {
-                        dataTahun[tahun].ambil++;
-                        dataTahun[tahun][`tp${tpVal}`]++;
-                        if (tpVal >= 3) dataTahun[tahun].mtm++;
-                    }
-
-                } else {
-                    // --- KIRAAN UNTUK PENILAIAN (AKADEMIK) ---
-                    let markah = '-';
-                    if (typeof dapatkanMarkah === 'function') markah = dapatkanMarkah(s, subjekFieldID);
-                    else if (typeof window.dapatkanMarkah === 'function') markah = window.dapatkanMarkah(s, subjekFieldID);
-
-                    if (markah === '-' || markah === '' || markah === null || markah === undefined) {
-                        if (s.marks && s.marks[subUpper] !== undefined) markah = s.marks[subUpper];
-                        else if (s.marks && s.marks[subLower] !== undefined) markah = s.marks[subLower];
-                        else if (s[`marks.${subUpper}`] !== undefined) markah = s[`marks.${subUpper}`];
-                        else if (s[`marks.${subLower}`] !== undefined) markah = s[`marks.${subLower}`];
-                        else if (s[subUpper] !== undefined) markah = s[subUpper];
-                        else if (s[subLower] !== undefined) markah = s[subLower];
-                    }
-                    
-                    if (markah !== undefined && markah !== '-' && markah !== '' && markah !== null && !isNaN(markah)) {
-                        let m = Number(markah);
-                        dataTahun[tahun].ambil++;
-                        dataTahun[tahun].totalMarkah += m;
-                        
-                        if (m >= 82) dataTahun[tahun].cemerlang++;
-                        else if (m >= 66) dataTahun[tahun].baik++;
-                        else if (m >= 50) dataTahun[tahun].memuaskan++;
-                        else if (m >= 35) dataTahun[tahun].sederhana++;
-                        else if (m >= 20) dataTahun[tahun].perluBimbingan++;
-                        else dataTahun[tahun].gagal++;
-                    }
-                }
-            }
-        });
-
-        // 5. Bina HTML Jadual Berdasarkan Modul Aktif
-        let tajukJadual = isPBDAktif ? `ANALISIS PENTAKSIRAN PBD ${subjekFieldID}` : `ANALISIS PENCAPAIAN UJIAN ${subjekFieldID}`;
-        let htmlJadual = `
-            <div style="text-align:center; margin-bottom:20px; font-family: Arial, sans-serif;">
-                <h2 style="font-size:20px; font-weight:900; text-transform:uppercase; margin-bottom:5px; color:#0f172a;">${tajukJadual}</h2>
-                <h3 style="font-size:14px; font-weight:bold; color:#1e40af; margin-top:0; text-transform:uppercase;">
-                    (TAHUN 1 HINGGA TAHUN 6) - ${penilaian.replace(/_/g, ' ')}
-                </h3>
-            </div>
-            <table style="width:100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size:11px; margin-bottom: 30px; text-align:center;" border="1">
-                <thead>
-        `;
-
-        if (isPBDAktif) {
-            // HEADER PBD
-            htmlJadual += `
-                    <tr>
-                        <th rowspan="2" style="background-color:#0f2147; color:white; padding:8px; border: 1px solid white;">TAHUN</th>
-                        <th rowspan="2" style="background-color:#3b82f6; color:white; padding:8px; border: 1px solid white;">BIL MURID</th>
-                        <th colspan="6" style="background-color:#1e3a8a; color:white; padding:5px; border: 1px solid white;">BILANGAN MURID MENGIKUT TAHAP PENGUASAAN (TP)</th>
-                        <th rowspan="2" style="background-color:#6b21a8; color:white; padding:8px; border: 1px solid white;">PERATUS MTM<br>(TP 3-6)</th>
-                    </tr>
-                    <tr>
-                        <th style="background-color:#ef4444; color:white; padding:5px; border: 1px solid white;">TP 1</th>
-                        <th style="background-color:#f97316; color:white; padding:5px; border: 1px solid white;">TP 2</th>
-                        <th style="background-color:#eab308; color:white; padding:5px; border: 1px solid white;">TP 3</th>
-                        <th style="background-color:#3b82f6; color:white; padding:5px; border: 1px solid white;">TP 4</th>
-                        <th style="background-color:#8b5cf6; color:white; padding:5px; border: 1px solid white;">TP 5</th>
-                        <th style="background-color:#10b981; color:white; padding:5px; border: 1px solid white;">TP 6</th>
-                    </tr>
-                </thead><tbody>
-            `;
-        } else {
-            // HEADER PENILAIAN (LULUS)
-            htmlJadual += `
-                    <tr>
-                        <th rowspan="2" style="background-color:#0f2147; color:white; padding:8px; border: 1px solid white;">TAHUN</th>
-                        <th rowspan="2" style="background-color:#3b82f6; color:white; padding:8px; border: 1px solid white;">BIL MURID</th>
-                        <th colspan="6" style="background-color:#1e3a8a; color:white; padding:5px; border: 1px solid white;">PERATUS PENCAPAIAN (%)</th>
-                        <th rowspan="2" style="background-color:#6b21a8; color:white; padding:8px; border: 1px solid white;">LULUS (%)</th>
-                    </tr>
-                    <tr>
-                        <th style="background-color:#16a34a; color:white; padding:5px; border: 1px solid white;">CEMERLANG<br>(82-100)</th>
-                        <th style="background-color:#2563eb; color:white; padding:5px; border: 1px solid white;">BAIK<br>(66-81)</th>
-                        <th style="background-color:#0ea5e9; color:white; padding:5px; border: 1px solid white;">MEMUASKAN<br>(50-65)</th>
-                        <th style="background-color:#eab308; color:white; padding:5px; border: 1px solid white;">SEDERHANA<br>(35-49)</th>
-                        <th style="background-color:#f97316; color:white; padding:5px; border: 1px solid white;">PERLU BIMBINGAN<br>(20-34)</th>
-                        <th style="background-color:#dc2626; color:white; padding:5px; border: 1px solid white;">GAGAL<br>(0-19)</th>
-                    </tr>
-                </thead><tbody>
-            `;
-        }
-
-        let labelTahun = [];
-        let dataGraf = [];
-        let labelAtasGraf = [];
-
-        // 6. Loop Untuk Isi Data Dalam Jadual & Graf
-        [1, 2, 3, 4, 5, 6].forEach(thn => {
-            let dt = dataTahun[thn];
-            let bgRow = thn % 2 === 0 ? '#f8fafc' : '#ffffff';
-
-            if (isPBDAktif) {
-                // BARIS PBD
-                let peratusMTM = dt.ambil > 0 ? ((dt.mtm / dt.ambil) * 100).toFixed(1) : 0;
-                
-                labelTahun.push(`TAHUN ${thn}`);
-                dataGraf.push(Number(peratusMTM));
-                labelAtasGraf.push(`${dt.mtm} (${peratusMTM}%)`);
-
-                htmlJadual += `
-                    <tr style="background-color:${bgRow};">
-                        <td style="font-weight:bold; padding:6px; border: 1px solid #cbd5e1;">TAHUN ${thn}</td>
-                        <td style="padding:6px; border: 1px solid #cbd5e1; font-weight:bold;">${dt.ambil}</td>
-                        <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#fee2e2;">${dt.tp1}</td>
-                        <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#ffedd5;">${dt.tp2}</td>
-                        <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#fef9c3;">${dt.tp3}</td>
-                        <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#dbeafe;">${dt.tp4}</td>
-                        <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#f3e8ff;">${dt.tp5}</td>
-                        <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#dcfce7;">${dt.tp6}</td>
-                        <td style="padding:6px; border: 1px solid #cbd5e1; font-weight:bold; background-color:#faf5ff;">${dt.mtm} (${peratusMTM}%)</td>
-                    </tr>
-                `;
-            } else {
-                // BARIS PENILAIAN
-                let pCemerlang = dt.ambil > 0 ? ((dt.cemerlang / dt.ambil) * 100).toFixed(1) : 0;
-                let pBaik = dt.ambil > 0 ? ((dt.baik / dt.ambil) * 100).toFixed(1) : 0;
-                let pMemuaskan = dt.ambil > 0 ? ((dt.memuaskan / dt.ambil) * 100).toFixed(1) : 0;
-                let pSederhana = dt.ambil > 0 ? ((dt.sederhana / dt.ambil) * 100).toFixed(1) : 0;
-                let pPerlu = dt.ambil > 0 ? ((dt.perluBimbingan / dt.ambil) * 100).toFixed(1) : 0;
-                let pGagal = dt.ambil > 0 ? ((dt.gagal / dt.ambil) * 100).toFixed(1) : 0;
-
-                // FORMULA LULUS: Markah >= 20 (Cemerlang + Baik + Memuaskan + Sederhana + Perlu Bimbingan)
-                let bilLulus = dt.cemerlang + dt.baik + dt.memuaskan + dt.sederhana + dt.perluBimbingan;
-                let peratusLulus = dt.ambil > 0 ? ((bilLulus / dt.ambil) * 100).toFixed(1) : 0;
-
-                labelTahun.push(`TAHUN ${thn}`);
-                dataGraf.push(Number(peratusLulus));
-                labelAtasGraf.push(`${bilLulus} (${peratusLulus}%)`);
-
-                htmlJadual += `
-                    <tr style="background-color:${bgRow};">
-                        <td style="font-weight:bold; padding:6px; border: 1px solid #cbd5e1;">TAHUN ${thn}</td>
-                        <td style="padding:6px; border: 1px solid #cbd5e1; font-weight:bold;">${dt.ambil}</td>
-                        <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#dcfce7; color:#166534;">${dt.cemerlang} (${pCemerlang}%)</td>
-                        <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#dbeafe; color:#1e40af;">${dt.baik} (${pBaik}%)</td>
-                        <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#e0f2fe; color:#0369a1;">${dt.memuaskan} (${pMemuaskan}%)</td>
-                        <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#fef9c3; color:#854d0e;">${dt.sederhana} (${pSederhana}%)</td>
-                        <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#ffedd5; color:#c2410c;">${dt.perluBimbingan} (${pPerlu}%)</td>
-                        <td style="padding:6px; border: 1px solid #cbd5e1; background-color:#fee2e2; color:#b91c1c;">${dt.gagal} (${pGagal}%)</td>
-                        <td style="padding:6px; border: 1px solid #cbd5e1; font-weight:bold; background-color:#faf5ff;">${bilLulus} (${peratusLulus}%)</td>
-                    </tr>
-                `;
-            }
-        });
-
-        let labelGrafTajuk = isPBDAktif ? `ANALISIS PERATUS MTM PBD (${subjekFieldID})` : `PERATUS KELULUSAN UJIAN (${subjekFieldID})`;
-
-        htmlJadual += `
-                </tbody>
-            </table>
-            <div style="border: 2px solid #e2e8f0; border-radius: 8px; padding: 20px; font-family: Arial, sans-serif; page-break-inside: avoid;">
-                <h4 style="text-align:center; color:#1e40af; font-weight:900; text-transform:uppercase; margin-top:0;">
-                    GRAF ${labelGrafTajuk}<br>(TAHUN 1 HINGGA TAHUN 6)
-                </h4>
-                
-                <div id="bekas-gambar-graf" style="text-align:center; margin: 20px auto; min-height:300px;">
-                    <div style="color:gray; font-style:italic;">Memproses graf...</div>
-                </div>
-            </div>
-        `;
-
-        printArea.innerHTML = htmlJadual;
-
-        // 7. Trik Lukis Canvas Luar Skrin (Chart.js)
-        let oldTemp = document.getElementById('temp-graf-wrapper');
-        if (oldTemp) oldTemp.remove();
-
-        const tempContainer = document.createElement('div');
-        tempContainer.id = 'temp-graf-wrapper';
-        tempContainer.style.position = 'absolute';
-        tempContainer.style.left = '-9999px';
-        tempContainer.style.top = '0';
-        tempContainer.style.width = '800px'; 
-        tempContainer.style.height = '370px';
-        tempContainer.style.display = 'block';
-
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.id = 'tempGrafCanvas';
-        tempCanvas.width = 800;
-        tempCanvas.height = 370;
-        tempContainer.appendChild(tempCanvas);
-        document.body.appendChild(tempContainer);
-
-        const ctx = tempCanvas.getContext('2d');
-        let labelYAxis = isPBDAktif ? 'Peratus MTM (%)' : 'Peratus Lulus (%)';
-
-        if (window.grafTahunInstance) window.grafTahunInstance.destroy();
-
-        // Custom Plugin untuk Melukis Teks Label (Contoh: "33 (82.5%)") di Atas Setiap Bar Graf
-        const customDataLabelsPlugin = {
-            id: 'customDataLabels',
-            afterDatasetsDraw(chart) {
-                const { ctx } = chart;
-                chart.data.datasets.forEach((dataset, i) => {
-                    const meta = chart.getDatasetMeta(i);
-                    meta.data.forEach((bar, index) => {
-                        const teksLabel = dataset.customDataLabels ? dataset.customDataLabels[index] : '';
-                        if (teksLabel) {
-                            ctx.save();
-                            ctx.font = 'bold 11px Arial';
-                            ctx.fillStyle = '#0f172a';
-                            ctx.textAlign = 'center';
-                            ctx.textBaseline = 'bottom';
-                            ctx.fillText(teksLabel, bar.x, bar.y - 6);
-                            ctx.restore();
-                        }
-                    });
-                });
-            }
-        };
-
-        window.grafTahunInstance = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labelTahun,
-                datasets: [{
-                    label: labelYAxis,
-                    data: dataGraf,
-                    customDataLabels: labelAtasGraf, // Memasukkan tatasusunan teks contoh: "33 (82.5%)"
-                    backgroundColor: ['#2563eb', '#14b8a6', '#eab308', '#8b5cf6', '#f97316', '#84cc16']
-                }]
-            },
-            plugins: [customDataLabelsPlugin],
-            options: {
-                responsive: false, 
-                animation: false, 
-                plugins: { legend: { display: false } },
-                scales: { 
-                    y: { 
-                        beginAtZero: true, 
-                        max: 115, // Ditetapkan 115 supaya teks label tidak terpotong pada bar 100%
-                        title: { display: true, text: labelYAxis }
-                    } 
-                }
-            }
-        });
-
-        // 8. Tangkap Gambar & Cetak
-        setTimeout(() => {
-            const imejURL = window.grafTahunInstance.toBase64Image();
-            const bekasGambar = document.getElementById('bekas-gambar-graf');
-            
-            if (bekasGambar) {
-                bekasGambar.innerHTML = `<img src="${imejURL}" style="max-width:100%; height:auto;" />`;
-            }
-            
-            tempContainer.remove();
-
-            setTimeout(() => {
-                window.print();
-            }, 300);
-
-        }, 400); 
-
-    } catch (error) {
-        console.error("Ralat memuat turun data:", error);
-        printArea.innerHTML = '';
-        alert("Gagal memuat turun data dari pelayan: " + error.message);
-    }
-};
 </script>
 </body>
 </html>
