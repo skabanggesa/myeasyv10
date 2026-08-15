@@ -799,13 +799,18 @@ window.fetchStudentList = async () => {
     const btn = window.event ? window.event.target : document.querySelector('button[onclick="fetchStudentList()"]');
     const originalText = btn ? btn.innerText : "MASUK";
 
-    const tahun = document.getElementById('selTahun').value;
-    const kelas = document.getElementById('selKelas').value;
-    const penilaian = document.getElementById('selPenilaian').value;
+    // Menyokong ID elemen anaTahun/selTahun & anaKelas/selKelas
+    const elTahun = document.getElementById('anaTahun') || document.getElementById('selTahun');
+    const elKelas = document.getElementById('anaKelas') || document.getElementById('selKelas');
+    const elPenilaian = document.getElementById('anaPenilaian') || document.getElementById('selPenilaian');
 
-    if(!kelas) return alert("Sila pilih kelas terlebih dahulu!");
+    const tahun = elTahun ? elTahun.value : '';
+    const kelas = elKelas ? elKelas.value : '';
+    const penilaian = elPenilaian ? elPenilaian.value : '';
 
-    if(btn) {
+    if (!kelas) return alert("Sila pilih kelas terlebih dahulu!");
+
+    if (btn) {
         btn.disabled = true;
         btn.innerText = "SEDANG MENCARI...";
         btn.classList.add('opacity-50', 'cursor-not-allowed');
@@ -816,19 +821,22 @@ window.fetchStudentList = async () => {
         const result = await res.json();
 
         activeStudents = result.data || [];
-        activeStudents.sort((a, b) => a.nama.localeCompare(b.nama));
-        window.renderMarkTable();
-    } catch(error) {
+        activeStudents.sort((a, b) => (a.nama || '').localeCompare(b.nama || ''));
+        
+        if (typeof window.renderMarkTable === 'function') {
+            window.renderMarkTable();
+        }
+    } catch (error) {
         alert("Ralat mengambil data: " + error.message);
     } finally {
-        if(btn) {
+        if (btn) {
             btn.disabled = false;
             btn.innerText = originalText;
             btn.classList.remove('opacity-50', 'cursor-not-allowed');
         }
     }
 };
-
+    
 window.deleteSingleStudent = async () => {
     const nama = document.getElementById('deleteSingleName').value.trim().toUpperCase();
     const kelas = document.getElementById('deleteSingleClass').value.trim().toUpperCase();
