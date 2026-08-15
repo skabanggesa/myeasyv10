@@ -595,7 +595,7 @@ function showDashboard(user) {
     document.getElementById('main-app').classList.remove('hidden-section');
     document.getElementById('userStatus').innerText = `${userRoleText}: ${userName}`;
     
-    // Semakan peranan yang fleksibel (Admin, Super Admin, Penyelia)
+    // Semakan peranan fleksibel (Admin, Super Admin, Penyelia)
     const isAdmin = userRoleLower.includes('admin') || userRoleLower.includes('penyelia');
 
     if (isAdmin) {
@@ -605,8 +605,9 @@ function showDashboard(user) {
         document.getElementById('guru-area')?.classList.remove('hidden-section');
     }
 
-    if (typeof window.loadClassesForDropdown === 'function') {
-        window.loadClassesForDropdown();
+    // Panggil terus pemuatan kelas tanpa bergantung pada alias
+    if (typeof window.kemaskiniDropdownKelas === 'function') {
+        window.kemaskiniDropdownKelas();
     }
 }
 window.registerUser = async (role) => {
@@ -1434,17 +1435,25 @@ window.kemaskiniDropdownKelas = async () => {
     if (!elTahun || !selectKelas) return;
     const tahunSekarang = elTahun.value; 
 
-    if (!tahunSekarang) return;
+    // Jika tahun belum dipilih
+    if (!tahunSekarang) {
+        selectKelas.innerHTML = `<option value="">Sila Pilih Tahun Dulu</option>`;
+        return;
+    }
 
-    // Kosongkan dan set status memuatkan
     selectKelas.innerHTML = `<option value="">Memuatkan kelas...</option>`;
 
     try {
         const res = await fetch(`${SCRIPT_URL}?action=getClassesByYear&tahun=${encodeURIComponent(tahunSekarang)}`);
         const result = await res.json();
         
-        // Semak result.data (bukan result.classes)
         const senaraiKelas = (result.status === "success" && Array.isArray(result.data)) ? result.data.sort() : [];
+
+        // Jika tiada kelas dijumpai untuk tahun tersebut
+        if (senaraiKelas.length === 0) {
+            selectKelas.innerHTML = `<option value="">-- Tiada Kelas Dijumpai --</option>`;
+            return;
+        }
 
         selectKelas.innerHTML = `
             <option value="">-- Pilih Kelas --</option>
@@ -1466,10 +1475,8 @@ window.kemaskiniDropdownKelas = async () => {
     }
 };
 
-// Alias supaya panggilan window.loadClassesForDropdown() dari showDashboard() tidak error
+// Alias & Binding Event Listener
 window.loadClassesForDropdown = window.kemaskiniDropdownKelas;
-
-// Event Listener untuk penukaran tahun
 document.getElementById('anaTahun')?.addEventListener('change', window.kemaskiniDropdownKelas);
     
 window.janaAnalisis = async () => {
