@@ -761,40 +761,59 @@ window.deleteClass = async () => {
     }
 };
 
+// =========================================================
+// MUAT KELAS & MURID AUTOMATIK (MASTER_DATA)
+// =========================================================
 window.loadClassesForDropdown = async () => {
+    const anaSel = document.getElementById('anaKelas');
+    const sel = document.getElementById('selKelas');
+    const delSel = document.getElementById('deleteClassSelect');
+    const dataList = document.getElementById('studentNamesList');
+
+    // Kemaskini teks sementara semasa memuatkan data
+    if (anaSel) anaSel.innerHTML = '<option value="">Memuatkan kelas...</option>';
+    if (sel) sel.innerHTML = '<option value="">Memuatkan kelas...</option>';
+    if (delSel) delSel.innerHTML = '<option value="">Memuatkan kelas...</option>';
+
     try {
         const res = await fetch(`${SCRIPT_URL}?action=getClassesAndStudents`);
         const data = await res.json();
         
-        const classes = data.classes || [];
-        const studentNames = data.studentNames || []; 
+        if (data.status === "success") {
+            const classes = data.classes || [];
+            const studentNames = data.studentNames || [];
 
-        const sel = document.getElementById('selKelas');
-        const anaSel = document.getElementById('anaKelas'); 
-        const delSel = document.getElementById('deleteClassSelect'); 
+            // Tetapkan pilihan lalai
+            if (anaSel) anaSel.innerHTML = '<option value="">-- Pilih Kelas --</option><option value="SEMUA">🌐 SEMUA KELAS (MAKRO)</option>';
+            if (sel) sel.innerHTML = '<option value="">-- Pilih Kelas --</option>';
+            if (delSel) delSel.innerHTML = '<option value="">-- Pilih Kelas Untuk Dipadam --</option>';
 
-        if (sel) sel.innerHTML = '<option value="">Pilih Kelas</option>';
-        if (anaSel) anaSel.innerHTML = '<option value="">Pilih Kelas</option><option value="SEMUA">🌐 SEMUA KELAS (MAKRO)</option>'; 
-        if (delSel) delSel.innerHTML = '<option value="">-- Pilih Kelas Untuk Dipadam --</option>'; 
-        
-        classes.sort().forEach(c => {
-            if (sel) sel.innerHTML += `<option value="${c}">${c}</option>`;
-            if (anaSel) anaSel.innerHTML += `<option value="${c}">${c}</option>`; 
-            if (delSel) delSel.innerHTML += `<option value="${c}">${c}</option>`; 
-        });
-
-        const dataList = document.getElementById('studentNamesList');
-        if (dataList) {
-            dataList.innerHTML = ''; 
-            studentNames.sort().forEach(nama => {
-                dataList.innerHTML += `<option value="${nama}">`;
+            // Isi dropdown kelas
+            classes.sort().forEach(c => {
+                if (anaSel) anaSel.add(new Option(c, c));
+                if (sel) sel.add(new Option(c, c));
+                if (delSel) delSel.add(new Option(c, c));
             });
+
+            // Isi datalist nama murid
+            if (dataList) {
+                dataList.innerHTML = '';
+                studentNames.sort().forEach(nama => {
+                    const opt = document.createElement('option');
+                    opt.value = nama;
+                    dataList.appendChild(opt);
+                });
+            }
         }
     } catch (e) {
         console.error("Ralat memuatkan senarai kelas:", e);
+        if (anaSel) anaSel.innerHTML = '<option value="">-- Gagal Muat Kelas --</option>';
     }
 };
 
+// WAJIB: Jalankan pemuatan automatik apabila fail skrip dibaca
+window.loadClassesForDropdown();
+    
 window.fetchStudentList = async () => {
     const btn = window.event ? window.event.target : document.querySelector('button[onclick="fetchStudentList()"]');
     const originalText = btn ? btn.innerText : "MASUK";
