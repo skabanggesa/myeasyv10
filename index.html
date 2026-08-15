@@ -818,16 +818,14 @@ window.fetchStudentList = async () => {
     const btn = window.event ? window.event.target : document.querySelector('button[onclick="fetchStudentList()"]');
     const originalText = btn ? btn.innerText : "MASUK";
 
-    // Menyokong ID elemen anaTahun/selTahun & anaKelas/selKelas
-    const elTahun = document.getElementById('anaTahun') || document.getElementById('selTahun');
-    const elKelas = document.getElementById('anaKelas') || document.getElementById('selKelas');
-    const elPenilaian = document.getElementById('anaPenilaian') || document.getElementById('selPenilaian');
+    // Semak nilai dari anaKelas atau selKelas (mana-mana yang ada isi)
+    const tahun = (document.getElementById('anaTahun')?.value || document.getElementById('selTahun')?.value || '').trim();
+    const kelas = (document.getElementById('anaKelas')?.value || document.getElementById('selKelas')?.value || '').trim();
+    const penilaian = (document.getElementById('anaPenilaian')?.value || document.getElementById('selPenilaian')?.value || '').trim();
 
-    const tahun = elTahun ? elTahun.value : '';
-    const kelas = elKelas ? elKelas.value : '';
-    const penilaian = elPenilaian ? elPenilaian.value : '';
-
-    if (!kelas) return alert("Sila pilih kelas terlebih dahulu!");
+    if (!kelas || kelas === "") {
+        return alert("Sila pilih kelas terlebih dahulu!");
+    }
 
     if (btn) {
         btn.disabled = true;
