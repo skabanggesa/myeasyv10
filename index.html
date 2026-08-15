@@ -1424,35 +1424,53 @@ window.cetakPerbandinganTahun = async () => {
     }
 };
 
+// =========================================================
+// MUAT NAIK SENARAI KELAS DARI MASTER_DATA MENGIKUT TAHUN
+// =========================================================
 window.kemaskiniDropdownKelas = async () => {
-    const tahunSekarang = document.getElementById('anaTahun').value; 
+    const elTahun = document.getElementById('anaTahun');
     const selectKelas = document.getElementById('anaKelas');
     
+    if (!elTahun || !selectKelas) return;
+    const tahunSekarang = elTahun.value; 
+
     if (!tahunSekarang) return;
+
+    // Kosongkan dan set status memuatkan
+    selectKelas.innerHTML = `<option value="">Memuatkan kelas...</option>`;
 
     try {
         const res = await fetch(`${SCRIPT_URL}?action=getClassesByYear&tahun=${encodeURIComponent(tahunSekarang)}`);
         const result = await res.json();
-        const kelasDisusun = (result.classes || []).sort();
+        
+        // Semak result.data (bukan result.classes)
+        const senaraiKelas = (result.status === "success" && Array.isArray(result.data)) ? result.data.sort() : [];
 
         selectKelas.innerHTML = `
             <option value="">-- Pilih Kelas --</option>
             <option value="SEMUA">🌐 SEMUA KELAS (MAKRO)</option>
         `;
 
-        kelasDisusun.forEach(namaKelas => {
-            const option = document.createElement('option');
-            option.value = namaKelas;
-            option.innerText = namaKelas;
-            selectKelas.appendChild(option);
+        senaraiKelas.forEach(namaKelas => {
+            if (namaKelas) {
+                const option = document.createElement('option');
+                option.value = namaKelas;
+                option.innerText = namaKelas;
+                selectKelas.appendChild(option);
+            }
         });
 
     } catch (error) {
         console.error("Gagal mendapatkan senarai kelas dari Google Sheets:", error);
+        selectKelas.innerHTML = `<option value="">-- Gagal Muat Kelas --</option>`;
     }
 };
 
-document.getElementById('anaTahun').addEventListener('change', window.kemaskiniDropdownKelas);
+// Alias supaya panggilan window.loadClassesForDropdown() dari showDashboard() tidak error
+window.loadClassesForDropdown = window.kemaskiniDropdownKelas;
+
+// Event Listener untuk penukaran tahun
+document.getElementById('anaTahun')?.addEventListener('change', window.kemaskiniDropdownKelas);
     
 window.janaAnalisis = async () => {
     const tahun = document.getElementById('anaTahun').value;
