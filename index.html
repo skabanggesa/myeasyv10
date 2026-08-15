@@ -406,26 +406,24 @@
 </div>
 
 <script type="module">
-    // 1. IMPORT FIREBASE
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { 
-        getFirestore, collection, addDoc, getDocs, query, where, doc, setDoc, deleteDoc 
-    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+// Tetapkan URL Web App Google Apps Script anda
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwMcWyfOAkHawx3WjhAWQGjkB9MbbRcFkYTfDmXllz1mGKnUzB9Syi7ppsKPeDhFU2vqA/exec ";
 
-    // 2. CONFIG
-    const firebaseConfig = {
-        apiKey: "AIzaSyDEuXGoOt9BTv6OBvpc1h-yVmARlpW-LkE",
-        authDomain: "myeasy-a1547.firebaseapp.com",
-        projectId: "myeasy-a1547",
-        storageBucket: "myeasy-a1547.firebasestorage.app",
-        messagingSenderId: "182516833076",
-        appId: "1:182516833076:web:a43961448e7ebb6ccc6361",
-        measurementId: "G-7HCS2KH67Y"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
+async function ambilData() {
+    try {
+        const response = await fetch(`${SCRIPT_URL}?action=getData`);
+        const result = await response.json();
+        
+        // Gantikan pembolehubah global senarai murid anda dengan data dari Sheet
+        senaraiMurid = result.data || []; 
+        
+        // Panggil semula fungsi paparan UI asal anda
+        paparJadualMurid();
+        paparJadualMarkah();
+    } catch (error) {
+        console.error("Ralat mengambil data:", error);
+    }
+}
 // 3. VARIABLE GLOBAL & STRUKTUR PBD KPM KUALITATIF
 const KPM_SUBJECTS = [
     {id: 'BM', name: 'Bahasa Melayu', skills: ['Mendengar & Bertutur', 'Membaca', 'Menulis']}, 
@@ -535,6 +533,9 @@ window.updateSelectedSubjects = () => {
     }
 };
 
+// =========================================================
+// AKSES USER & LOG MASUK (DIKEMASKINI KE GOOGLE SHEETS)
+// =========================================================
 window.handleLogin = async () => {
     const btn = window.event.target;
     const originalText = btn.innerText;
@@ -546,10 +547,10 @@ window.handleLogin = async () => {
     btn.classList.add('opacity-50', 'cursor-not-allowed');
 
     try {
-        const q = query(collection(db, "users"), where("email", "==", email));
-        const querySnapshot = await getDocs(q);
+        const res = await fetch(`${SCRIPT_URL}?action=getUser&email=${encodeURIComponent(email)}`);
+        const result = await res.json();
         
-        if (querySnapshot.empty) {
+        if (!result.user) {
             if(email === "admin@gesa.com") {
                 showDashboard({name: "Super Admin", role: "admin", email: email});
             } else {
@@ -557,7 +558,7 @@ window.handleLogin = async () => {
             }
             return;
         }
-        querySnapshot.forEach((docSnap) => showDashboard(docSnap.data()));
+        showDashboard(result.user);
     } catch (e) { 
         alert("Ralat sambungan: " + e.message);
     } finally {
@@ -586,8 +587,19 @@ window.registerUser = async (role) => {
     const name = document.getElementById('regName').value;
     const email = document.getElementById('regEmail').value.toLowerCase();
     if(!name || !email) return alert("Isi semua info!");
-    await setDoc(doc(db, "users", email), { name, email, role });
-    alert("Guru berdaftar!");
+
+    try {
+        await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'registerUser',
+                payload: { name, email, role }
+            })
+        });
+        alert("Guru berdaftar!");
+    } catch (e) {
+        alert("Gagal mendaftar guru: " + e.message);
+    }
 };
 
 window.upgradeDataLama = async () => {
@@ -603,32 +615,12 @@ window.upgradeDataLama = async () => {
     }
 
     try {
-        const q = query(collection(db, "marks_v10"), where("penilaian", "==", "Penilaian Semester Pertama"));
-        const snapshot = await getDocs(q);
-        if (snapshot.empty) {
-            alert("Tiada rekod data lama ditemui.");
-            return;
-        }
-
-        let upgradedCount = 0;
-        for (let docSnap of snapshot.docs) {
-            const oldData = docSnap.data();
-            const oldId = docSnap.id;
-            const newId = `${oldData.studentId}_Ujian_Pertengahan_Sesi_Akademik`;
-            
-            const newData = {
-                ...oldData,
-                penilaian: "Ujian Pertengahan Sesi Akademik",
-                lastUpdated: new Date()
-            };
-
-            await setDoc(doc(db, "marks_v10", newId), newData, { merge: true });
-            if (oldId !== newId) {
-                await deleteDoc(doc(db, "marks_v10", oldId));
-            }
-            upgradedCount++;
-        }
-        alert(`Berjaya! ${upgradedCount} rekod data lama telah dinaik taraf.`);
+        const res = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'upgradeDataLama' })
+        });
+        const result = await res.json();
+        alert(result.message || "Berjaya menaik taraf data lama!");
     } catch (e) {
         alert("Gagal menaik taraf: " + e.message);
     } finally {
@@ -654,21 +646,24 @@ window.uploadStudentCSV = async () => {
     reader.onload = async (e) => {
         const text = e.target.result;
         const rows = text.split('\n').filter(r => r.trim() !== "");
-        let count = 0;
-        try {
-            for (let i = 1; i < rows.length; i++) {
-                const data = rows[i].split(',').map(s => s.trim());
-                if (data.length >= 3) {
-                    const [nama, kelas, tahun] = data;
-                    if (nama && kelas && tahun) {
-                        await addDoc(collection(db, "students"), { 
-                            nama: nama.toUpperCase(), kelas: kelas.toUpperCase(), tahun: tahun 
-                        });
-                        count++;
-                    }
+        let studentsPayload = [];
+
+        for (let i = 1; i < rows.length; i++) {
+            const data = rows[i].split(',').map(s => s.trim());
+            if (data.length >= 3) {
+                const [nama, kelas, tahun] = data;
+                if (nama && kelas && tahun) {
+                    studentsPayload.push({ nama: nama.toUpperCase(), kelas: kelas.toUpperCase(), tahun: tahun });
                 }
             }
-            alert(`Berjaya! ${count} data murid telah disimpan.`);
+        }
+
+        try {
+            await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'uploadCSV', payload: studentsPayload })
+            });
+            alert(`Berjaya! ${studentsPayload.length} data murid telah disimpan.`);
             fileInput.value = ""; 
             window.loadClassesForDropdown();
         } catch (error) {
@@ -695,10 +690,12 @@ window.addSingleStudent = async () => {
     btn.innerText = "MENYIMPAN...";
 
     try {
-        await addDoc(collection(db, "students"), {
-            nama: nama,
-            kelas: kelas,
-            tahun: tahun
+        await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'addStudent',
+                payload: { nama, kelas, tahun }
+            })
         });
         alert(`Murid ${nama} berjaya ditambah ke kelas ${kelas}!`);
         document.getElementById('newStudentName').value = ""; 
@@ -711,7 +708,6 @@ window.addSingleStudent = async () => {
     }
 };
 
-// FUNGSI UNTUK PADAM KELAS BERSAMA MURID DI DALAMNYA
 window.deleteClass = async () => {
     const kelas = document.getElementById('deleteClassSelect').value;
     if(!kelas) return alert("Sila pilih kelas untuk dipadam.");
@@ -724,16 +720,11 @@ window.deleteClass = async () => {
     btn.innerText = "MEMADAM...";
 
     try {
-        const q = query(collection(db, "students"), where("kelas", "==", kelas));
-        const snapshot = await getDocs(q);
-        
-        let count = 0;
-        for (let docSnap of snapshot.docs) {
-            await deleteDoc(doc(db, "students", docSnap.id));
-            count++;
-        }
-        
-        alert(`Berjaya! ${count} murid berserta kelas ${kelas} telah dipadam.`);
+        await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'deleteClass', kelas: kelas })
+        });
+        alert(`Berjaya! Kelas ${kelas} telah dipadam.`);
         window.loadClassesForDropdown();
     } catch (e) {
         alert("Gagal memadam kelas: " + e.message);
@@ -744,39 +735,36 @@ window.deleteClass = async () => {
 };
 
 window.loadClassesForDropdown = async () => {
-    const q = collection(db, "students");
-    const snapshot = await getDocs(q);
-    
-    const classes = new Set();
-    const studentNames = new Set(); 
+    try {
+        const res = await fetch(`${SCRIPT_URL}?action=getClassesAndStudents`);
+        const data = await res.json();
+        
+        const classes = data.classes || [];
+        const studentNames = data.studentNames || []; 
 
-    snapshot.forEach(docSnap => {
-        classes.add(docSnap.data().kelas);
-        studentNames.add(docSnap.data().nama); 
-    });
-    
-    // 1. Uruskan Dropdown Kelas
-    const sel = document.getElementById('selKelas');
-    const anaSel = document.getElementById('anaKelas'); 
-    const delSel = document.getElementById('deleteClassSelect'); 
+        const sel = document.getElementById('selKelas');
+        const anaSel = document.getElementById('anaKelas'); 
+        const delSel = document.getElementById('deleteClassSelect'); 
 
-    if (sel) sel.innerHTML = '<option value="">Pilih Kelas</option>';
-    if (anaSel) anaSel.innerHTML = '<option value="">Pilih Kelas</option><option value="SEMUA">🌐 SEMUA KELAS (MAKRO)</option>'; 
-    if (delSel) delSel.innerHTML = '<option value="">-- Pilih Kelas Untuk Dipadam --</option>'; 
-    
-    Array.from(classes).sort().forEach(c => {
-        if (sel) sel.innerHTML += `<option value="${c}">${c}</option>`;
-        if (anaSel) anaSel.innerHTML += `<option value="${c}">${c}</option>`; 
-        if (delSel) delSel.innerHTML += `<option value="${c}">${c}</option>`; 
-    });
-
-    // 2. Uruskan Datalist Cadangan Nama Murid
-    const dataList = document.getElementById('studentNamesList');
-    if (dataList) {
-        dataList.innerHTML = ''; 
-        Array.from(studentNames).sort().forEach(nama => {
-            dataList.innerHTML += `<option value="${nama}">`;
+        if (sel) sel.innerHTML = '<option value="">Pilih Kelas</option>';
+        if (anaSel) anaSel.innerHTML = '<option value="">Pilih Kelas</option><option value="SEMUA">🌐 SEMUA KELAS (MAKRO)</option>'; 
+        if (delSel) delSel.innerHTML = '<option value="">-- Pilih Kelas Untuk Dipadam --</option>'; 
+        
+        classes.sort().forEach(c => {
+            if (sel) sel.innerHTML += `<option value="${c}">${c}</option>`;
+            if (anaSel) anaSel.innerHTML += `<option value="${c}">${c}</option>`; 
+            if (delSel) delSel.innerHTML += `<option value="${c}">${c}</option>`; 
         });
+
+        const dataList = document.getElementById('studentNamesList');
+        if (dataList) {
+            dataList.innerHTML = ''; 
+            studentNames.sort().forEach(nama => {
+                dataList.innerHTML += `<option value="${nama}">`;
+            });
+        }
+    } catch (e) {
+        console.error("Ralat memuatkan senarai kelas:", e);
     }
 };
 
@@ -797,34 +785,10 @@ window.fetchStudentList = async () => {
     }
 
     try {
-        const qStudents = query(collection(db, "students"), where("tahun", "==", tahun), where("kelas", "==", kelas));
-        const studentSnap = await getDocs(qStudents);
-        let tempStudents = [];
-        studentSnap.forEach(docSnap => tempStudents.push({ id: docSnap.id, ...docSnap.data() }));
+        const res = await fetch(`${SCRIPT_URL}?action=getStudentsAndMarks&tahun=${encodeURIComponent(tahun)}&kelas=${encodeURIComponent(kelas)}&penilaian=${encodeURIComponent(penilaian)}`);
+        const result = await res.json();
 
-        const qMarks = query(collection(db, "marks_v10"), where("tahun", "==", tahun), where("kelas", "==", kelas), where("penilaian", "==", penilaian));
-        const marksSnap = await getDocs(qMarks);
-        
-        let savedMarksMap = {};
-        marksSnap.forEach(docSnap => {
-            let data = docSnap.data();
-            
-            Object.keys(data).forEach(key => {
-                if (key.startsWith('marks.')) {
-                    data[key.split('.')[1]] = data[key];
-                }
-            });
-            
-            savedMarksMap[data.studentId] = data; 
-        });
-
-        activeStudents = tempStudents.map(student => {
-            if(savedMarksMap[student.id]) {
-                return { ...student, ...savedMarksMap[student.id] };
-            }
-            return student;
-        });
-
+        activeStudents = result.data || [];
         activeStudents.sort((a, b) => a.nama.localeCompare(b.nama));
         window.renderMarkTable();
     } catch(error) {
@@ -838,7 +802,6 @@ window.fetchStudentList = async () => {
     }
 };
 
-// FUNGSI UNTUK PADAM SATU MURID
 window.deleteSingleStudent = async () => {
     const nama = document.getElementById('deleteSingleName').value.trim().toUpperCase();
     const kelas = document.getElementById('deleteSingleClass').value.trim().toUpperCase();
@@ -853,19 +816,10 @@ window.deleteSingleStudent = async () => {
     btn.innerText = "MEMADAM...";
 
     try {
-        const q = query(collection(db, "students"), where("nama", "==", nama), where("kelas", "==", kelas));
-        const snapshot = await getDocs(q);
-        
-        if (snapshot.empty) {
-            alert(`Tiada rekod dijumpai untuk murid bernama ${nama} di kelas ${kelas}. Sila pastikan ejaan tepat.`);
-            return;
-        }
-
-        let count = 0;
-        for (let docSnap of snapshot.docs) {
-            await deleteDoc(doc(db, "students", docSnap.id));
-            count++;
-        }
+        await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'deleteSingleStudent', nama: nama, kelas: kelas })
+        });
         
         alert(`Berjaya! Rekod murid ${nama} telah dipadam.`);
         document.getElementById('deleteSingleName').value = ""; 
@@ -878,6 +832,10 @@ window.deleteSingleStudent = async () => {
         btn.innerText = originalText;
     }
 };
+
+// =========================================================
+// FUNGSI UTILITI LOGIK UI & JADUAL (KEKAL TANPA PERUBAHAN)
+// =========================================================
 
 window.updateLocalMark = (idx, sub, val) => {
     activeStudents[idx][sub] = parseFloat(val) || 0;
@@ -1017,7 +975,7 @@ window.calculateAndSaveToCloud = async () => {
     const masterSubjectList = ['BM', 'BI', 'MT', 'SN', 'PAI', 'BA', 'PM', 'SJ', 'RBT', 'PJK', 'PSV', 'MZ'];
 
     try {
-        for (let s of activeStudents) {
+        activeStudents.forEach(s => {
             let totalMarks = 0;
             let totalPoints = 0;
             let countSubjekDikirakan = 0;
@@ -1042,39 +1000,18 @@ window.calculateAndSaveToCloud = async () => {
                 s.percent = "0.00";
             }
             s.totalMarks = totalMarks;
+            s.tahun = tahun;
+            s.penilaian = penilaian;
+        });
 
-            const resRef = doc(db, "marks_v10", `${s.id}_${penilaian.replace(/\s+/g, '_')}`);
+        await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'saveMarks',
+                payload: activeStudents
+            })
+        });
 
-            const saveData = {
-                studentId: s.id,
-                nama: s.nama,
-                kelas: s.kelas,
-                tahun: tahun,
-                penilaian: penilaian,
-                gpm: s.gpm,
-                percent: s.percent,
-                totalMarks: s.totalMarks,
-                lastUpdated: new Date() 
-            };
-
-            masterSubjectList.forEach(sub => {
-                let markVal = parseFloat(s[sub]);
-                if (isNaN(markVal) && s.marks && s.marks[sub] !== undefined) {
-                    markVal = parseFloat(s.marks[sub]);
-                }
-                if (!isNaN(markVal)) {
-                    saveData[`marks.${sub}`] = markVal;
-                }
-            });
-
-            Object.keys(s).forEach(key => {
-                if (key.startsWith('pbd_')) {
-                    saveData[key] = s[key];
-                }
-            });
-
-            await setDoc(resRef, saveData, { merge: true });
-        }
         alert("Data Berjaya Disimpan! Sistem Hybrid (Akademik GPM & Pentaksiran PBD) dikemaskini.");
     } catch (e) {
         alert("Gagal simpan: " + e.message);
@@ -1392,6 +1329,10 @@ window.cetakSubjekPilihan = () => {
     setTimeout(() => { window.print(); }, 400);
 };
 
+// =========================================================
+// DIKEMASKINI: PANGGILAN DATA BERASASKAN GOOGLE SHEETS
+// =========================================================
+
 window.cetakPerbandinganTahun = async () => {
     window.tutupModalCetak();
     const tahun = document.getElementById('anaTahun') ? document.getElementById('anaTahun').value : document.getElementById('selTahun').value;
@@ -1403,14 +1344,14 @@ window.cetakPerbandinganTahun = async () => {
     if (oldArea) oldArea.remove();
 
     try {
-        const q = query(collection(db, "marks_v10"), where("tahun", "==", tahun), where("penilaian", "==", penilaian));
-        const snapshot = await getDocs(q);
+        const res = await fetch(`${SCRIPT_URL}?action=getMarksByYear&tahun=${encodeURIComponent(tahun)}&penilaian=${encodeURIComponent(penilaian)}`);
+        const result = await res.json();
+        const dataMurid = result.data || [];
 
-        if (snapshot.empty) return alert("Tiada data ditemui untuk analisis perbandingan tahun!");
+        if (dataMurid.length === 0) return alert("Tiada data ditemui untuk analisis perbandingan tahun!");
 
         let classData = {};
-        snapshot.forEach(docSnap => {
-            const data = docSnap.data();
+        dataMurid.forEach(data => {
             const k = data.kelas || 'LAIN-LAIN';
             if (!classData[k]) classData[k] = { totalPelajar: 0, totalGPM: 0, totalPeratus: 0 };
             classData[k].totalPelajar++;
@@ -1464,18 +1405,9 @@ window.kemaskiniDropdownKelas = async () => {
     if (!tahunSekarang) return;
 
     try {
-        const q = query(collection(db, "marks_v10"), where("tahun", "==", tahunSekarang));
-        const snapshot = await getDocs(q);
-        
-        const senaraiKelasUnik = new Set();
-        snapshot.forEach(docSnap => {
-            const data = docSnap.data();
-            if (data.kelas) {
-                senaraiKelasUnik.add(data.kelas);
-            }
-        });
-
-        const kelasDisusun = Array.from(senaraiKelasUnik).sort();
+        const res = await fetch(`${SCRIPT_URL}?action=getClassesByYear&tahun=${encodeURIComponent(tahunSekarang)}`);
+        const result = await res.json();
+        const kelasDisusun = (result.classes || []).sort();
 
         selectKelas.innerHTML = `
             <option value="">-- Pilih Kelas --</option>
@@ -1490,12 +1422,12 @@ window.kemaskiniDropdownKelas = async () => {
         });
 
     } catch (error) {
-        console.error("Gagal mendapatkan senarai kelas dari Firestore:", error);
+        console.error("Gagal mendapatkan senarai kelas dari Google Sheets:", error);
     }
 };
 
 document.getElementById('anaTahun').addEventListener('change', window.kemaskiniDropdownKelas);
-
+    
 window.janaAnalisis = async () => {
     const tahun = document.getElementById('anaTahun').value;
     const penilaian = document.getElementById('anaPenilaian').value;
@@ -1506,34 +1438,17 @@ window.janaAnalisis = async () => {
     const btn = window.event ? window.event.target : document.querySelector('button[onclick="janaAnalisis()"]');
     if(btn) { btn.innerText = "SEDANG MENJANA..."; btn.disabled = true; }
 
-try {
-        let q;
-        if (kelas === "SEMUA") {
-            q = query(collection(db, "marks_v10"), where("tahun", "==", tahun), where("penilaian", "==", penilaian));
-        } else {
-            q = query(collection(db, "marks_v10"), where("tahun", "==", tahun), where("penilaian", "==", penilaian), where("kelas", "==", kelas));
-        }
-        const snapshot = await getDocs(q);
+    try {
+        // Fetch data dari Google Sheets API
+        const res = await fetch(`${SCRIPT_URL}?action=getMarks&tahun=${encodeURIComponent(tahun)}&penilaian=${encodeURIComponent(penilaian)}&kelas=${encodeURIComponent(kelas)}`);
+        const result = await res.json();
+        let students = result.data || [];
 
-        if(snapshot.empty) {
+        if(students.length === 0) {
             document.getElementById('analisis-result').innerHTML = `<p class="text-red-600 font-bold bg-red-50 p-4 rounded text-center">Tiada rekod markah ditemui. Sila SIMPAN markah dahulu.</p>`;
             document.getElementById('analisis-result').classList.remove('hidden-section');
             return;
         }
-
-        let students = [];
-        snapshot.forEach(docSnap => {
-            const rawData = docSnap.data();
-            let cleanedStudent = { ...rawData };
-            
-            Object.keys(rawData).forEach(key => {
-                if (key.startsWith('marks.')) {
-                    const subName = key.split('.')[1];
-                    cleanedStudent[subName] = rawData[key];
-                }
-            });
-            students.push(cleanedStudent);
-        });
 
         students.sort((a, b) => {
             let pctDiff = parseFloat(b.percent) - parseFloat(a.percent);
@@ -1723,17 +1638,17 @@ try {
                     scales: { y: { beginAtZero: true, max: 100, title: { display: true, text: 'Peratus (%)', font: { weight: 'bold' } } } }
                 }
             });
-            window.janaAnalisisPbdMakro(students);
-            window.janaAnalisisDLP(students);
+            if (typeof window.janaAnalisisPbdMakro === 'function') window.janaAnalisisPbdMakro(students);
+            if (typeof window.janaAnalisisDLP === 'function') window.janaAnalisisDLP(students);
         }, 150);
 
     } catch (error) {
-        alert("Gagal menjana analisis.");
+        alert("Gagal menjana analisis: " + error.message);
     } finally {
         if(btn) { btn.innerText = "JANA ANALISIS"; btn.disabled = false; }
     }
 };
-    
+
 window.printAnalisis = async () => {
     const tabAkademikAktif = !document.getElementById('analisis-result').classList.contains('hidden-section');
     const tabPbdAktif = !document.getElementById('analisis-pbd-result').classList.contains('hidden-section');
@@ -1898,7 +1813,7 @@ window.printAnalisis = async () => {
         setTimeout(() => { window.print(); }, 500);
     }
 };
-
+    
 window.toggleAnalisis = () => {
     const analisisSection = document.getElementById('analisis-section-main');
     const guruArea = document.getElementById('guru-area');
