@@ -1433,12 +1433,16 @@ window.kemaskiniDropdownKelas = async () => {
     const selectKelas = document.getElementById('anaKelas');
     
     if (!elTahun || !selectKelas) return;
-    const tahunSekarang = elTahun.value; 
 
-    // Jika tahun belum dipilih
-    if (!tahunSekarang) {
-        selectKelas.innerHTML = `<option value="">Sila Pilih Tahun Dulu</option>`;
-        return;
+    // Semak nilai value; jika kosong, ambil teks daripada pilihan yang aktif
+    let tahunSekarang = elTahun.value;
+    if ((!tahunSekarang || tahunSekarang === "") && elTahun.selectedIndex >= 0) {
+        tahunSekarang = elTahun.options[elTahun.selectedIndex].text.trim();
+    }
+
+    // Jika masih kosong atau mengandungi perkataan "Pilih", tetapkan terus ke '2026'
+    if (!tahunSekarang || tahunSekarang.includes('Pilih')) {
+        tahunSekarang = '2026';
     }
 
     selectKelas.innerHTML = `<option value="">Memuatkan kelas...</option>`;
@@ -1449,7 +1453,6 @@ window.kemaskiniDropdownKelas = async () => {
         
         const senaraiKelas = (result.status === "success" && Array.isArray(result.data)) ? result.data.sort() : [];
 
-        // Jika tiada kelas dijumpai untuk tahun tersebut
         if (senaraiKelas.length === 0) {
             selectKelas.innerHTML = `<option value="">-- Tiada Kelas Dijumpai --</option>`;
             return;
@@ -1474,6 +1477,10 @@ window.kemaskiniDropdownKelas = async () => {
         selectKelas.innerHTML = `<option value="">-- Gagal Muat Kelas --</option>`;
     }
 };
+
+// Alias & Binding Event Listener
+window.loadClassesForDropdown = window.kemaskiniDropdownKelas;
+document.getElementById('anaTahun')?.addEventListener('change', window.kemaskiniDropdownKelas);
 
 // Alias & Binding Event Listener
 window.loadClassesForDropdown = window.kemaskiniDropdownKelas;
