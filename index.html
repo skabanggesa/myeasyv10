@@ -534,55 +534,81 @@ window.updateSelectedSubjects = () => {
 };
 
 // =========================================================
-// AKSES USER & LOG MASUK (DIKEMASKINI KE GOOGLE SHEETS)
+// AKSES USER & LOG MASUK (DIPERBETULKAN)
 // =========================================================
-window.handleLogin = async () => {
-    const btn = window.event.target;
-    const originalText = btn.innerText;
-    const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+window.handleLogin = async (e) => {
+    // Dapatkan elemen butang secara selamat
+    const btn = (e && e.target) ? e.target : (window.event ? window.event.target : null);
+    const originalText = btn ? btn.innerText : "LOG MASUK";
+    const emailInput = document.getElementById('loginEmail').value.trim().toLowerCase();
     const errorMsg = document.getElementById('loginError');
     
-    btn.disabled = true;
-    btn.innerText = "MENYEMAK AKSES...";
-    btn.classList.add('opacity-50', 'cursor-not-allowed');
+    if (!emailInput) {
+        alert("Sila masukkan alamat emel!");
+        return;
+    }
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerText = "MENYEMAK AKSES...";
+        btn.classList.add('opacity-50', 'cursor-not-allowed');
+    }
+    if (errorMsg) errorMsg.classList.add('hidden');
 
     try {
-        const res = await fetch(`${SCRIPT_URL}?action=getUser&email=${encodeURIComponent(email)}`);
+        const res = await fetch(`${SCRIPT_URL}?action=getUser&email=${encodeURIComponent(emailInput)}`);
         const result = await res.json();
         
-        if (!result.user) {
-            if(email === "admin@gesa.com") {
-                showDashboard({name: "Super Admin", role: "admin", email: email});
+        // SEMAK result.status DAN result.data
+        if (result.status === "success" && result.data) {
+            showDashboard(result.data);
+        } else {
+            // Bypass log masuk kecemasan
+            if (emailInput === "admin@gesa.com") {
+                showDashboard({ nama: "Super Admin", peranan: "Super Admin", email: emailInput });
             } else {
-                errorMsg.classList.remove('hidden');
+                if (errorMsg) {
+                    errorMsg.innerText = result.message || "Emel tidak berdaftar!";
+                    errorMsg.classList.remove('hidden');
+                }
             }
-            return;
         }
-        showDashboard(result.user);
-    } catch (e) { 
-        alert("Ralat sambungan: " + e.message);
+    } catch (err) { 
+        alert("Ralat sambungan: " + err.message);
     } finally {
-        btn.disabled = false;
-        btn.innerText = originalText;
-        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        if (btn) {
+            btn.disabled = false;
+            btn.innerText = originalText;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
     }
 };
 
 function showDashboard(user) {
     currentUser = user;
+    
+    const userName = user.nama || user.name || 'Pengguna';
+    const userRoleText = user.peranan || user.role || 'Guru';
+    const userRoleLower = userRoleText.toString().toLowerCase();
+
     document.getElementById('login-section').classList.add('hidden-section');
     document.getElementById('main-app').classList.remove('hidden-section');
-    document.getElementById('userStatus').innerText = `${user.role}: ${user.name}`;
+    document.getElementById('userStatus').innerText = `${userRoleText}: ${userName}`;
     
-    if(user.role === 'admin') {
-        document.getElementById('admin-area').classList.remove('hidden-section');
-        document.getElementById('guru-area').classList.remove('hidden-section');
-    } else {
-        document.getElementById('guru-area').classList.remove('hidden-section');
-    }
-    window.loadClassesForDropdown();
-}
+    // Semakan peranan yang fleksibel (Admin, Super Admin, Penyelia)
+    const isAdmin = userRoleLower.includes('admin') || userRoleLower.includes('penyelia');
 
+    if (isAdmin) {
+        document.getElementById('admin-area')?.classList.remove('hidden-section');
+        document.getElementById('guru-area')?.classList.remove('hidden-section');
+    } else {
+        document.getElementById('guru-area')?.classList.remove('hidden-section');
+    }
+
+    if (typeof window.loadClassesForDropdown === 'function') {
+        window.loadClassesForDropdown();
+    }
+}
 window.registerUser = async (role) => {
     const name = document.getElementById('regName').value;
     const email = document.getElementById('regEmail').value.toLowerCase();
