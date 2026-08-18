@@ -1526,6 +1526,9 @@ window.janaAnalisis = async () => {
         const res = await fetch(`${SCRIPT_URL}?action=getMarks&tahun=${encodeURIComponent(tahun)}&penilaian=${encodeURIComponent(penilaian)}&kelas=${encodeURIComponent(kelas)}`);
         const result = await res.json();
         let students = result.data || [];
+        if (kelas !== "SEMUA") {
+    students = students.filter(s => s.kelas === kelas && s.tahun == tahun);
+}
 
         if(students.length === 0) {
             document.getElementById('analisis-result').innerHTML = `<p class="text-red-600 font-bold bg-red-50 p-4 rounded text-center">Tiada rekod markah ditemui. Sila SIMPAN markah dahulu.</p>`;
@@ -1563,14 +1566,14 @@ window.janaAnalisis = async () => {
             let totalPelajar = students.length;
 
             students.forEach(s => {
-                const mark = parseFloat(s[sub]) || 0;
+                const mark = parseFloat(meDapatkanMarkah(s, sub)) || 0;
                 if (mark > maxMark) maxMark = mark;
                 
                 const gradeInfo = getGrade(mark);
                 if (gradesCount[gradeInfo.gred] !== undefined) gradesCount[gradeInfo.gred]++;
                 if (mark >= 20) lulus++; else gagal++;
 
-                let tp = parseInt(s[`pbd_${sub}_tp`]) || 0;
+                let tp = parseInt(dapatkanDataPBD(s, sub).tp) || 0;
                 tpCounts[tp]++;
             });
 
@@ -1973,7 +1976,7 @@ window.janaAnalisisPbdMakro = (students) => {
         let tp1_2 = 0; let tp3_6 = 0; let totalAmbil = 0;
         
         students.forEach(s => {
-            const val = parseInt(s[`pbd_${sub.id}_tp`]) || 0;
+            const val = parseInt(dapatkanDataPBD(s, sub.id).tp) || 0;
             if (val > 0) {
                 totalAmbil++;
                 if (val <= 2) tp1_2++;
